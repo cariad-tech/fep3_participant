@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #include "data_io.h"
 
@@ -31,14 +40,14 @@ DataRegistry::DataReader::~DataReader()
 fep3::Result DataRegistry::DataWriter::write(const IDataSample& data_sample)
 {
     //usually we should NOT imidiatelly forward here but push to a queue and forward it while flush is called!
-    //but this can be done only if we are able to preallocate data_write_ptr from the simbus 
+    //but this can be done only if we are able to preallocate data_write_ptr from the simbus
     return _dataout_writer_ref.write(data_sample);
 }
 
 fep3::Result DataRegistry::DataWriter::write(const IStreamType& stream_type)
 {
     //usually we should NOT imidiatelly forward here but push to a queue and forward it while flush is called!
-    //but this can be done only if we are able to preallocate data_write_ptr from the simbus 
+    //but this can be done only if we are able to preallocate data_write_ptr from the simbus
     return _dataout_writer_ref.write(stream_type);
 }
 
@@ -70,23 +79,23 @@ DataRegistry::DataReaderProxy::DataReaderProxy(std::shared_ptr<IDataRegistry::ID
 }
 
 size_t DataRegistry::DataReaderProxy::size() const
-{ 
-    return _data_reader->size(); 
+{
+    return _data_reader->size();
 }
 
 size_t DataRegistry::DataReaderProxy::capacity() const
 {
-    return _data_reader->capacity(); 
+    return _data_reader->capacity();
 }
 
 fep3::Result DataRegistry::DataReaderProxy::pop(IDataReceiver& receiver)
-{ 
-    return _data_reader->pop(receiver); 
+{
+    return _data_reader->pop(receiver);
 }
 
 fep3::Optional<Timestamp> DataRegistry::DataReaderProxy::getFrontTime() const
 {
-    return _data_reader->getFrontTime(); 
+    return _data_reader->getFrontTime();
 }
 
 /***************************************************************/
@@ -104,15 +113,15 @@ DataRegistry::DataWriterProxy::DataWriterProxy(std::shared_ptr<IDataRegistry::ID
 
 fep3::Result DataRegistry::DataWriterProxy::write(const IDataSample& data_sample)
 {
-    return _data_writer->write(data_sample); 
+    return _data_writer->write(data_sample);
 }
 
 fep3::Result DataRegistry::DataWriterProxy::write(const IStreamType& stream_type)
 {
-    return _data_writer->write(stream_type); 
+    return _data_writer->write(stream_type);
 }
 
 fep3::Result DataRegistry::DataWriterProxy::flush()
 {
-    return _data_writer->flush(); 
+    return _data_writer->flush();
 }

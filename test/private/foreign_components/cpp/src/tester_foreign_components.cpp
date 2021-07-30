@@ -1,26 +1,35 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 
 #include <fep3/fep3_macros.h>
 
 #include <fep3/plugin/cpp/cpp_host_plugin.h>
 #include <fep3/participant/component_factories/cpp/component_creator_cpp_plugin.h>
-#include "test_plugins/test_plugin_1_intf.h"
+#include "test_plugins/test_component_a_intf.h"
 
 const std::string test_plugin_1_path = PLUGIN_1;
 
 /**
  * Test the loading and creating of a class from a CPPPlugin
- * @req_id 
+ * @req_id
 */
 TEST(ForeignComponentsCPPPluginTester, testLoading)
 {
@@ -43,13 +52,15 @@ TEST(ForeignComponentsCPPPluginTester, testLoading)
             })
         );
 
-    auto component = ComponentCreatorCPPPlugin()(*plugin.get(), ITestPlugin1::getComponentIID());
+    auto component = ComponentCreatorCPPPlugin()(*plugin.get(), ITestComponentA::getComponentIID());
     ASSERT_TRUE(component);
-    ITestPlugin1* testinterface = reinterpret_cast<ITestPlugin1*>(component->getInterface(ITestPlugin1::getComponentIID()));
+    ITestComponentA* test_interface = static_cast<ITestComponentA*>(component->getInterface(ITestComponentA::getComponentIID()));
 
-    testinterface->set1(5);
-    ASSERT_EQ(testinterface->get1(), 5);
+    test_interface->set(5);
+    ASSERT_EQ(test_interface->get(), 5);
 
-    testinterface->set1(2000);
-    ASSERT_EQ(testinterface->get1(), 2000);
+    test_interface->set(2000);
+    ASSERT_EQ(test_interface->get(), 2000);
+
+    EXPECT_EQ("test_cpp_plugin_1:component_a", test_interface->getIdentifier());
 }

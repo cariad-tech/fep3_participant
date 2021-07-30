@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <stdexcept>
 
@@ -21,6 +29,46 @@ namespace plugin
 {
 namespace arya
 {
+
+ParticipantLibraryVersion::ParticipantLibraryVersion
+    (const std::string& id
+    , int32_t major
+    , int32_t minor
+    , int32_t patch
+    , int32_t build
+    )
+    : _id(id)
+    , _major(major)
+    , _minor(minor)
+    , _patch(patch)
+    , _build(build)
+{}
+
+ParticipantLibraryVersion::ParticipantLibraryVersion(const fep3_plugin_base_ParticipantLibraryVersion& participant_library_version)
+    : _id(participant_library_version._id)
+    , _major(participant_library_version._major)
+    , _minor(participant_library_version._minor)
+    , _patch(participant_library_version._patch)
+    , _build(participant_library_version._build)
+{}
+
+bool ParticipantLibraryVersion::operator==(const ParticipantLibraryVersion& other) const
+{
+    return
+        _id == other._id
+        && _major == other._major
+        && _minor == other._minor
+        && _patch == other._patch
+        && _build == other._build
+        ;
+}
+
+std::string ParticipantLibraryVersion::toString() const
+{
+    std::stringstream version_stream;
+    version_stream << _id << " @ " << _major << "." << _minor << "." << _patch << " build " << _build;
+    return version_stream.str();
+}
 
 HostPluginBase::HostPluginBase(const std::string& file_path, bool prevent_unloading)
     //: boost::dll::shared_library(file_path, boost::dll::load_mode::append_decorations)

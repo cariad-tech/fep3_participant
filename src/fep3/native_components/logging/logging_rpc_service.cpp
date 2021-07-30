@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #include "logging_rpc_service.h"
 #include "logging_service.h"
@@ -23,9 +33,9 @@ int LoggingRPCService::setLoggerFilter(const std::string& enable_sinks, const st
 {
     std::vector<std::string> enabled_logging_sinks = a_util::strings::split(enable_sinks, ",");
 
-    logging::LoggerFilter config{ static_cast<logging::Severity>(severity), enabled_logging_sinks };
+    LoggerFilter filter{ static_cast<LoggerSeverity>(severity), enabled_logging_sinks };
 
-    return _logging_service.setFilter(logger_name, config).getErrorCode();
+    return _logging_service.setFilter(logger_name, filter).getErrorCode();
 }
 
 Json::Value LoggingRPCService::getLoggerFilter(const std::string& logger_name)
@@ -78,7 +88,7 @@ int LoggingRPCService::setSinkProperty(const std::string& property_name,
     auto sink = _logging_service.getSink(sink_name);
     if (sink)
     {
-        if (sink->setProperty(property_name, type, value))
+        if (sink->setProperty(property_name, value, type))
         {
             return 0;
         }

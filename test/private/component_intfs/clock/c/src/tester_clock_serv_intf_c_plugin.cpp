@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -83,7 +92,7 @@ using ClockServiceLoaderFixture = MockedComponentCPluginLoaderFixture<ClockServi
 /**
  * Test method fep3::IClockService::getTime of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_getTime)
 {
@@ -108,7 +117,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_getTime)
 /**
  * Test method fep3::IClockService::getType of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_getType)
 {
@@ -133,7 +142,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_getType)
 /**
  * Test method fep3::IClockService::getMainClockName of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_getMainClockName)
 {
@@ -154,7 +163,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_getMainClockName)
 /**
  * Test method fep3::IClockService::registerEventSink of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_registerEventSink)
 {
@@ -163,7 +172,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_registerEventSink)
     {
         auto& mock_clock_service = getMockComponent();
 
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_clock_service, registerEventSink(::testing::_))
             .WillOnce(CheckEventSink(mock_event_sink.get()));
@@ -176,7 +185,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_registerEventSink)
 /**
  * Test method fep3::IClockService::unregisterEventSink of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_unregisterEventSink)
 {
@@ -185,7 +194,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_unregisterEventSink)
     {
         auto& mock_clock_service = getMockComponent();
 
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_clock_service, unregisterEventSink(::testing::_))
             .WillOnce(CheckEventSink(mock_event_sink.get()));
@@ -198,7 +207,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_unregisterEventSink)
 /**
  * Test method fep3::IClockRegistry::registerClock of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_registerClock)
 {
@@ -208,7 +217,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_registerClock)
     {
         auto& mock_clock_service = getMockComponent();
 
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_clock_service, registerClock(::testing::_))
             .WillOnce(CheckClock(mock_clock.get()));
@@ -221,12 +230,12 @@ TEST_F(ClockServiceLoaderFixture, testMethod_registerClock)
 /**
  * Test method fep3::IClockRegistry::unregisterClock of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_unregisterClock)
 {
     const auto& test_clock_name = std::string("test_clock");
-    
+
     // setting of expectations
     {
         auto& mock_clock_service = getMockComponent();
@@ -242,7 +251,7 @@ TEST_F(ClockServiceLoaderFixture, testMethod_unregisterClock)
 /**
  * Test method fep3::IClockRegistry::getClockNames of a clock service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceLoaderFixture, testMethod_getClockNames)
 {
@@ -275,11 +284,11 @@ using ClockServiceLoaderWithAccessToClocks = MockedComponentCPluginLoader
     , Plugin1PathGetter
     , SetMockComponentFunctionSymbolGetter
     >;
-    
+
 /**
  * Test fixture class loading a single mocked component from within a C plugin
  */
-class ClockServiceWithAccessToClocksLoaderFixture 
+class ClockServiceWithAccessToClocksLoaderFixture
     : public ::testing::Test
     , public ClockServiceLoaderWithAccessToClocks
 {
@@ -290,7 +299,7 @@ protected:
         _get_clocks_function = getPlugin()->get<fep3::IClock*(size_t)>("getClock");
         ASSERT_NE(nullptr, _get_clocks_function);
     }
-    
+
     ::fep3::IClock* getClock(size_t index) const
     {
         return _get_clocks_function(index);
@@ -301,7 +310,7 @@ private:
 
 /**
  * Test the interface fep3::IClock of a clock that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testClockInterface)
 {
@@ -309,6 +318,7 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testClockInterface)
     const auto& test_clock_type = ::fep3::IClock::ClockType(::fep3::IClock::ClockType::continuous);
     const auto& test_time = ::fep3::Timestamp{1};
     auto mock_clock = std::make_unique<::testing::StrictMock<::fep3::mock::Clock>>();
+    const ::fep3::Timestamp reset_time{ 15 };
     // setting of expectations
     {
         auto& mock_clock_service = getMockComponent();
@@ -323,7 +333,7 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testClockInterface)
             .WillOnce(::testing::Return(test_clock_type));
         EXPECT_CALL(*mock_clock.get(), getTime())
             .WillOnce(::testing::Return(test_time));
-        EXPECT_CALL(*mock_clock.get(), reset())
+        EXPECT_CALL(*mock_clock.get(), reset(reset_time))
             .WillOnce(::testing::Return());
         EXPECT_CALL(*mock_clock.get(), start(::testing::_))
             .WillOnce(::testing::Return());
@@ -337,12 +347,12 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testClockInterface)
     const auto& clock = getClock(0);
     // we registered one clock before
     ASSERT_NE(nullptr, clock);
-    
+
     // now test the interface IClock of a clock that resides in a C plugin
     EXPECT_EQ(test_clock_name, clock->getName());
     EXPECT_EQ(test_clock_type, clock->getType());
     EXPECT_EQ(test_time, clock->getTime());
-    clock->reset();
+    clock->reset(reset_time);
     // Note: We are not testing the IClock::IEventSink interface in this test, so we use NiceMock and don't set expectations.
     clock->start(std::make_shared<::testing::NiceMock<::fep3::mock::EventSink>>());
     clock->stop();
@@ -350,7 +360,7 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testClockInterface)
 
 /**
  * Test the interface fep3::IClock::IEventSink of an event sink that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2833
  */
 TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testEventSinkInterface)
 {
@@ -365,7 +375,7 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testEventSinkInterface)
 
         EXPECT_CALL(mock_clock_service, registerClock(::testing::_))
             .WillOnce(::testing::Return(::fep3::Result{}));
-            
+
         EXPECT_CALL(*mock_event_sink.get(), timeUpdateBegin(::fep3::Timestamp(1), ::fep3::Timestamp(2)))
             .WillOnce(::testing::Return());
         EXPECT_CALL(*mock_event_sink.get(), timeUpdating(::fep3::Timestamp(3)))
@@ -384,11 +394,11 @@ TEST_F(ClockServiceWithAccessToClocksLoaderFixture, testEventSinkInterface)
     const auto& clock = getClock(0);
     // we registered one clock before
     ASSERT_NE(nullptr, clock);
-    
+
     clock->start(mock_event_sink);
     const auto& event_sink_of_clock = pointer_to_mock_clock->getEventSink().lock();
     ASSERT_TRUE(event_sink_of_clock);
-    
+
     // now test the interface IClock::IEventSink of an event sink that resides in a C plugin
     event_sink_of_clock->timeUpdateBegin(::fep3::Timestamp(1), ::fep3::Timestamp(2));
     event_sink_of_clock->timeUpdating(::fep3::Timestamp(3));

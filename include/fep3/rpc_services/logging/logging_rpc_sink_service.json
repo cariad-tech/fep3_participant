@@ -1,6 +1,6 @@
 [
   // registers to the Service
-  //  the rpc logging sink will start 
+  //  the rpc logging sink will start
   //  sending messages to this RPC LoggingSink Client
   {
     "name": "registerRPCLoggingSinkClient",
@@ -12,7 +12,7 @@
     "returns": 0 //message_received (0 for success)
   },
   // unregisters to the Service
-  //  the rpc logging sink will stop 
+  //  the rpc logging sink will stop
   //  sending messages to this RPC LoggingSink Client
   {
     "name": "unregisterRPCLoggingSinkClient",

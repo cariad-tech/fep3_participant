@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -16,24 +25,26 @@
 #include <fep3/components/simulation_bus/mock/mock_simulation_bus.h>
 #include <fep3/native_components/simulation_bus/simulation_bus.h>
 #include <fep3/native_components/simulation_bus/simbus_datareader.h>
-#include <fep3/base/streamtype/default_streamtype.h>
+#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/sample/mock/mock_data_sample.h>
+#include <fep3/base/stream_type/mock/mock_stream_type.h>
 #include <fep3/base/sample/data_sample.h>
 
 #include "helper/gmock_async_helper.h"
 
 #include <thread>
 #include <array>
+#include <future>
 
 using namespace fep3;
 
 namespace {
 
-class DataSampleNumber : public DataSample {
+class DataSampleNumber : public base::DataSample {
 public:
     explicit DataSampleNumber(uint32_t order) {
 
-        auto memory = fep3::RawMemoryStandardType<uint32_t>(order);
+        auto memory = fep3::base::RawMemoryStandardType<uint32_t>(order);
 
         this->write(memory);
     }
@@ -42,11 +53,6 @@ public:
 MATCHER_P(StreamTypeMatcher, other, "Equality matcher for IStreamType")
 {
     return arg == other;
-}
-
-ACTION_P(Notify, notification)
-{
-    notification->notify();
 }
 
 struct FillTheReceiverQueueData {
@@ -87,61 +93,65 @@ public:
 /**
  * @detail Test the stopping of the DataReader
  * @req_id FEPSDK-SimulationBus
- * 
+ *
  */
-TEST(NativeSimulationBus, testStoppingDataReader)
+TEST(NativeSimulationBus, testDataTriggeredReception)
 {
+    const data_read_ptr<const IDataSample> sample = std::make_shared<base::DataSample>(0, true);
+    const data_read_ptr<const IStreamType> stream_type = std::make_shared<base::StreamTypeDDL>("my_ddl_uint8", "Z:/fileref.ddl");
 
-    using ::testing::_;
-    using MatchIDataSample = testing::Matcher<const data_read_ptr<const IDataSample>&>;
+    const std::string signal_1_name = "signal_1";
+    const size_t queue_size = 5;
 
-    auto item_queue = std::make_shared<fep3::native::DataItemQueue<>>(5);
-    auto sample = std::make_shared<fep3::mock::DataSample>();
-    item_queue->push(sample);
-    item_queue->push(sample);
-    item_queue->push(sample);
-    item_queue->push(sample);
-    item_queue->push(sample);
+    auto sim_bus = std::make_shared<fep3::native::SimulationBus>();
+    auto reader = sim_bus->getReader(signal_1_name, queue_size);
+    auto writer = sim_bus->getWriter(signal_1_name, queue_size);
 
-    fep3::mock::DataReceiver receiver1;
+    const auto& receiver1 = std::make_shared<::testing::StrictMock<fep3::mock::DataReceiver>>();
+    reader->reset(receiver1);
+
     test::helper::Notification done1;
-    {
-        ::testing::InSequence s1;
-        EXPECT_CALL(receiver1, call(MatchIDataSample(_)))
-            .WillOnce(Notify(&done1));
-
-        EXPECT_CALL(receiver1, call(MatchIDataSample(_)))
-            //Thread safty of item_queue is required
-            .WillRepeatedly(FillTheReceiverQueue(FillTheReceiverQueueData {item_queue, sample}));
+    { // setting of expectations
+        EXPECT_CALL(*receiver1.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>
+            (mock::DataSampleSmartPtrMatcher(sample)))).WillOnce(::testing::Return());
+        EXPECT_CALL(*receiver1.get(), call(::testing::Matcher<const data_read_ptr<const IStreamType>&>
+            (mock::StreamTypeSmartPtrMatcher(stream_type)))).WillOnce(Notify(&done1));
     }
 
-    fep3::native::SimulationBus::DataReader reader{ item_queue };
-
-    std::thread t1(&fep3::native::SimulationBus::DataReader::receive, &reader, std::ref(receiver1));
-    done1.waitForNotification();
-    reader.stop();
+    std::promise<void> blocking_reception_prepared;
+    auto blocking_reception_prepared_result = blocking_reception_prepared.get_future();
+    std::thread t1([sim_bus, &blocking_reception_prepared]()
+        {
+            sim_bus->startBlockingReception([&blocking_reception_prepared]()
+                {
+                    blocking_reception_prepared.set_value();
+                });
+        });
+    // wait for the blocking reception to be prepared
+    blocking_reception_prepared_result.get();
+    // transmitting a sample must trigger the receiver
+    writer->write(*sample);
+    writer->write(*stream_type);
+    writer->transmit();
+    done1.waitForNotificationWithTimeout(std::chrono::seconds(3));
+    sim_bus->stopBlockingReception();
     t1.join();
 
-    // Second run of:
-    // start thread
-    // run receive
-    // stop reveive
-    fep3::mock::DataReceiver receiver2;
-    test::helper::Notification done2;
-    {
-        ::testing::InSequence s1;
-        EXPECT_CALL(receiver2, call(MatchIDataSample(_)))
-            .WillOnce(Notify(&done2));
+    // remove the receiver
+    reader->reset();
 
-        EXPECT_CALL(receiver2, call(MatchIDataSample(_)))
-            //Thread safty of item_queue is required
-            .WillRepeatedly(FillTheReceiverQueue(FillTheReceiverQueueData {item_queue, sample}));
-    }
-
-    std::thread t2(&fep3::native::SimulationBus::DataReader::receive, &reader, std::ref(receiver2));
-    done2.waitForNotification();
-    reader.stop();
-    t2.join();
+    bool reception_preparation_done_callback_called = false;
+    // if no reader has a receiver set, startBlockingReception must not block
+    sim_bus->startBlockingReception([&reception_preparation_done_callback_called]()
+        {
+            reception_preparation_done_callback_called = true;
+        });
+    EXPECT_TRUE(reception_preparation_done_callback_called);
+    // transmitting another sample must not trigger the receiver
+    // (because it has been removed from the reader)
+    writer->write(*sample);
+    writer->transmit();
+    sim_bus->stopBlockingReception();
 }
 
 /**
@@ -151,8 +161,8 @@ TEST(NativeSimulationBus, testStoppingDataReader)
  */
 TEST(NativeSimulationBus, testTransmission)
 {
-    const data_read_ptr<const IDataSample> sample = std::make_shared<DataSample>(0, true);
-    const StreamTypeDDL ddltype("my_ddl_uint8", "Z:/fileref.ddl");
+    const data_read_ptr<const IDataSample> sample = std::make_shared<base::DataSample>(0, true);
+    const base::StreamTypeDDL ddltype("my_ddl_uint8", "Z:/fileref.ddl");
 
     const std::string signal_1_name = "signal_1";
     const size_t queue_size = 5;
@@ -194,7 +204,7 @@ TEST(NativeSimulationBus, testTransmissionOfStreamType)
     auto reader = sim_bus->getReader(signal_1_name, queue_size);
     auto writer = sim_bus->getWriter(signal_1_name, queue_size);
 
-    StreamTypeDDL ddltype("my_ddl_uint8", "Z:/fileref.ddl");
+    base::StreamTypeDDL ddltype("my_ddl_uint8", "Z:/fileref.ddl");
     writer->write(ddltype);
 
     writer->transmit();

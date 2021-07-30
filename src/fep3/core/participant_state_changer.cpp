@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <fep3/core/participant_state_changer.h>
 #include <fep3/rpc_services/participant_statemachine/participant_statemachine_client_stub.h>
 #include <fep3/rpc_services/participant_statemachine/participant_statemachine_rpc_intf_def.h>
@@ -21,15 +29,15 @@ namespace core
 {
 namespace arya
 {
-class StateMachineClient 
-    : public fep3::rpc::RPCServiceClient<fep3::rpc::arya::ParticipantStateMachineClientStub,
+class StateMachineClient
+    : public fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCParticipantStateMachineClientStub,
                                          fep3::rpc::arya::IRPCParticipantStateMachineDef>
 {
-    typedef fep3::rpc::RPCServiceClient<fep3::rpc::arya::ParticipantStateMachineClientStub,
+    typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCParticipantStateMachineClientStub,
                                         fep3::rpc::arya::IRPCParticipantStateMachineDef> super;
 public:
     StateMachineClient(const std::string& service_name,
-                       const std::shared_ptr<fep3::rpc::IRPCRequester>& rpc_requester) 
+                       const std::shared_ptr<fep3::arya::IRPCRequester>& rpc_requester)
         : super(service_name, rpc_requester)
     {
     }
@@ -38,12 +46,12 @@ public:
 class ParticipantStateChanger::Impl
 {
 public:
-    Impl(fep3::core::arya::Participant& part) 
+    Impl(fep3::core::arya::Participant& part)
         : _part(part),
-          _sm_client(fep3::rpc::arya::IRPCParticipantStateMachineDef::DEFAULT_NAME, 
+          _sm_client(fep3::rpc::arya::IRPCParticipantStateMachineDef::DEFAULT_NAME,
                      part.getComponent<IServiceBus>()->getRequester(part.getName()))
     {
-        
+
     }
     virtual ~Impl()
     {
@@ -56,6 +64,20 @@ public:
 ParticipantStateChanger::ParticipantStateChanger(Participant& part)
     : _impl(std::make_unique<Impl>(part))
 {
+}
+
+ParticipantStateChanger::ParticipantStateChanger(const ParticipantStateChanger& other)
+    : _impl(std::make_unique<Impl>(*other._impl))
+{
+}
+
+ParticipantStateChanger& ParticipantStateChanger::operator=(const ParticipantStateChanger& other)
+{
+    if (this != &other)
+    {
+        _impl.reset(new Impl(*other._impl));
+    }
+    return *this;
 }
 
 ParticipantStateChanger::~ParticipantStateChanger()

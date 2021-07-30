@@ -1,22 +1,35 @@
 /**
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
 
-   @copyright
-   @verbatim
-   Copyright @ 2019 Audi AG. All rights reserved.
-   
-       This Source Code Form is subject to the terms of the Mozilla
-       Public License, v. 2.0. If a copy of the MPL was not distributed
-       with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   If it is not possible or desirable to put the notice in a particular file, then
-   You may include the notice in a location (such as a LICENSE file in a
-   relevant directory) where a recipient would be likely to look for such a notice.
-   
-   You may add additional accurate notices of copyright ownership.
-   @endverbatim
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include <fep3/core/data/data_reader.h>
+#include <fep3/base/data_registry/data_registry.h>
+
+namespace
+{
+    // Set to 2 to avoid loss of data samples if a received new data sample
+    // overwrites an existing old data sample which has not been read by the user yet.
+    // ATTENTION: Not yet read samples might still be overwritten if more samples
+    // than data reader backlog capacity are received, in case of default capacity this
+    // is the case if 2 or more samples are received.
+    constexpr size_t default_data_reader_backlog_capacity{2};
+}
 
 namespace fep3
 {
@@ -26,19 +39,19 @@ namespace arya
 {
 
 DataReader::DataReader() :
-    _stream_type(fep3::arya::meta_type_raw),
-    DataReaderBacklog(1, StreamType(fep3::arya::meta_type_raw))
+    _stream_type(fep3::base::arya::meta_type_raw),
+    DataReaderBacklog(default_data_reader_backlog_capacity, base::StreamType(fep3::base::arya::meta_type_raw))
 {
 }
 
-DataReader::DataReader(std::string name, const StreamType & stream_type) :
+DataReader::DataReader(std::string name, const base::StreamType & stream_type) :
     _name(std::move(name)),
     _stream_type(stream_type),
-    DataReaderBacklog(1, stream_type)
+    DataReaderBacklog(default_data_reader_backlog_capacity, stream_type)
 {
 }
 
-DataReader::DataReader(std::string name, const StreamType & stream_type, size_t queue_size) :
+DataReader::DataReader(std::string name, const base::StreamType & stream_type, size_t queue_size) :
     _name(std::move(name)),
     _stream_type(stream_type),
     DataReaderBacklog(queue_size, stream_type)
@@ -48,7 +61,7 @@ DataReader::DataReader(std::string name, const StreamType & stream_type, size_t 
 DataReader::DataReader(const DataReader & other) :
     _name(other._name),
     _stream_type(other._stream_type),
-    DataReaderBacklog(other.capacity(), other._stream_type)
+    DataReaderBacklog(other.getSampleQueueCapacity(), other._stream_type)
 {
 }
 
@@ -63,7 +76,7 @@ DataReader& DataReader::operator=(const DataReader& other)
 
 fep3::Result DataReader::addToDataRegistry(IDataRegistry& data_registry)
 {
-    _connected_reader = addDataIn(data_registry, _name.c_str(), _stream_type, capacity());
+    _connected_reader = base::addDataIn(data_registry, _name, _stream_type, getSampleQueueCapacity());
     if (_connected_reader)
     {
         return {};
@@ -78,6 +91,12 @@ fep3::Result DataReader::removeFromDataRegistry()
 {
     _connected_reader.reset();
     return {};
+}
+
+fep3::Result DataReader::removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry)
+{
+    _connected_reader.reset();
+    return base::removeDataIn(data_registry, _name);
 }
 
 void DataReader::receiveNow(Timestamp time_of_update)
@@ -125,7 +144,7 @@ fep3::Result removeFromComponents(DataReader& reader, const IComponents& compone
     auto data_registry = components.getComponent<IDataRegistry>();
     if (data_registry)
     {
-        return reader.removeFromDataRegistry();
+        return reader.removeFromDataRegistry(*data_registry);
     }
     else
     {

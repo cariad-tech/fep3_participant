@@ -1,3 +1,17 @@
+<!--
+  Copyright @ 2021 VW Group. All rights reserved.
+  
+      This Source Code Form is subject to the terms of the Mozilla
+      Public License, v. 2.0. If a copy of the MPL was not distributed
+      with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+  
+  If it is not possible or desirable to put the notice in a particular file, then
+  You may include the notice in a location (such as a LICENSE file in a
+  relevant directory) where a recipient would be likely to look for such a notice.
+  
+  You may add additional accurate notices of copyright ownership.
+  
+  -->
 <?xml version="1.0" encoding="utf-8"?>
 <timing xmlns:timing="fep/xsd/timing">
     <schema_version>1.0</schema_version>
@@ -16,7 +30,7 @@
                     <cycle_time>100000</cycle_time>
                     <cycle_delay_time>200000</cycle_delay_time>
                     <max_run_realtime>300000</max_run_realtime>
-                    <run_realtime_violation>set_stm_to_error</run_realtime_violation>
+                    <run_realtime_violation>skip_output_publish</run_realtime_violation>
                     <data_references>
                         <inputs>
                             <input_reference>

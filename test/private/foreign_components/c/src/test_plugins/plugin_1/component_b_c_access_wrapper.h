@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -20,7 +29,7 @@
 #include <fep3/plugin/c/c_wrapper/c_wrapper_helper.h>
 #include <fep3/plugin/c/c_wrapper/destructor_c_wrapper.h>
 #include <fep3/plugin/c/shared_binary_intf.h>
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/base/c_access_wrapper/component_base_c_access.h>
 #include <fep3/components/base/c_access_wrapper/component_c_wrapper.h>
 
@@ -49,7 +58,7 @@ public:
 
     inline ComponentB(const Access& access, const std::shared_ptr<fep3::plugin::c::ISharedBinary>& shared_binary);
     ~ComponentB() override = default;
-    
+
     // methods implementing ::test_plugin::IComponentB
     inline int32_t get() const override;
 
@@ -95,8 +104,8 @@ namespace detail
  * @note This template function must be instantiated in the plugin's code (cpp file).
  *
  * @tparam component_b_type The type of the component to be created
- * @param [out] result Pointer to an access structure to be filled; if null, no object will be created
- * @param shared_binary_access Access structure to the shared binary the created component will reside in
+ * @param[out] result Pointer to an access structure to be filled; if null, no object will be created
+ * @param[out] shared_binary_access Access structure to the shared binary the created component will reside in
  * @return C Interface error: fep3_plugin_c_interface_error_none if no error occurred, error code otherwise
  */
 template<typename component_b_type>

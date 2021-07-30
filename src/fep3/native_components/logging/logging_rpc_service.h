@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -23,7 +33,8 @@ namespace arya // version namespace is use because we might support more then th
 {
 class LoggingService;
 
-/// RPC Server of the Logging Service that handles the registration of listeners and configuration of loggers
+/// RPC Server of the Logging Service that handles the setting of filters and sink properties and
+/// provides getters for filters, logger, sinks and sink properties
 class LoggingRPCService :
     public rpc::RPCService<rpc_stubs::RPCLoggingServiceStub, rpc::IRPCLoggingServiceDef>
 {
@@ -35,9 +46,9 @@ private:
     /**
     * Sets a filter for a given logger (domain)
     *
-    * @param [in] enable_sink       A comma seperated list of all enabled logging sinks
-    * @param [in] logger_name       The logger name / domain to be configured. For more details see @ref page_fep_logging_service
-    * @param [in] severity          The filter level for this logger. All logs with a higher level will be disregarded.
+    * @param[in] enable_sink       A comma seperated list of all enabled logging sinks
+    * @param[in] logger_name       The logger name / domain to be configured. For more details see @ref page_fep_logging_service
+    * @param[in] severity          The filter level for this logger. All logs with a higher level will be disregarded.
     *                               To disable a logger use Severity::off.
     *
     * @return Standard Result value.

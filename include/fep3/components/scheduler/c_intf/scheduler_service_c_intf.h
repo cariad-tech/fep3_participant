@@ -1,15 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @attention Changes in this file must be reflected in the corresponding C++ interface file scheduler_service_intf.h
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @attention Changes in this file must be reflected in the corresponding C++ interface file scheduler_service_intf.h
 
 #pragma once
 
@@ -42,13 +49,15 @@ typedef struct
     fep3_plugin_c_InterfaceError (FEP3_PLUGIN_CALL *getActiveSchedulerName)(fep3_arya_HISchedulerService, void(*)(void*, const char*), void*);
     fep3_plugin_c_InterfaceError (FEP3_PLUGIN_CALL *registerScheduler)
         (fep3_arya_HISchedulerService
-        , int32_t*
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , fep3_plugin_c_arya_SDestructionManager
         , fep3_arya_SIScheduler
         );
     fep3_plugin_c_InterfaceError (FEP3_PLUGIN_CALL *unregisterScheduler)
         (fep3_arya_HISchedulerService
-        , int32_t*
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , const char*
         );
     fep3_plugin_c_InterfaceError (FEP3_PLUGIN_CALL *getSchedulerNames)
@@ -64,8 +73,8 @@ typedef struct
  *
  * @param[in,out] access_result Pointer to an access structure providing access to the component to get;
  *                              if null, no object will be get and the parameter remains unchanged
- * @param iid IID of the component to be created
- * @param handle_to_component Handle to the interface of the component to get
+ * @param[in] iid IID of the component to be created
+ * @param[in] handle_to_component Handle to the interface of the component to get
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle_to_component is null
@@ -85,8 +94,8 @@ fep3_plugin_c_InterfaceError fep3_plugin_c_arya_getSchedulerService
  *
  * @param[in,out] access_result Pointer to an access structure providing access to the created component;
  *                              if null, no object will be created and the parameter remains unchanged
- * @param shared_binary_access Access structure to the shared binary the component will reside in
- * @param iid IID of the component to be created
+ * @param[in] shared_binary_access Access structure to the shared binary the component will reside in
+ * @param[in] iid IID of the component to be created
  * @return error code (if any)
  */
 FEP3_PLUGIN_EXPORT fep3_plugin_c_InterfaceError FEP3_PLUGIN_CALL fep3_plugin_c_arya_createSchedulerService

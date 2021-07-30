@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include "fep_connext_dds_service_bus.h"
 #include <fep3/native_components/service_bus/rpc/http/http_systemaccess.h>
 #include <fep3/native_components/service_bus/rpc/http/http_server.h>
@@ -79,7 +87,7 @@ public:
                 system_name.c_str(),
                 system_name.c_str());
         }
-        std::shared_ptr<fep3::base::SystemAccessBase::ISystemAccessBaseDefaultUrls> service_bus_system_default 
+        std::shared_ptr<fep3::base::SystemAccessBase::ISystemAccessBaseDefaultUrls> service_bus_system_default
             = std::make_shared<ServiceBusDDS_HTTPDefaults>();
         try
         {
@@ -89,11 +97,11 @@ public:
             }
             else if (system_url.empty())
             {
-                //is valid we do not want to use discovery 
+                //is valid we do not want to use discovery
                 //we know all addresses from outside!
                 used_system_url = {};
             }
-            //we do not open any url 
+            //we do not open any url
             if (!used_system_url.empty())
             {
                 fep3::helper::Url url(system_url);

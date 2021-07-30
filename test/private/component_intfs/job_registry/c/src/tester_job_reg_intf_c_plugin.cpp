@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -54,7 +63,7 @@ using JobRegistryLoaderFixture = MockedComponentCPluginLoaderFixture<JobRegistry
 
 /**
  * Test method fep3::IJobRegistry::addJob of a job registry that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2087
  */
 TEST_F(JobRegistryLoaderFixture, testMethod_addJob)
 {
@@ -64,20 +73,19 @@ TEST_F(JobRegistryLoaderFixture, testMethod_addJob)
         , fep3::arya::Duration{2}
         , fep3::arya::Duration{3}
         , fep3::arya::JobConfiguration::TimeViolationStrategy::skip_output_publish
-        , {"other_job_a", "other_job_b"}
         };
     // Note: There is no way to check if the jobs as added to the job registry (residing in a C plugin)
     // are referring to the correct original jobs except triggering them and checking if the original
     // jobs are executed correctly. Thus we use a StrictMock of the job and check if executeDataIn
     // is executed correctly (see below).
     const auto& mock_job = std::make_shared<::testing::StrictMock<fep3::mock::Job>>();
-    
+
     auto& mock_job_registry = getMockComponent();
     // setting of expectations
     {
         ::testing::InSequence call_sequence;
-        
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_job_registry, addJob(test_job_name, ::testing::_, test_job_configuration))
             .WillOnce(::testing::Return(::fep3::Result{}));
@@ -91,34 +99,42 @@ TEST_F(JobRegistryLoaderFixture, testMethod_addJob)
     const auto& jobs_of_job_registry = mock_job_registry.getJobPointers();
     ASSERT_EQ(1, jobs_of_job_registry.size());
     ::fep3::IJob* job_of_job_registry = *jobs_of_job_registry.begin();
-    
+
     // now test the interface IJob of a job that resides in a C plugin
     EXPECT_EQ(::fep3::Result{}, job_of_job_registry->executeDataIn(::fep3::Timestamp(1)));
 }
 
 /**
  * Test method fep3::IJobRegistry::removeJob of a job registry that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2087
  */
 TEST_F(JobRegistryLoaderFixture, testMethod_removeJob)
 {
-    const auto& test_job_name = std::string("test_job");
-    
+    const auto test_job_name = std::string("test_job");
+    const auto non_registered_test_job_name = std::string("non_registered_job");
+
     // setting of expectations
     {
         auto& mock_job_registry = getMockComponent();
 
+        ::testing::InSequence call_sequence;
+
         EXPECT_CALL(mock_job_registry, removeJob(test_job_name))
             .WillOnce(::testing::Return(fep3::Result{}));
+        EXPECT_CALL(mock_job_registry, removeJob(non_registered_test_job_name))
+            .WillOnce(::testing::Return(fep3::Result{fep3::ERR_NOT_FOUND}));
     }
     fep3::arya::IJobRegistry* job_registry = getComponent();
     ASSERT_NE(nullptr, job_registry);
-    EXPECT_EQ(fep3::Result{}, job_registry->removeJob(test_job_name));
+    EXPECT_TRUE(fep3::isOk(job_registry->removeJob(test_job_name)));
+
+    // attempt to unregister a job that has not been registered before must fail
+    EXPECT_EQ(fep3::ERR_NOT_FOUND, job_registry->removeJob(non_registered_test_job_name).getErrorCode());
 }
 
 /**
  * Test method fep3::IJobRegistry::getJobInfos of a job registry that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2087
  */
 TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
 {
@@ -130,7 +146,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
                 , fep3::arya::Duration{1}
                 , fep3::arya::Duration{111}
                 , fep3::arya::JobConfiguration::TimeViolationStrategy::ignore_runtime_violation
-                , {"other_job_1", "other_job_11"}
                 }
             }
         , fep3::JobInfo
@@ -140,7 +155,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
                 , fep3::arya::Duration{22}
                 , fep3::arya::Duration{222}
                 , fep3::arya::JobConfiguration::TimeViolationStrategy::warn_about_runtime_violation
-                , {"other_job_2", "other_job_22"}
                 }
             }
         , fep3::JobInfo
@@ -150,7 +164,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
                 , fep3::arya::Duration{33}
                 , fep3::arya::Duration{333}
                 , fep3::arya::JobConfiguration::TimeViolationStrategy::skip_output_publish
-                , {"other_job_3", "other_job_33"}
                 }
             }
         };
@@ -158,7 +171,7 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
     // setting of expectations
     {
         auto& mock_job_registry = getMockComponent();
-        
+
         EXPECT_CALL(mock_job_registry, getJobInfos())
             .WillOnce(::testing::Return(test_job_infos));
     }
@@ -169,7 +182,7 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobInfos)
 
 /**
  * Test method fep3::IJobRegistry::getJobss of a job registry that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2087
  */
 TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
 {
@@ -192,7 +205,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
                         , fep3::arya::Duration{11}
                         , fep3::arya::Duration{111}
                         , fep3::arya::JobConfiguration::TimeViolationStrategy::ignore_runtime_violation
-                        , {"other_job_1", "other_job_11"}
                         }
                     }
                 }
@@ -208,7 +220,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
                         , fep3::arya::Duration{22}
                         , fep3::arya::Duration{222}
                         , fep3::arya::JobConfiguration::TimeViolationStrategy::warn_about_runtime_violation
-                        , {"other_job_2", "other_job_22"}
                         }
                     }
                 }
@@ -224,7 +235,6 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
                         , fep3::arya::Duration{33}
                         , fep3::arya::Duration{333}
                         , fep3::arya::JobConfiguration::TimeViolationStrategy::skip_output_publish
-                        , {"other_job_3", "other_job_33"}
                         }
                     }
                 }
@@ -234,15 +244,15 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
     // setting of expectations
     {
         ::testing::InSequence call_sequence;
-        
+
         auto& mock_job_registry = getMockComponent();
-        
+
         EXPECT_CALL(mock_job_registry, getJobs())
             .WillOnce(::testing::Return(test_reference_jobs));
 
         EXPECT_CALL(*mock_job_1.get(), executeDataIn(::fep3::Timestamp(1)))
             .WillOnce(::testing::Return(::fep3::Result{}));
-        
+
         EXPECT_CALL(*mock_job_2.get(), executeDataIn(::fep3::Timestamp(2)))
             .WillOnce(::testing::Return(::fep3::Result{}));
 
@@ -282,7 +292,7 @@ TEST_F(JobRegistryLoaderFixture, testMethod_getJobs)
 
 /**
  * Test the interface fep3::IJob of a job that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2087
  */
 TEST_F(JobRegistryLoaderFixture, testJobInterface)
 {
@@ -292,7 +302,6 @@ TEST_F(JobRegistryLoaderFixture, testJobInterface)
         , fep3::arya::Duration{2}
         , fep3::arya::Duration{3}
         , fep3::arya::JobConfiguration::TimeViolationStrategy::skip_output_publish
-        , {"other_job_a", "other_job_b"}
         };
 
     const auto& mock_job = std::make_shared<::testing::StrictMock<fep3::mock::Job>>();
@@ -301,8 +310,8 @@ TEST_F(JobRegistryLoaderFixture, testJobInterface)
     // setting of expectations
     {
         ::testing::InSequence call_sequence;
-        
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_job_registry, addJob(test_job_name, ::testing::_, test_job_configuration))
             .WillOnce(::testing::Return(::fep3::Result{}));
@@ -321,7 +330,7 @@ TEST_F(JobRegistryLoaderFixture, testJobInterface)
     const auto& jobs_of_job_registry = mock_job_registry.getJobPointers();
     ASSERT_EQ(1, jobs_of_job_registry.size());
     ::fep3::IJob* job_of_job_registry = *jobs_of_job_registry.begin();
-    
+
     // now test the interface IJob of a job that resides in a C plugin
     EXPECT_EQ(::fep3::Result{}, job_of_job_registry->executeDataIn(::fep3::Timestamp(1)));
     EXPECT_EQ(::fep3::Result{}, job_of_job_registry->execute(::fep3::Timestamp(2)));

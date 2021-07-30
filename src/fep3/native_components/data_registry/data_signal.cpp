@@ -1,13 +1,21 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
 
 #include "data_signal.h"
 
@@ -25,9 +33,24 @@ std::string DataRegistry::DataSignal::getName() const
     return _name;
 }
 
-StreamType DataRegistry::DataSignal::getType() const
+std::string DataRegistry::DataSignal::getAlias() const
+{
+    return _alias;
+}
+
+void DataRegistry::DataSignal::setAlias(const std::string & alias)
+{
+    _alias = alias;
+}
+
+base::StreamType DataRegistry::DataSignal::getType() const
 {
     return _type;
+}
+
+void DataRegistry::DataSignal::setType(const IStreamType& type)
+{
+    _type = type;
 }
 
 bool DataRegistry::DataSignal::hasDynamicType() const
@@ -66,7 +89,7 @@ void DataRegistry::DataSignalIn::unregisterDataListener(const std::shared_ptr<ID
     }
 }
 
-size_t DataRegistry::DataSignalIn::getMaxQueueSize() const 
+size_t DataRegistry::DataSignalIn::getMaxQueueSize() const
 {
     size_t size_result = 1;
     auto readers = _readers;
@@ -91,25 +114,25 @@ fep3::Result DataRegistry::DataSignalIn::registerAtSimulationBus(ISimulationBus&
     {
         if (hasDynamicType())
         {
-            _sim_bus_reader = simulation_bus.getReader(getName(), getMaxQueueSize());
+            _sim_bus_reader = simulation_bus.getReader(getAlias(), getMaxQueueSize());
         }
         else
         {
-            _sim_bus_reader = simulation_bus.getReader(getName(), getType(), getMaxQueueSize());
+            _sim_bus_reader = simulation_bus.getReader(getAlias(), getType(), getMaxQueueSize());
         }
+
+        if (!_sim_bus_reader)
+        {
+            RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, "Registering data reader %s at simulation bus failed", getAlias().c_str());
+        }
+        _sim_bus_reader->reset(shared_from_this());
+
+        return{};
+
     }
     catch (const std::exception& ex)
     {
         RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
-    }
-
-    if (_sim_bus_reader)
-    {
-        return startReceiving();
-    }
-    else
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, "Registering data reader %s at simulation bus failed", getName().c_str());
     }
 }
 
@@ -117,48 +140,20 @@ void DataRegistry::DataSignalIn::unregisterFromSimulationBus()
 {
     if (_sim_bus_reader)
     {
-        stopReceiving();
         _sim_bus_reader.reset();
     }
 }
 
-fep3::Result DataRegistry::DataSignalIn::startReceiving()
+fep3::Result DataRegistry::DataSignalIn::registerAtSignalMapping(SignalMapping& mapping)
 {
-    if (_sim_bus_reader)
-    {
-        ISimulationBus::IDataReader* reader = _sim_bus_reader.get();
-        // Fix me: This will create a new thread for every data reader and can cause
-        // a out-of-memory situation if a lot of readers get created!!!
-        // but this can only be fixed if simulationbus changes!
-        _receive_thread = std::thread([reader, this]()
-        {
-            reader->receive(*this);
-        });
-        return{};
-    }
-    RETURN_ERROR_DESCRIPTION(ERR_NOT_INITIALISED, "Data Registry is not initialised");
-}
-
-
-fep3::Result DataRegistry::DataSignalIn::stopReceiving()
-{
-    if (_sim_bus_reader)
-    {
-        _sim_bus_reader->stop();
-        if (_receive_thread.joinable())
-        {
-            _receive_thread.join();
-        }
-        return{};
-    }
-    RETURN_ERROR_DESCRIPTION(ERR_NOT_INITIALISED, "Data Registry is not initialised");
+    return mapping.registerDataReceiver(shared_from_this(), getName());
 }
 
 std::unique_ptr<IDataRegistry::IDataReader> DataRegistry::DataSignalIn::getReader(const size_t queue_capacity)
 {
     const auto& iter = _readers->insert(_readers->end(), std::weak_ptr<DataRegistry::DataReader>());
     // Construct shared_ptr with custom deleter
-    std::shared_ptr<DataRegistry::DataReader> reader{new DataRegistry::DataReader(queue_capacity), 
+    std::shared_ptr<DataRegistry::DataReader> reader{new DataRegistry::DataReader(queue_capacity),
         [readers_ptr = std::weak_ptr<DataReaderList>(_readers), iter](DataRegistry::DataReader* ptr)
         {
             delete ptr;
@@ -175,11 +170,13 @@ std::unique_ptr<IDataRegistry::IDataReader> DataRegistry::DataSignalIn::getReade
 
 void DataRegistry::DataSignalIn::operator()(const data_read_ptr<const IStreamType>& type)
 {
+    setType(*type);
+
     //first of all we receive for the queues 
     auto readers = _readers;
     for (auto& reader : *readers)
     {
-        //very very very slow! why we have this very slow weak pointer here ???? 
+        //very very very slow! why we have this very slow weak pointer here ????
         auto locked_reader = reader.lock();
         if (locked_reader)
         {
@@ -195,11 +192,11 @@ void DataRegistry::DataSignalIn::operator()(const data_read_ptr<const IStreamTyp
 
 void DataRegistry::DataSignalIn::operator()(const data_read_ptr<const IDataSample>& sample)
 {
-    //first of all we receive for the queues 
+    //first of all we receive for the queues
     auto readers = _readers;
     for (auto& reader : *readers)
     {
-        //very very very slow! why we have this very slow weak pointer here ???? 
+        //very very very slow! why we have this very slow weak pointer here ????
         auto locked_reader = reader.lock();
         if (locked_reader)
         {
@@ -249,11 +246,11 @@ fep3::Result DataRegistry::DataSignalOut::registerAtSimulationBus(ISimulationBus
         {
             if (max_queue_size > 0)
             {
-                _sim_bus_writer = simulation_bus.getWriter(getName(), max_queue_size);
+                _sim_bus_writer = simulation_bus.getWriter(getAlias(), max_queue_size);
             }
             else
             {
-                _sim_bus_writer = simulation_bus.getWriter(getName());
+                _sim_bus_writer = simulation_bus.getWriter(getAlias());
             }
             if (_sim_bus_writer)
             {
@@ -264,11 +261,11 @@ fep3::Result DataRegistry::DataSignalOut::registerAtSimulationBus(ISimulationBus
         {
             if (max_queue_size > 0)
             {
-                _sim_bus_writer = simulation_bus.getWriter(getName(), getType(), max_queue_size);
+                _sim_bus_writer = simulation_bus.getWriter(getAlias(), getType(), max_queue_size);
             }
             else
             {
-                _sim_bus_writer = simulation_bus.getWriter(getName(), getType());
+                _sim_bus_writer = simulation_bus.getWriter(getAlias(), getType());
             }
         }
     }
@@ -311,6 +308,8 @@ fep3::Result DataRegistry::DataSignalOut::write(const IDataSample& data_sample)
 
 fep3::Result DataRegistry::DataSignalOut::write(const IStreamType& stream_type)
 {
+    setType(stream_type);
+
     //usually we should queue and write and transmit at flush call
     //but we have no simulationbus implementation where we can obtain the samples from
     // data writer of simulation bus must be redesigned !!

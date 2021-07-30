@@ -11,7 +11,11 @@
         "returns": "signal_name_1,signal_name_2"
     },
 
-    // retrieves the streamtype
+    // retrieves the stream type for a given signal name
+    // searches in the following order for signal by name
+    // and returns the corresponding stream type if a signal is found:
+    // * alias inputs
+    // * alias outputs
     {
         "name": "getStreamType",
         "params": {

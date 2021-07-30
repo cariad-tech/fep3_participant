@@ -1,15 +1,24 @@
 /**
- * Implementation of participant
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
+
+#include <fep3/participant/participant.h>
 
 #include <mutex>
 #include <condition_variable>
@@ -17,12 +26,17 @@
 #include <a_util/result/error_def.h>
 #include "state_machine/participant_state_machine.h"
 
-#include <fep3/participant/participant.h>
-#include "component_registry_factory/component_registry_factory.h"
 #include "element_manager/element_manager.h"
+#include "component_registry_factory/component_registry_factory.h"
+#include "fep3/components/base/component_registry.h"
+#include "console_logger.h"
+
 
 #include <fep3/components/service_bus/service_bus_intf.h>
 #include <fep3/components/service_bus/rpc/fep_rpc_stubs_service.h>
+#include <fep3/components/logging/easy_logger.h>
+
+#include <fep3/components/participant_info/participant_info_intf.h>
 
 #include <fep3/components/logging/logging_service_intf.h>
 #include <fep3/rpc_services/participant_statemachine/participant_statemachine_rpc_intf_def.h>
@@ -33,7 +47,7 @@ namespace fep3
 namespace arya
 {
 
-class Participant::Impl : public rpc::RPCService<fep3::rpc::arya::ParticipantStateMachineServiceStub,
+class Participant::Impl : public rpc::RPCService<fep3::rpc_stubs::RPCParticipantStateMachineServiceStub,
                                                  fep3::rpc::arya::IRPCParticipantStateMachineDef>
 {
 public:
@@ -56,12 +70,14 @@ public:
          const std::string& version_info,
          const std::string& system_name,
          const std::shared_ptr<ComponentRegistry>& comp_registry,
-         const std::shared_ptr<const IElementFactory>& elem_factory)
+         const std::shared_ptr<const IElementFactory>& elem_factory,
+         const std::shared_ptr<ILogger>& default_logger)
         : _name(name),
           _version_info(version_info),
           _system_name(system_name),
           _component_registry(comp_registry),
-          _element_factory(elem_factory)
+          _element_factory(elem_factory),
+          _default_logger(default_logger)
     {
     }
 
@@ -135,6 +151,7 @@ public:
 
     std::shared_ptr<ComponentRegistry> _component_registry;
     std::shared_ptr<const IElementFactory> _element_factory;
+    std::shared_ptr<ILogger> _default_logger;
     std::string getName() const
     {
         return _name;
@@ -187,17 +204,8 @@ void Participant::Impl::Runner::notify()
  *
  ********************************************************************/
 
-Participant::Participant(const std::string& name,
-    const std::string& version_info,
-    const std::string& system_name,
-    const std::shared_ptr<ComponentRegistry>& component_registry,
-    const std::shared_ptr<const IElementFactory>& factory)
-    : _impl(std::make_shared<Impl>(name,
-                                   version_info,
-                                   system_name,
-                                   component_registry,
-                                   factory)),
-      _component_registry(component_registry)
+Participant::Participant(const arya::IComponents& components, std::shared_ptr<Impl> impl)
+    : _components(&components), _impl(std::move(impl))
 {}
 
 Participant::~Participant() = default;
@@ -210,20 +218,46 @@ Participant& Participant::operator=(Participant&& other) = default;
 int Participant::exec(const std::function<void()>& start_up_callback)
 {
     const auto& component_registry = _impl->_component_registry;
-    if(isOk(component_registry->create()))
+    const auto& component_registry_creation_result = component_registry->create();
+
+    FEP3_LOGGER_LOG_RESULT
+        (_impl->_default_logger
+        , component_registry_creation_result
+        );
+    if(isOk(component_registry_creation_result))
     {
-        //try logging
         auto logging_service = _impl->_component_registry->getComponent<ILoggingService>();
-        std::shared_ptr<ILoggingService::ILogger> participant_logger;
+        std::shared_ptr<ILogger> participant_logger;
         if (logging_service)
         {
+            // if logging service is available, use it for further logging ...
+            FEP3_LOGGER_LOG_INFO
+                (participant_logger
+                , "Logging Service Component is now available; all logs will go to the Logging Service from now on"
+                )
             participant_logger = logging_service->createLogger("participant");
         }
+        else
+        {
+            // ... otherwise keep using the logger of the participant implementation
+            FEP3_LOGGER_LOG_INFO
+                (participant_logger
+                , "No Logging Service Component available; keep logging to the default logger"
+                )
+            participant_logger = _impl->_default_logger;
+        }
         //the most important part
-        //we do not work without a servicebus ??? 
+        //we do not work without a servicebus ???
         auto service_bus = _impl->_component_registry->getComponent<IServiceBus>();
-        
-        if (service_bus)
+
+        if (!service_bus)
+        {
+            FEP3_LOGGER_LOG_ERROR
+                (participant_logger
+                , "No Service Bus Component available"
+                )
+        }
+        else
         {
             //the default access must be created while createParticipant!
             ElementManager man(_impl->_element_factory);
@@ -241,7 +275,7 @@ int Participant::exec(const std::function<void()>& start_up_callback)
                 {
                     start_up_callback();
                 }
-                _impl->_runner.operator()(_impl->_participant_state_machine);
+                _impl->_runner(_impl->_participant_state_machine);
 
                 server->unregisterService(rpc::IRPCParticipantStateMachineDef::getRPCDefaultName());
 
@@ -264,14 +298,30 @@ Participant createParticipant(const std::string& name,
     const std::shared_ptr<const IElementFactory>& factory,
     const std::string& server_address_url)
 {
-    std::shared_ptr<ComponentRegistry> components = ComponentRegistryFactory::createRegistry();
-    //initialize the service bus here!! 
+    // a logger that is capable to log before the components (i. e. the Logging Service) are created,
+    // to enable logging during creation of Component Registry and Components
+    // For now we enable only error and fatal, maybe in the future the severity will be configurable (see FEPSDK-2599)
+    std::shared_ptr<ILogger> console_logger = std::make_shared<ConsoleLogger>(LoggerSeverity::error);
+    std::shared_ptr<ComponentRegistry> components = ComponentRegistryFactory::createRegistry(console_logger.get());
+
+    //initialize the service bus here!!
     auto service_bus = components->getComponent<IServiceBus>();
-    if (service_bus)
+    if (!service_bus)
+    {
+        FEP3_LOGGER_LOG_ERROR
+            (console_logger
+            , "No Service Bus Component available; Participant will not be visible on the Service Bus"
+            )
+    }
+    else
     {
         auto result_system_access_creation = service_bus->createSystemAccess(system_name,
             IServiceBus::ISystemAccess::_use_default_url,
             true);
+        FEP3_LOGGER_LOG_RESULT
+            (console_logger
+            , result_system_access_creation
+            );
         if (isOk(result_system_access_creation))
         {
             auto system_access = service_bus->getSystemAccess(system_name);
@@ -283,15 +333,15 @@ Participant createParticipant(const std::string& name,
             auto result_server_creation = system_access->createServer(name,
                                                                       use_url);
             if (fep3::isFailed(result_server_creation))
-            { 
+            {
                 throw std::runtime_error(std::string("can not create participant ")
                     + name + " Error:" + a_util::strings::toString(result_server_creation.getErrorCode())
                     + " Description: " + result_server_creation.getDescription());
             }
         }
     }
-    //maybe we throw here if initializing of servicebus failed!
-    return Participant(name, version_info, system_name, components, factory);
+
+    return Participant(*components, std::make_shared<Participant::Impl>(name, version_info, system_name, components, factory, console_logger));
 }
 
 std::string Participant::getName() const

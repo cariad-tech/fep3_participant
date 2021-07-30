@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 
 #include "test_job_registry_client_stub.h"
@@ -33,7 +42,7 @@ using namespace ::testing;
 
 using LoggingServiceMock = mock::LoggingService;
 using LoggerMock = StrictMock<mock::Logger>;
-using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationServiceComponent>;
+using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationService<>>;
 
 class TestClient : public rpc::RPCServiceClient<::test::rpc_stubs::TestJobRegistryClientStub, rpc::IRPCJobRegistryDef>
 {
@@ -44,7 +53,7 @@ public:
     using base_type::GetStub;
 
     TestClient(const std::string& server_object_name,
-        const std::shared_ptr<rpc::IRPCRequester>& rpc_requester)
+        const std::shared_ptr<IRPCRequester>& rpc_requester)
         : base_type(server_object_name, rpc_requester)
     {
     }
@@ -89,7 +98,7 @@ struct NativeJobRegistryRPC : public Test
 TEST_F(NativeJobRegistryRPC, testGetJobNames)
 {
     TestClient client(rpc::IRPCJobRegistryDef::getRPCDefaultName(),
-        _service_bus->getRequester(native::testing::test_participant_name));
+        _service_bus->getRequester(native::testing::participant_name_default));
 
     // actual test
     {
@@ -119,11 +128,10 @@ TEST_F(NativeJobRegistryRPC, testGetJobInfoByJobName)
         JobConfiguration{ Duration{1} });
     _job_registry->addJob("test_job_2", std::make_shared<core::Job>("test_job_2", Duration{ 2 }),
         JobConfiguration{ Duration{2}, Duration{3}, Duration{4},
-            JobConfiguration::TimeViolationStrategy::set_stm_to_error,
-            std::vector<std::string>{"dependent_job", "another_job"} });
+            JobConfiguration::TimeViolationStrategy::skip_output_publish });
 
     TestClient client(rpc::IRPCJobRegistryDef::getRPCDefaultName(),
-        _service_bus->getRequester(native::testing::test_participant_name));
+        _service_bus->getRequester(native::testing::participant_name_default));
 
     // actual test
     {
@@ -134,7 +142,6 @@ TEST_F(NativeJobRegistryRPC, testGetJobInfoByJobName)
         EXPECT_EQ("0", job_info["job_configuration"]["delay_sim_time"].asString());
         EXPECT_EQ("", job_info["job_configuration"]["max_runtime_real_time"].asString());
         EXPECT_EQ("ignore_runtime_violation", job_info["job_configuration"]["runtime_violation_strategy"].asString());
-        EXPECT_EQ("", job_info["job_configuration"]["jobs_this_depends_on"].asString());
 
         const auto job_info_2 = client.getJobInfo("test_job_2");
 
@@ -142,15 +149,14 @@ TEST_F(NativeJobRegistryRPC, testGetJobInfoByJobName)
         EXPECT_EQ("2", job_info_2["job_configuration"]["cycle_sim_time"].asString());
         EXPECT_EQ("3", job_info_2["job_configuration"]["delay_sim_time"].asString());
         EXPECT_EQ("4", job_info_2["job_configuration"]["max_runtime_real_time"].asString());
-        EXPECT_EQ("set_stm_to_error", job_info_2["job_configuration"]["runtime_violation_strategy"].asString());
-        EXPECT_EQ("dependent_job,another_job", job_info_2["job_configuration"]["jobs_this_depends_on"].asString());
+        EXPECT_EQ("skip_output_publish", job_info_2["job_configuration"]["runtime_violation_strategy"].asString());
     }
 }
 
 TEST_F(NativeJobRegistryRPC, testGetNonExistentJobInfoByJobName)
 {
     TestClient client(rpc::IRPCJobRegistryDef::getRPCDefaultName(),
-        _service_bus->getRequester(native::testing::test_participant_name));
+        _service_bus->getRequester(native::testing::participant_name_default));
 
     // actual test
     {

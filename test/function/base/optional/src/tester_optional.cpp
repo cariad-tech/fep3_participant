@@ -1,16 +1,29 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 
+#include <math.h>
+
 #include <fep3/fep3_optional.h>
+
+#include <cmath>
 
 /**
  * @brief A move-only type
@@ -28,9 +41,9 @@ public:
     MoveOnly& operator=(MoveOnly&&) = default;
     virtual ~MoveOnly() = default;
 
-    bool operator==(const MoveOnly& rhs) const
+    bool operator==(const MoveOnly& other) const
     {
-        return _value == rhs._value;
+        return _value == other._value;
     }
     int value() const
     {
@@ -64,42 +77,42 @@ public:
 TEST(OptionalTester, testConstruction)
 {
     using ::fep3::Optional;
-    
+
     // default CTOR
     Optional<int> test_optional_int_1;
     EXPECT_FALSE(test_optional_int_1.has_value());
-    
+
     Optional<int> test_optional_int_2(33);
     // copy CTOR from other optional of same type
     Optional<int> test_optional_int_3(test_optional_int_2);
     ASSERT_TRUE(test_optional_int_3.has_value());
     EXPECT_EQ(33, test_optional_int_3.value());
-    
+
     // copy CTOR from other optional of other type
     Optional<double> test_optional_double_1(test_optional_int_2);
     ASSERT_TRUE(test_optional_double_1.has_value());
-    EXPECT_EQ(33, round(test_optional_double_1.value()));
-    
+    EXPECT_EQ(33, std::round(test_optional_double_1.value()));
+
     short other_value(33);
     // copy CTOR from value of other (non-optional) type
     Optional<int> test_optional_int_4(other_value);
     ASSERT_TRUE(test_optional_int_4.has_value());
     EXPECT_EQ(33, test_optional_int_4.value());
-    
+
     Optional<MoveOnly> test_optional_move_only_1(44);
     // move CTOR from other optional of same type
     Optional<MoveOnly> test_optional_move_only_2(std::move(test_optional_move_only_1));
     EXPECT_FALSE(test_optional_move_only_1.has_value());
     ASSERT_TRUE(test_optional_move_only_2.has_value());
     EXPECT_EQ(44, test_optional_move_only_2.value().value());
-    
+
     Optional<OtherMoveOnly> test_optional_other_move_only(OtherMoveOnly(55));
     // move CTOR from other optional of other type
     Optional<MoveOnly> test_optional_move_only_3(std::move(test_optional_other_move_only));
     EXPECT_FALSE(test_optional_other_move_only.has_value());
     ASSERT_TRUE(test_optional_move_only_3.has_value());
     EXPECT_EQ(55, test_optional_move_only_3.value().value());
-    
+
     OtherMoveOnly other_move_only(66);
     // move CTOR from value of other (non-optional) type
     Optional<MoveOnly> test_optional_move_only_4(std::move(other_move_only));
@@ -114,26 +127,26 @@ TEST(OptionalTester, testConstruction)
 TEST(OptionalTester, testAssignment)
 {
     using ::fep3::Optional;
-    
+
     Optional<int> test_optional_int_1(33);
     Optional<int> test_optional_int_2;
     // copy assigment from other optional of same type
     test_optional_int_2 = test_optional_int_1;
     ASSERT_TRUE(test_optional_int_2.has_value());
     EXPECT_EQ(33, test_optional_int_2.value());
-    
+
     Optional<double> test_optional_double_1;
     // copy assignment from other optional of other type
     test_optional_double_1 = test_optional_int_2;
     ASSERT_TRUE(test_optional_double_1.has_value());
-    EXPECT_EQ(33, round(test_optional_double_1.value()));
-    
+    EXPECT_EQ(33, std::round(test_optional_double_1.value()));
+
     short other_value(33);
     // copy assignment from value of other (non-optional) type
     test_optional_int_2 = other_value;
     ASSERT_TRUE(test_optional_int_2.has_value());
     EXPECT_EQ(33, test_optional_int_2.value());
-    
+
     Optional<MoveOnly> test_optional_move_only_1(44);
     Optional<MoveOnly> test_optional_move_only_2;
     // move assignment from other optional of same type
@@ -141,7 +154,7 @@ TEST(OptionalTester, testAssignment)
     EXPECT_FALSE(test_optional_move_only_1.has_value());
     ASSERT_TRUE(test_optional_move_only_2.has_value());
     EXPECT_EQ(44, test_optional_move_only_2.value().value());
-    
+
     Optional<OtherMoveOnly> test_optional_other_move_only(OtherMoveOnly(55));
     Optional<MoveOnly> test_optional_move_only_3;
     // move assignment from other optional of other type
@@ -149,7 +162,7 @@ TEST(OptionalTester, testAssignment)
     EXPECT_FALSE(test_optional_other_move_only.has_value());
     ASSERT_TRUE(test_optional_move_only_3.has_value());
     EXPECT_EQ(55, test_optional_move_only_3.value().value());
-    
+
     OtherMoveOnly other_move_only(66);
     Optional<MoveOnly> test_optional_move_only_4;
     // move assignment from value of other (non-optional) type
@@ -266,7 +279,7 @@ TEST(OptionalTester, testComparison)
     {
         Optional<int> optional_integer_1;
         Optional<int> optional_integer_2;
-        EXPECT_TRUE(optional_integer_1 == optional_integer_2);
+        EXPECT_EQ(optional_integer_1, optional_integer_2);
         EXPECT_FALSE(optional_integer_1 != optional_integer_2);
     }
 
@@ -274,7 +287,7 @@ TEST(OptionalTester, testComparison)
     {
         Optional<int> optional_integer_1;
         Optional<int> optional_integer_2(2);
-        EXPECT_TRUE(optional_integer_1 != optional_integer_2);
+        EXPECT_NE(optional_integer_1, optional_integer_2);
         EXPECT_FALSE(optional_integer_1 == optional_integer_2);
     }
 
@@ -282,7 +295,7 @@ TEST(OptionalTester, testComparison)
     {
         Optional<int> optional_integer_1(1);
         Optional<int> optional_integer_2(2);
-        EXPECT_TRUE(optional_integer_1 != optional_integer_2);
+        EXPECT_NE(optional_integer_1, optional_integer_2);
         EXPECT_FALSE(optional_integer_1 == optional_integer_2);
     }
 
@@ -290,7 +303,7 @@ TEST(OptionalTester, testComparison)
     {
         Optional<int> optional_integer_1(1);
         Optional<int> optional_integer_2(1);
-        EXPECT_TRUE(optional_integer_1 == optional_integer_2);
+        EXPECT_EQ(optional_integer_1, optional_integer_2);
         EXPECT_FALSE(optional_integer_1 != optional_integer_2);
     }
 }

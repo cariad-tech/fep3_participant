@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "local_system_clock_discrete.h"
 
@@ -28,7 +37,7 @@ namespace native
 DiscreteClockUpdater::DiscreteClockUpdater()
     : _simulation_time(simulation_time_start_value)
     , _next_request_gettime(std::chrono::time_point<std::chrono::steady_clock>{Timestamp{ 0 }})
-    , _cycle_time(FEP3_CLOCK_SIM_TIME_CYCLE_TIME_DEFAULT_VALUE)
+    , _step_size(FEP3_CLOCK_SIM_TIME_STEP_SIZE_DEFAULT_VALUE)
     , _time_factor(FEP3_CLOCK_SIM_TIME_TIME_FACTOR_DEFAULT_VALUE)
     , _stop(false)
 {
@@ -87,17 +96,17 @@ void DiscreteClockUpdater::work()
                 }
             }
         }
-        _next_request_gettime = steady_clock::now() + _cycle_time;
+        _next_request_gettime = steady_clock::now() + _step_size;
 
         try
         {
-             _simulation_time += _cycle_time;
+             _simulation_time += _step_size;
 
             {
                 std::lock_guard<std::mutex> guard(_clock_updater_mutex);
                 updateTime(_simulation_time);
             }
-           
+
         }
         catch (std::exception& exception)
         {
@@ -107,9 +116,9 @@ void DiscreteClockUpdater::work()
     }
 }
 
-void DiscreteClockUpdater::updateConfiguration(const Duration cycle_time, const double time_factor)
+void DiscreteClockUpdater::updateConfiguration(const Duration step_size, const double time_factor)
 {
-    _cycle_time = cycle_time;
+    _step_size = step_size;
     _time_factor = time_factor;
 }
 

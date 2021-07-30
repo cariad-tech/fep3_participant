@@ -1,16 +1,25 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include <plugins/rti_dds/simulation_bus/rti_conext_dds_include.h>
-#include <fep3/base/streamtype/default_streamtype.h>
+#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/sample/data_sample.h>
 #include "internal_topic.h"
 
@@ -30,7 +39,10 @@ std::string InternalTopic::GetTopic()
     return _topic_name;
 }
 
-std::unique_ptr<fep3::ISimulationBus::IDataReader> InternalTopic::createDataReader(size_t /*queue_capacity*/)
+std::unique_ptr<fep3::ISimulationBus::IDataReader> InternalTopic::createDataReader
+    (size_t /*queue_capacity*/
+    , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& /*data_access_collection*/
+    )
 {
     return std::make_unique<InternalTopic::InternalReader>(shared_from_this());
 }
@@ -77,25 +89,20 @@ bool InternalTopic::InternalReader::pop(fep3::ISimulationBus::IDataReceiver& rec
         const std::string data = _internal_topic->_queue.front();
         _internal_topic->_queue.pop();
 
-        auto sample = std::make_shared<DataSample>();
+        auto sample = std::make_shared<base::DataSample>();
         sample->set(data.data(), data.size());
         sample->setTime(std::chrono::seconds(0));
         sample->setCounter(0);
-        
+
         receiver(sample);
         return true;
     }
     return false;
 }
 
-void InternalTopic::InternalReader::receive(fep3::arya::ISimulationBus::IDataReceiver& /*receiver*/)
+void InternalTopic::InternalReader::reset(const std::shared_ptr<fep3::arya::ISimulationBus::IDataReceiver>& /*receiver*/)
 {
-    
-}
 
-void InternalTopic::InternalReader::stop()
-{
-    
 }
 
 fep3::Optional<fep3::Timestamp> InternalTopic::InternalReader::getFrontTime() const

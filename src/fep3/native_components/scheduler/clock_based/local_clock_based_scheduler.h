@@ -1,15 +1,22 @@
 /**
-* Scheduler based on local clock
-*
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -38,7 +45,7 @@ namespace native
 static fep3::Timestamp reset_time = fep3::Timestamp(-1);
 
 class ServiceThread
-{   
+{
 public:
     ServiceThread(const std::string& name,
         fep3::IJob& job,
@@ -89,12 +96,12 @@ public:
 
     ~TimerThread();
     /**
-     * @brief This method will reapeaditly wait until woken up by method wakeUp 
+     * @brief This method will reapeaditly wait until woken up by method wakeUp
      */
     fep3::Result execute(Timestamp wakeup_time) override;
     /**
      * @brief Wakes up our timer.Will be called by TimerScheduler::processSchedulerQueueAsynchron.
-     * Whenever it's woken up we execute the job using the _job_runner    
+     * Whenever it's woken up we execute the job using the _job_runner
      */
     fep3::Result wakeUp(Timestamp wakeup_time, std::promise<void>* finished = nullptr) override;
     fep3::Result start();
@@ -120,7 +127,7 @@ private:
 #endif
     std::promise<void>* _finished_promise = nullptr;
     volatile Timestamp::rep _wakeup_time{ -1 };
-    volatile Timestamp::rep _last_call_time{ -1 };  
+    volatile Timestamp::rep _last_call_time{ -1 };
     TimerScheduler& _timer_scheduler;
     fep3::native::JobRunner _job_runner;
 };
@@ -130,8 +137,7 @@ class LocalClockBasedScheduler : public fep3::IScheduler
 {
 public:
     LocalClockBasedScheduler(
-        const std::shared_ptr<const fep3::ILoggingService::ILogger>& logger,
-        const std::function<fep3::Result()>& set_participant_to_error_state);
+        const std::shared_ptr<const fep3::ILogger>& logger);
     ~LocalClockBasedScheduler() = default;
 
 public:
@@ -140,7 +146,7 @@ public:
     fep3::Result initialize(fep3::IClockService& clock, const fep3::Jobs& jobs) override;
     fep3::Result start() override;
     fep3::Result stop() override;
-    fep3::Result deinitialize() override; 
+    fep3::Result deinitialize() override;
 
 private:
     std::shared_ptr<fep3::native::TimerThread> createTimerThread(
@@ -155,8 +161,7 @@ private:
     std::unique_ptr<ServiceThread> _service_thread;
     std::shared_ptr<TimerScheduler> _timer_scheduler;
     std::list<std::shared_ptr<TimerThread>> _timers;
-    std::shared_ptr<const fep3::ILoggingService::ILogger> _logger;
-    std::function<fep3::Result()> _set_participant_to_error_state;
+    std::shared_ptr<const fep3::ILogger> _logger;
     fep3::IClockService* _clock = nullptr;
 };
 

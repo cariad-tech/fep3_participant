@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 
@@ -26,7 +34,7 @@ const std::string test_plugin_2_path = PLUGIN_2;
  * @req_id FEPSDK-Plugin
  */
 TEST(BaseCPPPluginTester, testLoading)
-{    
+{
     using namespace fep3::arya;
     std::unique_ptr<CPPPlugin> _plugin;
     ASSERT_NO_THROW
@@ -53,7 +61,7 @@ TEST(BaseCPPPluginTester, testComponentFactory)
     using namespace fep3::arya;
     std::unique_ptr<CPPPluginComponentFactory> _factory;
     std::vector<std::string> plugins = { test_plugin_1_path, test_plugin_2_path };
-    
+
     ASSERT_NO_THROW
     (
         _factory = std::make_unique<CPPPluginComponentFactory>(plugins);

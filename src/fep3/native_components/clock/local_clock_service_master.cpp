@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #include "local_clock_service_master.h"
 
@@ -33,7 +42,7 @@ namespace rpc
 {
 
 nanoseconds calculateSafetyTimeout(const nanoseconds rpc_timeout)
-{   
+{
     auto timeout = rpc_timeout * 2;
     if (timeout < minimum_safety_timeout)
     {
@@ -107,7 +116,7 @@ std::string ClockSlave::getName()
     return _name;
 }
 
-ClockMaster::ClockMaster(const std::shared_ptr<const ILoggingService::ILogger>& logger
+ClockMaster::ClockMaster(const std::shared_ptr<const ILogger>& logger
     , nanoseconds rpc_timeout
     , const std::function<fep3::Result()>& set_participant_to_error_state
     , const std::function<const std::shared_ptr<IRPCRequester>(const
@@ -189,8 +198,8 @@ fep3::Result ClockMaster::registerSlave(const std::string& slave_name, int event
     {
         auto slave = std::make_unique<SlaveEntry>(
                     (std::make_shared<ClockSlave>(
-                    slave_name, 
-                    rpc_requester, 
+                    slave_name,
+                    rpc_requester,
                     event_id_flag)));
 
         _slaves[slave_name] = std::move(slave);
@@ -209,9 +218,9 @@ fep3::Result ClockMaster::unregisterSlave(const std::string& slave_name)
     {
         it->second->_slave->deactivate();
         return{};
-    }        
+    }
 
-    RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, format("a slave with name '%s' was not found", slave_name.c_str()).c_str());    
+    RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, format("a slave with name '%s' was not found", slave_name.c_str()).c_str());
 }
 
 fep3::Result ClockMaster::receiveSlaveSyncedEvent(const std::string& /*slave_name*/, Timestamp /*time*/)
@@ -220,13 +229,13 @@ fep3::Result ClockMaster::receiveSlaveSyncedEvent(const std::string& /*slave_nam
 }
 
 fep3::Result ClockMaster::updateTimeout(const nanoseconds rpc_timeout)
-{    
+{
     const auto safety_timeout = calculateSafetyTimeout(rpc_timeout);
     FEP3_RETURN_IF_FAILED(validateTimeouts(rpc_timeout, safety_timeout));
 
     _rpc_timeout = rpc_timeout;
     _slaves_synchronizer._safety_timeout = safety_timeout;
-   
+
     createUpdateFunctions();
 
     return {};
@@ -246,13 +255,13 @@ void ClockMaster::timeUpdateBegin(Timestamp old_time, Timestamp new_time)
 }
 
 void ClockMaster::timeUpdating(Timestamp new_time)
-{       
+{
     std::lock_guard<std::mutex> lock(_slaves_mutex);
 
     auto func_wrapper = [&](ClockSlave& slave){
             _func_time_updating(slave, new_time);
-    };    
-        
+    };
+
     synchronizeEvent(func_wrapper
         , IRPCClockSyncMasterDef::EventIDFlag::register_for_time_updating
         , format("an error occured during time_updating at time %lld", new_time));
@@ -273,7 +282,7 @@ void ClockMaster::timeUpdateEnd(Timestamp new_time)
 
 void ClockMaster::timeResetBegin(Timestamp old_time, Timestamp new_time)
 {
-    std::lock_guard<std::mutex> lock(_slaves_mutex);    
+    std::lock_guard<std::mutex> lock(_slaves_mutex);
 
     auto func_wrapper = [&](ClockSlave& slave) {
         _func_time_reset_begin(slave, new_time, old_time);
@@ -315,41 +324,41 @@ AsyncExecutor::AsyncExecutor()
 void AsyncExecutor::executionLoop()
 {
     while (!_stop)
-    {           
+    {
         {
             std::unique_lock<std::mutex> lock(_tasks_mutex);
             /// using while because of spurious wakeups
             if (_tasks.empty())
-            {           
+            {
                 _condition_sync_start.wait(lock);
             }
-        }              
+        }
 
-        /// we check here again because we can be woken up by destructor        
+        /// we check here again because we can be woken up by destructor
         if (!_stop)
-        {                      
+        {
             std::packaged_task<void()> task;
 
             {
                 std::unique_lock<std::mutex> lock(_tasks_mutex);
                 if (!_tasks.empty())
-                {                
+                {
                     task = std::move(_tasks.front());
-                    _tasks.pop();                   
+                    _tasks.pop();
                 }
-            }            
+            }
 
             if (task.valid())
             {
                 (task)();
-            }                        
+            }
         }
     }
 }
 
 ClockMaster::MultipleSlavesSynchronizer::MultipleSlavesSynchronizer(
     nanoseconds timeout,
-    const std::shared_ptr<const ILoggingService::ILogger>& logger)
+    const std::shared_ptr<const ILogger>& logger)
     : _safety_timeout(timeout)
     , _logger(logger)
 {
@@ -360,7 +369,7 @@ void ClockMaster::MultipleSlavesSynchronizer::synchronize(
     std::unique_ptr<ClockMaster::SlaveEntry>>& slaves,
     std::function<void(ClockSlave&)> sync_func,
     const IRPCClockSyncMasterDef::EventIDFlag event_id_flag) const
-{ 
+{
     std::vector<std::pair<SlaveEntry&, std::future<void>>> synchronizations;
 
     for (const auto& it : slaves)
@@ -375,14 +384,14 @@ void ClockMaster::MultipleSlavesSynchronizer::synchronize(
         }
 
         if (clock_slave->isSet(event_id_flag))
-        {          
+        {
             auto sync_func_slave_binded = [clock_slave, sync_func]()
             {
                 sync_func(*clock_slave);
             };
 
             synchronizations.emplace_back(
-                *slave_entry, slave_synchronizer.enqueueTask(sync_func_slave_binded));            
+                *slave_entry, slave_synchronizer.enqueueTask(sync_func_slave_binded));
         }
     }
 
@@ -396,7 +405,7 @@ void ClockMaster::MultipleSlavesSynchronizer::waitUntilSyncFinish(
 
     for (auto& synchronization : current_synchronizations)
     {
-        const auto slave_name = synchronization.first._slave->getName();     
+        const auto slave_name = synchronization.first._slave->getName();
 
         const auto status = synchronization.second.wait_until(timeout_until);
         if (status == std::future_status::timeout)
@@ -404,7 +413,7 @@ void ClockMaster::MultipleSlavesSynchronizer::waitUntilSyncFinish(
             const auto message = format(
                 "a safety timeout (not rpc) occured while synchronizing the slave '%s'. "
                     "This points to an internal error."
-                , slave_name.c_str());            
+                , slave_name.c_str());
 
             _logger->logError(message);
         }
@@ -413,7 +422,7 @@ void ClockMaster::MultipleSlavesSynchronizer::waitUntilSyncFinish(
             try
             {
                 synchronization.second.get();
-            }          
+            }
             catch (const jsonrpc::JsonRpcException& ex)
             {
                 const auto message = format(
@@ -425,14 +434,14 @@ void ClockMaster::MultipleSlavesSynchronizer::waitUntilSyncFinish(
                 _logger->logError(message);
 
                 synchronization.first._slave->deactivate();
-            }         
+            }
         }
         else
         {
             const auto message = format(
                 "synchronization thread for slave '%s' was deferred."
                 , slave_name.c_str());
-            throw std::runtime_error(message);            
+            throw std::runtime_error(message);
         }
     }
 }

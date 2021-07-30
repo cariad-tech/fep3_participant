@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "local_scheduler_service.h"
 
@@ -62,7 +70,7 @@ std::string RPCSchedulerService::getActiveSchedulerName()
 }
 
 LocalSchedulerService::LocalSchedulerService()
-    : ComponentBase()
+    : fep3::base::Component<fep3::ISchedulerService>()
     , _logger_wrapper_forward(std::make_shared<LoggerForward>())
 {
     createSchedulerRegistry();
@@ -72,8 +80,7 @@ void LocalSchedulerService::createSchedulerRegistry()
 {
     std::unique_ptr<IScheduler> local_clock_based_scheduler =
         std::make_unique<LocalClockBasedScheduler>(
-            _logger_wrapper_forward,
-            _set_participant_to_error_state);
+            _logger_wrapper_forward);
     _scheduler_registry =
         std::make_unique<fep3::native::LocalSchedulerRegistry>(std::move(local_clock_based_scheduler));
 }
@@ -113,7 +120,7 @@ fep3::Result LocalSchedulerService::create()
 }
 
 fep3::Result LocalSchedulerService::destroy()
-{   
+{
     _logger.reset();
     _logger_wrapper_forward->setLogger(_logger);
 
@@ -134,12 +141,12 @@ fep3::Result LocalSchedulerService::destroy()
 }
 
 fep3::Result LocalSchedulerService::initialize()
-{   
+{
     return {};
 }
 
 fep3::Result LocalSchedulerService::tense()
-{   
+{
     _configuration.updatePropertyVariables();
 
     const auto components = _components.lock();
@@ -152,7 +159,7 @@ fep3::Result LocalSchedulerService::tense()
         _configuration._active_scheduler_name));
 
     FEP3_RETURN_IF_FAILED(initScheduler(*components));
-    
+
     return {};
 }
 
@@ -168,7 +175,7 @@ fep3::Result LocalSchedulerService::initScheduler(const IComponents& components)
     if (!job_registry)
     {
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "access to component IJobRegistry was not possible");
-    }  
+    }
 
     const auto jobs = job_registry->getJobs();
     FEP3_RETURN_IF_FAILED(_scheduler_registry->initializeActiveScheduler(

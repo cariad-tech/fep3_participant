@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -17,7 +26,7 @@
 #include <fep3/plugin/c/c_wrapper/c_wrapper_helper.h>
 #include <fep3/components/base/c_intf/component_c_intf.h>
 #include <fep3/components/base/c_access_wrapper/component_getter_function_getter_intf.h>
-#include <fep3/components/base/component_registry.h>
+#include <fep3/components/base/component_intf.h>
 
 namespace fep3
 {
@@ -33,10 +42,10 @@ namespace arya
 /**
  * Wrapper class for interface @ref fep3::arya::IComponents
  */
-class Components : private Helper<fep3::arya::IComponents>
+class Components : private arya::Helper<fep3::arya::IComponents>
 {
 private:
-    using Handle = fep3_arya_HComponents;
+    using Handle = fep3_arya_const_HComponents;
 public:
     /**
      * Functor creating an access structure for @ref ::fep3::arya::IComponents
@@ -47,13 +56,13 @@ public:
          * Creates an access structure to the component registry base as pointed to by @p pointer_to_component_registry
          *
          * @tparam components_access_type Access class for the components
-         * @param pointer_to_component_registry Pointer to the component registry to create an access structure for
+         * @param[in] pointer_to_component_registry Pointer to the component registry to create an access structure for
          * @return Access structure to the component registry
          */
-        fep3_arya_SComponents operator()(const fep3::arya::IComponents* pointer_to_component_registry)
+        fep3_arya_SComponents operator()(const fep3::arya::IComponents* pointer_to_component_registry) const noexcept
         {
             return fep3_arya_SComponents
-                {reinterpret_cast<fep3_arya_HComponents>(const_cast<fep3::arya::IComponents*>(pointer_to_component_registry))
+                {reinterpret_cast<const fep3_arya_const_HComponents>(pointer_to_component_registry)
                 , Components::findComponent
                 };
         }
@@ -62,10 +71,10 @@ public:
     // static methods transferring calls from the C interface to an object of fep3::arya::IComponents
     /**
      * Finds the component
-     * @param handle The handle to the component registry object to find the component interface in
-     * @param access_result Pointer to the result access structure of finding the component interface
-     * @param handle_to_component_getter_function_getters Handle to the component getter function getters
-     * @param iid The component interface ID to be found
+     * @param[in] handle The handle to the component registry object to find the component interface in
+     * @param[in,out] access_result Pointer to the result access structure of finding the component interface
+     * @param[in] handle_to_component_getter_function_getters Handle to the component getter function getters
+     * @param[in] iid The component interface ID to be found
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -81,7 +90,7 @@ public:
     {
         try
         {
-            if(const auto& wrapped_this = reinterpret_cast<fep3::arya::IComponents*>(handle))
+            if(const auto& wrapped_this = reinterpret_cast<const fep3::arya::IComponents*>(handle))
             {
                 if(const auto& pointer_to_component = wrapped_this->findComponent(iid))
                 {
@@ -106,7 +115,7 @@ public:
                             , component_getter_function
                             };
                         return fep3_plugin_c_interface_error_none;
-                        
+
                     }
                     else
                     {

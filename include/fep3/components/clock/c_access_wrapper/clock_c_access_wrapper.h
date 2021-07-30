@@ -1,14 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @note All methods are defined inline to provide the functionality as header only.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @note All methods are defined inline to provide the functionality as header only.
 
 #pragma once
 
@@ -35,8 +43,8 @@ namespace arya
  */
 class Clock
     : public ::fep3::arya::IClock
-    , private DestructionManager
-    , protected Helper
+    , private c::arya::DestructionManager
+    , protected arya::Helper
 {
 public:
     /**
@@ -45,8 +53,8 @@ public:
      * that resides in another binary (e. g. a shared library).
      */
     class EventSink
-        : public IEventSink
-        , private DestructionManager
+        : public fep3::arya::IClock::IEventSink
+        , private c::arya::DestructionManager
     {
     public:
         /// Type of access structure
@@ -54,12 +62,12 @@ public:
 
         /**
          * @brief CTOR
-         * @param access Access to the remote object
-         * @param destructors List of destructors to be called upon destruction of this
+         * @param[in] access Access to the remote object
+         * @param[in] destructors List of destructors to be called upon destruction of this
          */
         inline EventSink
             (const Access& access
-            , std::deque<std::unique_ptr<IDestructor>> destructors
+            , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
             );
         inline ~EventSink() override = default;
 
@@ -81,12 +89,12 @@ public:
 
     /**
      * @brief CTOR
-     * @param access Access to the remote object
-     * @param destructors List of destructors to be called upon destruction of this
+     * @param[in] access Access to the remote object
+     * @param[in] destructors List of destructors to be called upon destruction of this
      */
     inline Clock
         (const Access& access
-        , std::deque<std::unique_ptr<IDestructor>> destructors
+        , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
         );
     inline ~Clock() override = default;
 
@@ -95,7 +103,7 @@ public:
     inline std::string getName() const override;
     inline fep3::arya::IClock::ClockType getType() const override;
     inline fep3::arya::Timestamp getTime() const override;
-    inline void reset() override;
+    inline void reset(::fep3::arya::Timestamp new_time) override;
     inline void start(const std::weak_ptr<fep3::arya::IClock::IEventSink>& event_sink) override;
     inline void stop() override;
     /// @endcond no_documentation
@@ -119,13 +127,13 @@ namespace arya
 /**
  * Wrapper class for interface @ref fep3::arya::IClock
  */
-class Clock : private Helper<fep3::arya::IClock>
+class Clock : private arya::Helper<fep3::arya::IClock>
 {
 public:
     /**
      * Wrapper class for interface @ref fep3::arya::IClock::IEventSink
      */
-    class EventSink : private Helper<fep3::arya::IClock::IEventSink>
+    class EventSink : private arya::Helper<fep3::arya::IClock::IEventSink>
     {
     public:
         /**
@@ -136,10 +144,10 @@ public:
             /**
              * Creates an access structure to the event sink as pointed to by \p pointer_to_event_sink
              *
-             * @param pointer_to_event_sink Pointer to the event sink to create an access structure for
+             * @param[in] pointer_to_event_sink Pointer to the event sink to create an access structure for
              * @return Access structure to the event sink
              */
-            fep3_arya_IClock_SIEventSink operator()(fep3::arya::IClock::IEventSink* pointer_to_event_sink)
+            fep3_arya_IClock_SIEventSink operator()(fep3::arya::IClock::IEventSink* pointer_to_event_sink) const noexcept
             {
                 return fep3_arya_IClock_SIEventSink
                     {reinterpret_cast<fep3_arya_IClock_HIEventSink>(pointer_to_event_sink)
@@ -153,7 +161,7 @@ public:
         };
 
         /// Alias for the helper
-        using Helper = Helper<fep3::arya::IClock::IEventSink>;
+        using Helper = arya::Helper<fep3::arya::IClock::IEventSink>;
         /// Alias for the type of the handle to a wrapped object of type @ref fep3::arya::IClock::IEventSink
         using Handle = fep3_arya_IClock_HIEventSink;
 
@@ -168,8 +176,8 @@ public:
             return Helper::call
                 (handle
                 , &fep3::arya::IClock::IEventSink::timeUpdateBegin
-                , ::fep3::Timestamp(old_time)
-                , ::fep3::Timestamp(new_time)
+                , fep3::arya::Timestamp(old_time)
+                , fep3::arya::Timestamp(new_time)
                 );
         }
         static inline fep3_plugin_c_InterfaceError timeUpdating
@@ -180,7 +188,7 @@ public:
             return Helper::call
                 (handle
                 , &fep3::arya::IClock::IEventSink::timeUpdating
-                , ::fep3::Timestamp(new_time)
+                , fep3::arya::Timestamp(new_time)
                 );
         }
         static inline fep3_plugin_c_InterfaceError timeUpdateEnd
@@ -191,7 +199,7 @@ public:
             return Helper::call
                 (handle
                 , &fep3::arya::IClock::IEventSink::timeUpdateEnd
-                , ::fep3::Timestamp(new_time)
+                , fep3::arya::Timestamp(new_time)
                 );
         }
         static inline fep3_plugin_c_InterfaceError timeResetBegin
@@ -203,8 +211,8 @@ public:
             return Helper::call
                 (handle
                 , &fep3::arya::IClock::IEventSink::timeResetBegin
-                , ::fep3::Timestamp(old_time)
-                , ::fep3::Timestamp(new_time)
+                , fep3::arya::Timestamp(old_time)
+                , fep3::arya::Timestamp(new_time)
                 );
         }
         static inline fep3_plugin_c_InterfaceError timeResetEnd
@@ -215,7 +223,7 @@ public:
             return Helper::call
                 (handle
                 , &fep3::arya::IClock::IEventSink::timeResetEnd
-                , ::fep3::Timestamp(new_time)
+                , fep3::arya::Timestamp(new_time)
                 );
         }
         /// @endcond no_documentation
@@ -229,10 +237,10 @@ public:
         /**
          * Creates an access structure to the clock as pointed to by @p pointer_to_clock
          *
-         * @param pointer_to_clock Pointer to the clock to create an access structure for
+         * @param[in] pointer_to_clock Pointer to the clock to create an access structure for
          * @return Access structure to the clock
          */
-        fep3_arya_SIClock operator()(::fep3::arya::IClock* pointer_to_clock)
+        fep3_arya_SIClock operator()(::fep3::arya::IClock* pointer_to_clock) const noexcept
         {
             return fep3_arya_SIClock
                 {reinterpret_cast<::fep3::plugin::c::wrapper::arya::Clock::Handle>(pointer_to_clock)
@@ -247,7 +255,7 @@ public:
     };
 
     /// Alias for the helper
-    using Helper = Helper<fep3::arya::IClock>;
+    using Helper = arya::Helper<fep3::arya::IClock>;
     /// Alias for the type of the handle to a wrapped object of type @ref fep3::arya::IClock
     using Handle = fep3_arya_HIClock;
 
@@ -302,11 +310,13 @@ public:
     }
     static inline fep3_plugin_c_InterfaceError reset
         (Handle handle
+        , int64_t new_time
         ) noexcept
     {
         return Helper::call
             (handle
             , &fep3::arya::IClock::reset
+            , fep3::arya::Timestamp(new_time)
             );
     }
     static inline fep3_plugin_c_InterfaceError start
@@ -317,11 +327,10 @@ public:
     {
         return Helper::transferWeakPtr<access::arya::Clock::EventSink>
             (handle
-            , std::bind
-                (&fep3::arya::IClock::start
-                , std::placeholders::_1
-                , std::placeholders::_2
-                )
+            , [](auto&& clock, auto&& event_sink)
+                {
+                    return clock->start(std::forward<decltype(event_sink)>(event_sink));
+                }
             , destruction_manager_access_result
             , event_sink_access
             );
@@ -348,7 +357,7 @@ namespace arya
 
 Clock::EventSink::EventSink
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(access)
 {
@@ -358,7 +367,7 @@ Clock::EventSink::EventSink
 /// @cond no_documentation
 void Clock::EventSink::timeUpdateBegin(::fep3::arya::Timestamp old_time, ::fep3::arya::Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.timeUpdateBegin
         , old_time.count()
@@ -368,7 +377,7 @@ void Clock::EventSink::timeUpdateBegin(::fep3::arya::Timestamp old_time, ::fep3:
 
 void Clock::EventSink::timeUpdating(::fep3::arya::Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.timeUpdating
         , new_time.count()
@@ -377,7 +386,7 @@ void Clock::EventSink::timeUpdating(::fep3::arya::Timestamp new_time)
 
 void Clock::EventSink::timeUpdateEnd(::fep3::arya::Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.timeUpdateEnd
         , new_time.count()
@@ -386,7 +395,7 @@ void Clock::EventSink::timeUpdateEnd(::fep3::arya::Timestamp new_time)
 
 void Clock::EventSink::timeResetBegin(::fep3::arya::Timestamp old_time, ::fep3::arya::Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.timeResetBegin
         , old_time.count()
@@ -396,7 +405,7 @@ void Clock::EventSink::timeResetBegin(::fep3::arya::Timestamp old_time, ::fep3::
 
 void Clock::EventSink::timeResetEnd(Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.timeResetEnd
         , new_time.count()
@@ -405,7 +414,7 @@ void Clock::EventSink::timeResetEnd(Timestamp new_time)
 
 Clock::Clock
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(access)
 {
@@ -414,15 +423,19 @@ Clock::Clock
 
 std::string Clock::getName() const
 {
-    return Helper::callWithResultCallback<std::string>
+    return arya::Helper::callWithResultCallback<std::string>
         (_access._handle
         , _access.getName
+        , [](auto result)
+            {
+                return result;
+            }
         );
 }
 
 fep3::arya::IClock::ClockType Clock::getType() const
 {
-    return static_cast<fep3::arya::IClock::ClockType>(Helper::callWithResultParameter
+    return static_cast<fep3::arya::IClock::ClockType>(arya::Helper::callWithResultParameter
         (_access._handle
         , _access.getType
         ));
@@ -430,23 +443,24 @@ fep3::arya::IClock::ClockType Clock::getType() const
 
 fep3::arya::Timestamp Clock::getTime() const
 {
-    return fep3::arya::Timestamp(Helper::callWithResultParameter
+    return fep3::arya::Timestamp(arya::Helper::callWithResultParameter
         (_access._handle
         , _access.getTime
         ));
 }
 
-void Clock::reset()
+void Clock::reset(fep3::arya::Timestamp new_time)
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.reset
+        , new_time.count()
         );
 }
 
 void Clock::start(const std::weak_ptr<fep3::arya::IClock::IEventSink>& event_sink)
 {
-    return Helper::transferWeakPtr
+    return arya::Helper::transferWeakPtr
         (event_sink
         , _remote_clock_object_destructors
         , _access._handle
@@ -461,7 +475,7 @@ void Clock::start(const std::weak_ptr<fep3::arya::IClock::IEventSink>& event_sin
 
 void Clock::stop()
 {
-    return Helper::call
+    return arya::Helper::call
         (_access._handle
         , _access.stop
         );

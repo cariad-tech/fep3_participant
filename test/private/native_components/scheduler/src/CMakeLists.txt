@@ -1,18 +1,24 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 
 ##################################################################
 # tester_job_runner
 ##################################################################
+
+find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
 
 add_executable(tester_job_runner tester_job_runner.cpp)
 
@@ -23,7 +29,7 @@ add_test(NAME tester_job_runner
 )
 
 target_link_libraries(tester_job_runner PRIVATE
-    GTest::Main
+    GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -44,7 +50,7 @@ add_test(NAME tester_scheduler_registry
 )
 
 target_link_libraries(tester_scheduler_registry PRIVATE
-    GTest::Main
+    GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -65,7 +71,7 @@ add_test(NAME tester_timer_scheduler
 )
 
 target_link_libraries(tester_timer_scheduler PRIVATE
-    GTest::Main
+    GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -86,7 +92,7 @@ add_test(NAME tester_clock_based_scheduler
 )
 
 target_link_libraries(tester_clock_based_scheduler PRIVATE
-    GTest::Main
+    GTest::gtest_main
     participant_private_test_utils
     participant_test_utils
     fep3_participant_private_lib
@@ -108,7 +114,7 @@ add_test(NAME tester_scheduler_service
 )
 
 target_link_libraries(tester_scheduler_service PRIVATE
-    GTest::Main
+    GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -119,8 +125,6 @@ set_target_properties(tester_scheduler_service PROPERTIES FOLDER "test/private/n
 # Test of the native scheduler service rpc implementation
 ##################################################################
 
-find_package(pkg_rpc)
-
 jsonrpc_generate_client_stub(${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/scheduler_service/scheduler_service.json
                              test::rpc_stubs::TestSchedulerServiceClientStub
                              ${CMAKE_CURRENT_BINARY_DIR}/test_scheduler_service_client_stub.h)
@@ -129,21 +133,20 @@ add_executable(tester_scheduler_service_rpc tester_scheduler_service_rpc.cpp
                ${CMAKE_CURRENT_BINARY_DIR}/test_scheduler_service_client_stub.h
 )
 
-add_test(NAME tester_scheduler_service_rpc 
-    COMMAND tester_scheduler_service_rpc 
+add_test(NAME tester_scheduler_service_rpc
+    COMMAND tester_scheduler_service_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )
 
-target_link_libraries(tester_scheduler_service_rpc PRIVATE 
-    pkg_rpc
-    GTest::Main
-    GMock::GMock
-    a_util
+target_link_libraries(tester_scheduler_service_rpc PRIVATE
+    dev_essential::pkg_rpc
+    GTest::gtest_main
+    GTest::gmock
     fep3_participant_private_lib
 )
 
-target_include_directories(tester_scheduler_service_rpc PRIVATE 
+target_include_directories(tester_scheduler_service_rpc PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 

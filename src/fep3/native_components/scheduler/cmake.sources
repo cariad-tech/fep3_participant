@@ -1,34 +1,38 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 set(NATIVE_COMPONENTS_SCHEDULER_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/scheduler)
 set(COMPONENTS_SCHEDULER_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/scheduler)
 
-set(COMPONENTS_SCHEDULER_SOURCES_PRIVATE  
+set(COMPONENTS_SCHEDULER_SOURCES_PRIVATE
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/local_scheduler_service.h
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/local_scheduler_service.cpp
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/local_scheduler_registry.h
-    ${NATIVE_COMPONENTS_SCHEDULER_DIR}/local_scheduler_registry.cpp  
+    ${NATIVE_COMPONENTS_SCHEDULER_DIR}/local_scheduler_registry.cpp
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/job_runner.cpp
-    ${NATIVE_COMPONENTS_SCHEDULER_DIR}/job_runner.h  
+    ${NATIVE_COMPONENTS_SCHEDULER_DIR}/job_runner.h
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/clock_based/local_clock_based_scheduler.cpp
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/clock_based/local_clock_based_scheduler.h
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/clock_based/timer_scheduler_impl.cpp
     ${NATIVE_COMPONENTS_SCHEDULER_DIR}/clock_based/timer_scheduler_impl.h
 )
 
-set(COMPONENTS_SCHEDULER_SOURCES_PUBLIC  
+set(COMPONENTS_SCHEDULER_SOURCES_PUBLIC
     ${COMPONENTS_SCHEDULER_INCLUDE_DIR}/scheduler_service_intf.h
     ${COMPONENTS_SCHEDULER_INCLUDE_DIR}/scheduler_registry_intf.h
-    
+
 )
 
 set(COMPONENTS_SCHEDULER_SOURCES ${COMPONENTS_SCHEDULER_SOURCES_PRIVATE} ${COMPONENTS_SCHEDULER_SOURCES_PUBLIC})
@@ -59,7 +63,7 @@ set(COMPONENTS_SCHEDULER_SERVICE_RPC_SOURCES
 
 source_group(components\\scheduler_service\\rpc FILES ${COMPONENTS_SCHEDULER_SERVICE_RPC_SOURCES})
 
-install(FILES 
+install(FILES
     ${COMPONENTS_SCHEDULER_SERVICE_RPC_BINARY_DIR}/scheduler_service_service_stub.h
     ${COMPONENTS_SCHEDULER_SERVICE_RPC_BINARY_DIR}/scheduler_service_client_stub.h
     DESTINATION

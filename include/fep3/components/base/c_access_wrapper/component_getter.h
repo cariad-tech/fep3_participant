@@ -1,17 +1,24 @@
-﻿/**
+/**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
 #pragma once
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -33,16 +40,16 @@ namespace arya
  */
 class IComponentGetter
 {
+protected:
+    /// DTOR
+    ~IComponentGetter() = default;
+
 public:
     /**
-     * DTOR
-     */
-    virtual ~IComponentGetter() = default;
-    /**
      * @brief Parenthesis operator getting a transferable component as identified by @p handle_to_component
-     * @param component_getter_function The function to be used to get a component
-     * @param iid The interface ID of the component to get
-     * @param handle_to_component Handle to the component to get
+     * @param[in] component_getter_function The function to be used to get a component
+     * @param[in] iid The interface ID of the component to get
+     * @param[in] handle_to_component Handle to the component to get
      * @return Pointer to the component, nullptr if the component cannot be get
      */
     virtual fep3::arya::IComponent* operator()
@@ -66,7 +73,7 @@ private:
         inline Getter()
             : get_function_()
         {}
-        
+
         inline ::fep3::arya::IComponent* operator()
             (void* component_getter_function
             , const std::string& iid
@@ -78,14 +85,14 @@ private:
                 typename component_access_type::Access access_result;
                 if(nullptr != component_getter_function)
                 {
-                    const auto& specific_component_getter_function 
+                    const auto& specific_component_getter_function
                         = reinterpret_cast<fep3_plugin_c_InterfaceError(*)(typename component_access_type::Access* access, const char*, fep3_arya_HIComponent)>
                         (component_getter_function);
                     specific_component_getter_function(&access_result, iid.c_str(), handle_to_component);
                     if(!_exposed_component)
                     {
                         _exposed_component.reset(new component_access_type
-                            (access_result
+                            (std::move(access_result)
                             , {} // the getter returns a plain pointer so we cannot provide shared binary management
                             ));
                     }
@@ -100,8 +107,8 @@ private:
             , const char* iid
             , fep3_arya_HIComponent handle_to_component
             ){nullptr};
-        // note: as the getter exposes a plain pointer to the component, we cannot 
-        // predict how long it will be in use, thus we need to keep the object a pointer pointing to 
+        // note: as the getter exposes a plain pointer to the component, we cannot
+        // predict how long it will be in use, thus we need to keep the object a pointer pointing to
         // was exposed forever (i. e. until the getter is destroyed).
         std::unique_ptr<component_access_type> _exposed_component;
     };
@@ -176,13 +183,12 @@ private:
  * @return Shared pointer to the created component getter
  */
 template<typename... component_access_types>
-static std::shared_ptr<ComponentGetter<component_access_types...>> makeComponentGetter()
+std::shared_ptr<ComponentGetter<component_access_types...>> makeComponentGetter()
 {
     return std::make_shared<ComponentGetter<component_access_types...>>();
 }
 
 } // namespace arya
-
 } // namespace c
 } // namespace plugin
 } // namespace fep3

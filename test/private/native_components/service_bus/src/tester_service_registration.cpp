@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 #include <fep3/components/service_bus/rpc/fep_rpc.h>
 #include <fep3/rpc_services/base/fep_rpc_client.h>
@@ -81,7 +90,7 @@ class TestClient : public fep3::rpc::RPCServiceClient<::test::rpc_stubs::TestInt
 {
 public:
     TestClient(const char* service_name,
-        const std::shared_ptr<fep3::rpc::IRPCRequester>& rpc) : fep3::rpc::RPCServiceClient<::test::rpc_stubs::TestInterfaceClient,
+        const std::shared_ptr<fep3::IRPCRequester>& rpc) : fep3::rpc::RPCServiceClient<::test::rpc_stubs::TestInterfaceClient,
         ITestInterface>(service_name, rpc)
     {
     }
@@ -119,7 +128,7 @@ TEST(ServciceBusServer, testRegistrationOfServices)
     //register twice is not possible
     ASSERT_FALSE(fep3::isOk(server->registerService("test_service", test_service)));
 
-    //impl test 
+    //impl test
     fep3::rpc::RPCClient<ITestInterface> my_interface_client;
 
     //test the client server connections

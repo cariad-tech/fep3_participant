@@ -1,15 +1,24 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
-#include <fep3/base/streamtype/default_streamtype.h>
+
+#include <fep3/base/stream_type/default_stream_type.h>
 #include "stream_item_topic.h"
 #include "stream_item_reader.h"
 #include "stream_item_writer.h"
@@ -20,15 +29,23 @@ using namespace dds::domain;
 StreamItemTopic::StreamItemTopic(DomainParticipant & participant
     , const std::string & topic_name
     , const IStreamType& stream_type
-    , const std::shared_ptr<dds::core::QosProvider> & qos_provider) 
+    , const std::shared_ptr<dds::core::QosProvider> & qos_provider
+    , const std::shared_ptr<fep3::ILogger> logger)
     : _participant(participant)
     , _topic_name(topic_name)
     , _stream_type(stream_type)
     , _qos_provider(qos_provider)
+    , _logger(logger)
 {
     _qos_profile = findQosProfile(stream_type);
-    _sample_topic = std::make_unique<dds::topic::Topic<fep3::ddstypes::Sample>>( participant, topic_name );
-    _streamtype_topic = std::make_unique<dds::topic::Topic<fep3::ddstypes::StreamType>>( participant, topic_name + "_streamtype" );
+
+    if (logger->isDebugEnabled())
+    {
+        logger->logDebug(a_util::strings::format("Using qos profile '%s' for topic '%s'.", _qos_profile.c_str(), _topic_name.c_str()));
+    }
+
+    _sample_topic = std::make_unique<dds::topic::Topic<dds::core::BytesTopicType>>( participant, topic_name );
+    _stream_type_topic = std::make_unique<dds::topic::Topic<fep3::ddstypes::StreamType>>( participant, topic_name + "_stream_type" );
 }
 
 std::string StreamItemTopic::GetTopic()
@@ -36,41 +53,104 @@ std::string StreamItemTopic::GetTopic()
     return _topic_name;
 }
 
-std::string StreamItemTopic::findQosProfile(const fep3::IStreamType& stream_type)
+bool StreamItemTopic::updateStreamType(const fep3::IStreamType& stream_type)
 {
-    std::string profile = FEP3_QOS_DEFAULT_SAMPLE;
+    if(!(stream_type == _stream_type))
+    {
+        auto qos_profile = findQosProfile(stream_type);
+        if (qos_profile != _qos_profile)
+        {
+            if (_logger->isDebugEnabled())
+            {
+                _logger->logDebug(a_util::strings::format("Update qos profile for topic '%s' from '%s' to '%s'.", _topic_name.c_str(), _qos_profile.c_str(), qos_profile.c_str()));
+            }
 
-    if (stream_type.getMetaTypeName() == fep3::arya::meta_type_video.getName())
-    {
-        profile = "fep3::video";
+            _qos_profile = qos_profile;
+            return true;
+        }
     }
-    else if (stream_type.getMetaTypeName() == fep3::arya::meta_type_audio.getName())
-    {
-        profile = "fep3::audio";
-    }
-    else if (stream_type.getMetaTypeName() == fep3::arya::meta_type_ddl.getName())
-    {
-        profile = "fep3::ddl";
-    }
-    else if (stream_type.getMetaTypeName() == fep3::arya::meta_type_plain.getName())
-    {
-        profile = "fep3::plain_ctype";
-    }
-    else if (stream_type.getMetaTypeName() == fep3::arya::meta_type_plain.getName())
-    {
-        profile = "fep3::plain_ctype_array";
-    }
-    else if (stream_type.getMetaTypeName() == fep3::arya::meta_type_raw.getName())
-    {
-        profile = "fep3::raw";
-    }
-
-    return profile;
+    return false;
 }
 
-std::unique_ptr<ISimulationBus::IDataReader> StreamItemTopic::createDataReader(size_t queue_capacity)
+bool StreamItemTopic::isBigStreamType(const fep3::IStreamType& stream_type)
 {
-    return std::make_unique<StreamItemDataReader>(this->shared_from_this(), queue_capacity, _qos_provider);
+    
+    auto max_byte_size = stream_type.getProperty(fep3::base::arya::meta_type_prop_name_max_byte_size);
+    if (!max_byte_size.empty()
+        && std::stoi(max_byte_size) >= FEP3_TRANSPORT_LAYER_MAX_MESSAGE_SIZE)
+    {
+        return true;
+    }
+
+    // Need to compute size of all posible array types here. See FEPSDK-2934
+    // Remove lines bellow just a approximation 
+    if (stream_type.getMetaTypeName() == fep3::base::arya::meta_type_plain_array.getName())
+    {
+        auto max_array_size = stream_type.getProperty(fep3::base::arya::meta_type_prop_name_max_array_size);
+
+        // Assume 8 Bytes for the biggest plain type
+        if (!max_array_size.empty()
+            && std::stoi(max_array_size) * 8 >= FEP3_TRANSPORT_LAYER_MAX_MESSAGE_SIZE)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string StreamItemTopic::findQosProfile(const fep3::IStreamType& stream_type)
+{
+    auto qos_profile_name = stream_type.getMetaTypeName();
+
+    if (isBigStreamType(stream_type))
+    {
+        std::string big_qos_profile_name =  qos_profile_name + std::string("_big");
+
+        if (containsProfile(big_qos_profile_name))
+        {
+            if (_logger->isDebugEnabled())
+            {
+                _logger->logDebug(a_util::strings::format("stream_type '%s' for topic '%s' is too big and needs to be fragmented. Using profile '%s'."
+                    , qos_profile_name.c_str()
+                    , _topic_name.c_str()
+                    , big_qos_profile_name.c_str()));
+            }
+
+            return std::string("fep3::") + big_qos_profile_name;
+        }
+    }
+
+    if (containsProfile(qos_profile_name))
+    {
+        return std::string("fep3::") + qos_profile_name;
+    }
+    else
+    {
+        if (_logger->isWarningEnabled())
+        {
+            _logger->logWarning(a_util::strings::format("MetaType '%s' not defined in USER_QOS_PROFILES.xml. Using '" FEP3_DEFAULT_QOS_PROFILE "'.", qos_profile_name.c_str()));
+        }
+    }
+
+    return FEP3_DEFAULT_QOS_PROFILE;
+}
+
+bool StreamItemTopic::containsProfile(const std::string & profile_name)
+{
+    auto qos_profiles = _qos_provider->extensions().qos_profiles("fep3");
+    return std::find(qos_profiles.begin(), qos_profiles.end(), profile_name) != qos_profiles.end();
+}
+
+std::unique_ptr<ISimulationBus::IDataReader> StreamItemTopic::createDataReader
+    (size_t queue_capacity
+    , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& data_access_collection
+    )
+{
+    return std::make_unique<StreamItemDataReader>
+        (this->shared_from_this()
+        , queue_capacity
+        , data_access_collection
+        , _logger);
 }
 
 std::unique_ptr<ISimulationBus::IDataWriter> StreamItemTopic::createDataWriter(size_t queue_capacity)
@@ -85,14 +165,14 @@ dds::domain::DomainParticipant & StreamItemTopic::getDomainParticipant()
     return _participant;
 }
 
-dds::topic::Topic<fep3::ddstypes::Sample> StreamItemTopic::getSampleTopic()
+dds::topic::Topic<dds::core::BytesTopicType> StreamItemTopic::getSampleTopic()
 {
     return *_sample_topic;
 }
 
 dds::topic::Topic<fep3::ddstypes::StreamType> StreamItemTopic::getStreamTypeTopic()
 {
-    return *_streamtype_topic;
+    return *_stream_type_topic;
 }
 
 std::shared_ptr<dds::core::QosProvider> StreamItemTopic::getQosProvider()

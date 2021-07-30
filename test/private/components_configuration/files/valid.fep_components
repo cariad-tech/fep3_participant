@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+ 
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ 
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+ 
+You may add additional accurate notices of copyright ownership.
+-->
+<components xmlns="http://fep.vwgroup.com/fep_sdk/3.0/components">
+    <schema_version>1.0.0</schema_version>
+    <component>
+        <source type="built-in"/>
+        <iid>test_component_built-in_1</iid>
+    </component>
+    <component>
+        <source type="built-in"/>
+        <iid>test_component_built-in_2</iid>
+    </component>
+    <component>
+        <source type="built-in"/>
+        <iid>test_component_built-in_3</iid>
+    </component>
+    <component>
+        <source type="cpp-plugin">
+         file_ref_cpp_1
+        </source>
+        <iid>test_component_cpp-plugin_1</iid>
+    </component>
+    <component>
+        <source type="cpp-plugin">
+        file_ref_cpp_2
+        </source>
+        <iid>test_component_cpp-plugin_2</iid>
+    </component>
+    <component>
+        <source type="c-plugin">
+            file_ref_c_1
+        </source>
+        <iid>test_component_c-plugin_1</iid>
+    </component>
+    <component>
+        <source type="c-plugin">
+            file_ref_2
+        </source>
+        <iid>test_component_c-plugin_2</iid>
+    </component>
+    <component>
+        <source type="c-plugin">
+            file_ref_3
+        </source>
+        <iid>test_component_c-plugin_3</iid>
+    </component>
+</components>

@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -25,14 +34,11 @@ namespace arya
 * @brief Interface for the scheduler registry
 *
 */
-class FEP3_PARTICIPANT_EXPORT ISchedulerRegistry
+class ISchedulerRegistry
 {
-public:
-    /**
-    * @brief DTOR
-    *
-    */
-    virtual ~ISchedulerRegistry() = default;
+protected:
+    /// DTOR
+    ~ISchedulerRegistry() = default;
 
 public:
     /**
@@ -40,7 +46,7 @@ public:
     *
     * Registered schedulers may be set as active scheduler.
     *
-    * @param scheduler Scheduler to be registered
+    * @param[in] scheduler Scheduler to be registered
     * @return fep3::Result
     * @retval ERR_NOERROR Everything went fine
     * @retval ERR_INVALID_STATE The Participant is already running
@@ -50,8 +56,8 @@ public:
 
     /**
     * @brief Unregister the scheduler with the given @p scheduler_name.
-    * 
-    * @param scheduler_name The name of the scheduler
+    *
+    * @param[in] scheduler_name The name of the scheduler
     * @returns FEP Result
     * @retval ERR_NOERROR Everything went fine
     * @retval ERR_INVALID_STATE The Participant is already running
@@ -62,10 +68,10 @@ public:
 
     /**
     * @brief Return the names of all registered schedulers.
-    * 
+    *
     * @return List of all registered scheduler names
     */
-    virtual std::list<std::string> getSchedulerNames() const = 0;  
+    virtual std::list<std::string> getSchedulerNames() const = 0;
 };
 
 } // namespace arya

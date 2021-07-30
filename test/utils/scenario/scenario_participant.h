@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -41,13 +51,13 @@ public:
         : participant(participant)
     {
         setupLoggingSink();
-        setupClockSink();      
+        setupClockSink();
     }
 
     fep3::IJob* getJob(const std::string& name)
     {
         const auto job_registry = participant->getComponent<fep3::IJobRegistry>();
-        const auto jobs = job_registry->getJobs();        
+        const auto jobs = job_registry->getJobs();
 
         if(0 == jobs.count(name))
         {
@@ -63,21 +73,21 @@ private:
         logging_sink = std::make_shared<::testing::NiceMock<fep3::mock::LoggingSink>>();
 
         auto logging_service = participant->getComponent<fep3::ILoggingService>();
-        ASSERT_FEP3_NOERROR(logging_service->registerSink("mock_sink", logging_sink));  
+        ASSERT_FEP3_NOERROR(logging_service->registerSink("mock_sink", logging_sink));
 
         EXPECT_CALL(*logging_sink, log(::testing::_)).WillRepeatedly(testing::Return(Result{}));
         EXPECT_CALL(*logging_sink, log(logIsError())).Times(0);
 
-        setLoggerFilter();      
+        setLoggerFilter();
     }
 
     void setupClockSink()
     {
         clock_event_sink = std::make_shared<::testing::NiceMock<fep3::mock::EventSink>>();
 
-        auto clock = participant->getComponent<fep3::IClockService>();       
-        ASSERT_FEP3_NOERROR(clock->registerEventSink(clock_event_sink));              
-    } 
+        auto clock = participant->getComponent<fep3::IClockService>();
+        ASSERT_FEP3_NOERROR(clock->registerEventSink(clock_event_sink));
+    }
 
     void setLoggerFilter()
     {
@@ -86,8 +96,8 @@ private:
         const auto participant_name = participant->getName();
         auto service_bus = participant->getComponent<fep3::IServiceBus>();
         auto logging_client = LoggingServiceClient(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(), service_bus->getRequester(participant_name));
-        ASSERT_EQ(logging_client.setLoggerFilter("mock_sink,console","",static_cast<int>(fep3::logging::Severity::info)), 0);  
-    }  
+        ASSERT_EQ(logging_client.setLoggerFilter("mock_sink,console","",static_cast<int>(fep3::LoggerSeverity::debug)), 0);
+    }
 
 public:
     std::shared_ptr<fep3::Participant> participant;
@@ -98,8 +108,8 @@ public:
 };
 
 
-class ParticipantStateMachine 
-    : public IStateMachine  
+class ParticipantStateMachine
+    : public IStateMachine
 {
 public:
     ParticipantStateMachine(std::shared_ptr<fep3::core::ParticipantExecutor> executor)
@@ -119,7 +129,7 @@ public:
             _current_state = ParticipantState::RUNNING;
         }
         else if(ParticipantState::INITIALIZED == _current_state)
-        {           
+        {
              ASSERT_TRUE(_executor->start());
             _current_state = ParticipantState::RUNNING;
         }
@@ -129,22 +139,22 @@ public:
                 a_util::strings::format("Transition from '%s' to '%s' not supported"
                     , getStateName(_current_state).value().c_str()
                     , getStateName(ParticipantState::RUNNING).value().c_str()) );
-        }        
+        }
     }
 
     void Initialized() override
     {
         if(ParticipantState::RUNNING == _current_state)
-        {           
+        {
             ASSERT_TRUE(_executor->stop());
             _current_state = ParticipantState::INITIALIZED;
             ASSERT_TRUE(_executor->deinitialize());
             _current_state = ParticipantState::LOADED;
             ASSERT_TRUE(_executor->unload());
-            _current_state = ParticipantState::UNLOADED;           
+            _current_state = ParticipantState::UNLOADED;
         }
         else if(ParticipantState::UNLOADED == _current_state)
-        {           
+        {
             ASSERT_TRUE(_executor->load());
             _current_state = ParticipantState::LOADED;
             ASSERT_TRUE(_executor->initialize());
@@ -157,7 +167,7 @@ public:
                     , getStateName(_current_state).value().c_str()
                     , getStateName(ParticipantState::INITIALIZED).value().c_str()) );
         }
-        
+
     }
 
 private:

@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -67,6 +76,9 @@ namespace arya
  */
 class Helper
 {
+public:
+    struct Mutable;
+    struct Immutable;
 protected:
     /// Type traits to get the type of the first and second function parameter out of a function pointer type
     template<typename> struct FunctionParameters;
@@ -89,9 +101,9 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The pointer to the function to be called
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The pointer to the function to be called
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      */
     template<typename handle_type, typename function_type, typename... argument_types>
@@ -118,9 +130,9 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *          of \p function during the function call
@@ -153,28 +165,49 @@ protected:
      * @tparam return_type The type of the return value of this method
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
+     * @tparam conversion_function_type The type of a conversion function capable to convert the parameter of the
+     *         callback to destination_type::value_type
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] conversion_function The conversion function capable to convert the parameter of the
+     *                            callback to return_type::value_type
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the second argument of the callback.
      */
-    template<typename return_type, typename handle_type, typename function_type, typename... argument_types>
+    template
+        <typename return_type
+        , typename handle_type
+        , typename function_type
+        , typename conversion_function_type
+        , typename... argument_types
+        >
     static auto callWithResultCallback
         (handle_type handle
         , function_type function
+        , conversion_function_type&& conversion_function
         , argument_types... arguments
         )
     {
         return_type result{};
+        // the second parameter of function_type is the result callback
+        using result_callback_type = typename FunctionParameters<function_type>::Parameter2Type;
+        // the second parameter of result_callback_type is the result callback parameter type
+        using callback_parameter_type = typename FunctionParameters<result_callback_type>::Parameter2Type;
+
+        auto assigner = [conversion_function, &result](const callback_parameter_type& value)
+        {
+            result = conversion_function(value);
+        };
+        using assigner_type = decltype(assigner);
         fep3_plugin_c_InterfaceError error = (*function)
             (handle
-            , [](void* destination, auto local_result)
+            , [](void* destination, callback_parameter_type result)
                 {
-                    *reinterpret_cast<return_type*>(destination) = local_result;
+                    (*static_cast<assigner_type*>(destination))(result);
                 }
-            , static_cast<void*>(&result)
+            , &assigner
             , std::forward<argument_types>(arguments)...
             );
         if(fep3_plugin_c_interface_error_none != error)
@@ -198,16 +231,16 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
      * @tparam conversion_function_type The type of a conversion function capable to convert the parameter of the
-     *          callback to destination_type::value_type
+     *         callback to destination_type::value_type
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param conversion_function The conversion function capable to convert the parameter of the
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] conversion_function The conversion function capable to convert the parameter of the
      *                             callback to destination_type::value_type
-     * @param assignment_method The pointer to the method that can perform the assignment of the parameter of the
+     * @param[in] assignment_method The pointer to the method that can perform the assignment of the parameter of the
      *                           callback - converted by the \p conversion_function - to an instance of the
      *                           \p destination_type
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The container filled with the values of the second argument of the recurrings callbacks
      */
@@ -238,7 +271,7 @@ protected:
             (handle
             , [](void* destination, callback_parameter_type local_result)
                 {
-                    (*reinterpret_cast<assigner_type*>(destination))(local_result);
+                    (*static_cast<assigner_type*>(destination))(local_result);
                 }
             , static_cast<void*>(&assigner)
             , std::forward<argument_types>(arguments)...
@@ -263,9 +296,9 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return Unique pointer the access object providing access to the remote object
      */
@@ -296,9 +329,9 @@ protected:
         }
         if(nullptr != access._handle)
         {
-            std::deque<std::unique_ptr<IDestructor>> destructors;
+            std::deque<std::unique_ptr<c::arya::IDestructor>> destructors;
             // ownership transfer: when this object is destroyed, also destroy the remote object
-            destructors.push_back(std::make_unique<Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
+            destructors.push_back(std::make_unique<arya::Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
             return std::make_unique<access_object_type>
                 (access
                 , std::move(destructors)
@@ -323,9 +356,9 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return Unique pointer the access object providing access to the remote object
      */
@@ -356,9 +389,9 @@ protected:
         }
         if(nullptr != access._handle)
         {
-            std::deque<std::unique_ptr<IDestructor>> destructors;
+            std::deque<std::unique_ptr<c::arya::IDestructor>> destructors;
             // shared ownership: when the local object is destroyed, release reference to the remote object
-            destructors.push_back(std::make_unique<Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
+            destructors.push_back(std::make_unique<arya::Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
             return std::make_shared<access_object_type>
                 (access
                 , std::move(destructors)
@@ -382,13 +415,17 @@ protected:
      * @tparam object_type The type of the object to be transferred
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
+     * @tparam conversion_function_type The type of a conversion function capable to convert the parameter of the
+     *         callback to destination_type::value_type
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p unique_ptr_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param unique_ptr_to_object Unique pointer to the object to be transferred
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p unique_ptr_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] unique_ptr_to_object Unique pointer to the object to be transferred
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] conversion_function The conversion function capable to convert the parameter of the
+     *                            callback to return_type::value_type
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p unique_ptr_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *          of \p function during the function call
@@ -398,32 +435,52 @@ protected:
         , typename object_type
         , typename handle_type
         , typename function_type
+        , typename conversion_function_type
         , typename access_creator_type
         , typename... argument_types
         >
-    static return_type transferUniquePtrWithResultParameter
+    static return_type transferUniquePtrWithResultCallback
         (std::unique_ptr<object_type> unique_ptr_to_object
         , handle_type&& handle
         , function_type function
+        , conversion_function_type&& conversion_function
         , access_creator_type&& access_creator
         , argument_types&&... arguments
         )
     {
-        // the second parameter of function_type is the result pointer
-        typename std::remove_pointer<typename FunctionParameters<function_type>::Parameter2Type>::type result{};
+        return_type result{};
+        // the second parameter of function_type is the result callback
+        using result_callback_type = typename FunctionParameters<function_type>::Parameter2Type;
+        // the second parameter of result_callback_type is the result callback parameter type
+        using callback_parameter_type = typename FunctionParameters<result_callback_type>::Parameter2Type;
+
+        auto assigner = [conversion_function, &result](const callback_parameter_type& value)
+        {
+            result = conversion_function(value);
+        };
+        using assigner_type = decltype(assigner);
+
+        DestructionManager* destruction_manager{nullptr};
         const auto& pointer_to_object = unique_ptr_to_object.release();
-        auto destruction_manager = new DestructionManager;
-        // the local object must be destroyed when the remote object is destroyed, so we add a (new) shared reference to the reference manager
-        destruction_manager->addDestructor
-            (std::make_unique<OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_object)>::type>::type>>
-            (pointer_to_object));
+        if(pointer_to_object)
+        {
+            destruction_manager = new c::arya::DestructionManager;
+            // the local object must be destroyed when the remote object is destroyed, so we add a (new) shared reference to the reference manager
+            destruction_manager->addDestructor
+                (std::make_unique<c::arya::OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_object)>::type>::type>>
+                (pointer_to_object));
+        }
         auto destruction_manager_access = fep3_plugin_c_arya_SDestructionManager
-            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(destruction_manager))
-            , wrapper::Destructor::destroy
+            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(destruction_manager))
+            , wrapper::arya::Destructor::destroy
             };
         fep3_plugin_c_InterfaceError error = (*function)
             (handle
-            , &result
+            , [](void* destination, callback_parameter_type result)
+                {
+                    (*static_cast<assigner_type*>(destination))(result);
+                }
+            , &assigner
             , destruction_manager_access
             , access_creator(pointer_to_object)
             , std::forward<argument_types>(arguments)...
@@ -448,11 +505,11 @@ protected:
      * @tparam function_type The type of the function to be called
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p unique_ptr_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param shared_ptr_to_object Shared pointer to the object to be transferred
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p shared_ptr_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] shared_ptr_to_object Shared pointer to the object to be transferred
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p shared_ptr_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      */
     template
@@ -470,14 +527,19 @@ protected:
         , argument_types&&... arguments
         )
     {
-        auto reference_manager = new DestructionManager;
-        // reference to the local object must be released when the remote object is destroyed, so we add a (new) shared reference to the reference manager
-        reference_manager->addDestructor
-            (std::make_unique<OtherDestructor<typename std::remove_reference<decltype(shared_ptr_to_object)>::type>>
-            (new std::shared_ptr<object_type>(shared_ptr_to_object)));
+        c::arya::DestructionManager* reference_manager{nullptr};
+        // set the reference manager only if the pointer to the object is valid
+        if(shared_ptr_to_object)
+        {
+            reference_manager = new c::arya::DestructionManager;
+            // reference to the local object must be released when the remote object is destroyed, so we add a (new) shared reference to the reference manager
+            reference_manager->addDestructor
+                (std::make_unique<c::arya::OtherDestructor<typename std::remove_reference<decltype(shared_ptr_to_object)>::type>>
+                (new std::shared_ptr<object_type>(shared_ptr_to_object)));
+        }
         auto reference_manager_access = fep3_plugin_c_arya_SDestructionManager
-            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(reference_manager))
-            , wrapper::Destructor::destroy
+            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(reference_manager))
+            , wrapper::arya::Destructor::destroy
             };
         auto pointer_to_object = shared_ptr_to_object.get();
         fep3_plugin_c_InterfaceError error = (*function)
@@ -504,13 +566,17 @@ protected:
      * @tparam object_type The type of the object to be transferred
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
+     * @tparam conversion_function_type The type of a conversion function capable to convert the parameter of the
+     *         callback to destination_type::value_type
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p unique_ptr_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param shared_ptr_to_object Shared pointer to the object to be transferred
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p shared_ptr_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] shared_ptr_to_object Shared pointer to the object to be transferred
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] conversion_function The conversion function capable to convert the parameter of the
+     *                            callback to return_type::value_type
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p shared_ptr_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *          of \p function during the function call
@@ -520,32 +586,52 @@ protected:
         , typename object_type
         , typename handle_type
         , typename function_type
+        , typename conversion_function_type
         , typename access_creator_type
         , typename... argument_types
         >
-    static return_type transferSharedPtrWithResultParameter
+    static return_type transferSharedPtrWithResultCallback
         (const std::shared_ptr<object_type>& shared_ptr_to_object
         , handle_type&& handle
         , function_type function
+        , conversion_function_type&& conversion_function
         , access_creator_type&& access_creator
         , argument_types&&... arguments
         )
     {
-        // the second parameter of function_type is the result pointer
-        typename std::remove_pointer<typename FunctionParameters<function_type>::Parameter2Type>::type result{};
-        auto pointer_to_object = shared_ptr_to_object.get();
-        auto reference_manager = new DestructionManager;
-        // reference to the local object must be released when the remote object is destroyed, so we add a (new) shared reference to the reference manager
-        reference_manager->addDestructor
-            (std::make_unique<OtherDestructor<typename std::remove_reference<decltype(shared_ptr_to_object)>::type>>
-            (new std::shared_ptr<object_type>(shared_ptr_to_object)));
+        return_type result{};
+        // the second parameter of function_type is the result callback
+        using result_callback_type = typename FunctionParameters<function_type>::Parameter2Type;
+        // the second parameter of result_callback_type is the result callback parameter type
+        using callback_parameter_type = typename FunctionParameters<result_callback_type>::Parameter2Type;
+
+        auto assigner = [conversion_function, &result](const callback_parameter_type& value)
+        {
+            result = conversion_function(value);
+        };
+        using assigner_type = decltype(assigner);
+        c::arya::DestructionManager* reference_manager{nullptr};
+        // set the reference manager only if the pointer to the object is valid
+        if(shared_ptr_to_object)
+        {
+            reference_manager = new c::arya::DestructionManager;
+            // reference to the local object must be released when the remote object is destroyed, so we add a (new) shared reference to the reference manager
+            reference_manager->addDestructor
+                (std::make_unique<c::arya::OtherDestructor<typename std::remove_reference<decltype(shared_ptr_to_object)>::type>>
+                (new std::shared_ptr<object_type>(shared_ptr_to_object)));
+        }
         auto reference_manager_access = fep3_plugin_c_arya_SDestructionManager
-            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(reference_manager))
-            , wrapper::Destructor::destroy
+            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(reference_manager))
+            , wrapper::arya::Destructor::destroy
             };
+        auto pointer_to_object = shared_ptr_to_object.get();
         fep3_plugin_c_InterfaceError error = (*function)
             (handle
-            , &result
+            , [](void* destination, callback_parameter_type result)
+                {
+                    (*static_cast<assigner_type*>(destination))(result);
+                }
+            , &assigner
             , reference_manager_access
             , access_creator(pointer_to_object)
             , std::forward<argument_types>(arguments)...
@@ -571,12 +657,12 @@ protected:
      * @tparam function_type The type of the function to be called
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p unique_ptr_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param weak_ptr_to_object Weak pointer to the object to be transferred
-     * @param [in,out] destructor_container A container for destructors to control the remote object's lifetime
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p weak_ptr_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] weak_ptr_to_object Weak pointer to the object to be transferred
+     * @param[in,out] destructor_container A container for destructors to control the remote object's lifetime
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p weak_ptr_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      */
     template
@@ -624,14 +710,18 @@ protected:
      * @tparam destructor_container_type The type of the destructor container
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam function_type The type of the function to be called
+     * @tparam conversion_function_type The type of a conversion function capable to convert the parameter of the
+     *         callback to destination_type::value_type
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p unique_ptr_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param weak_ptr_to_object Weak pointer to the object to be transferred
-     * @param [in,out] destructor_container A container for destructors to control the remote object's lifetime
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p weak_ptr_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] weak_ptr_to_object Weak pointer to the object to be transferred
+     * @param[in,out] destructor_container A container for destructors to control the remote object's lifetime
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] conversion_function The conversion function capable to convert the parameter of the
+     *                            callback to return_type::value_type
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p weak_ptr_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *         of \p function during the function call
@@ -642,25 +732,40 @@ protected:
         , typename destructor_container_type
         , typename handle_type
         , typename function_type
+        , typename conversion_function_type
         , typename access_creator_type
         , typename... argument_types
         >
-    static return_type transferWeakPtrWithResultParameter
+    static return_type transferWeakPtrWithResultCallback
         (const std::weak_ptr<object_type>& weak_ptr_to_object
         , destructor_container_type& destructor_container
         , handle_type&& handle
         , function_type function
+        , conversion_function_type&& conversion_function
         , access_creator_type&& access_creator
         , argument_types&&... arguments
         )
     {
-        // the second parameter of function_type is the result pointer
-        typename std::remove_pointer<typename FunctionParameters<function_type>::Parameter2Type>::type result{};
+        return_type result{};
+        // the second parameter of function_type is the result callback
+        using result_callback_type = typename FunctionParameters<function_type>::Parameter2Type;
+        // the second parameter of result_callback_type is the result callback parameter type
+        using callback_parameter_type = typename FunctionParameters<result_callback_type>::Parameter2Type;
+
+        auto assigner = [conversion_function, &result](const callback_parameter_type& value)
+        {
+            result = conversion_function(value);
+        };
+        using assigner_type = decltype(assigner);
         auto pointer_to_object = weak_ptr_to_object.lock().get();
         fep3_plugin_c_arya_SDestructionManager destruction_manager_access{};
         fep3_plugin_c_InterfaceError error = (*function)
             (handle
-            , &result
+            , [](void* destination, callback_parameter_type result)
+                {
+                    (*static_cast<assigner_type*>(destination))(result);
+                }
+            , &assigner
             , &destruction_manager_access
             , access_creator(pointer_to_object)
             , std::forward<argument_types>(arguments)...
@@ -688,11 +793,11 @@ protected:
      * @tparam function_type The type of the function to be called
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p reference_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param reference_to_object Reference to the object to be passed
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p reference_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] reference_to_object Reference to the object to be passed
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p reference_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *          of \p function during the function call
@@ -732,11 +837,11 @@ protected:
      * @tparam function_type The type of the function to be called
      * @tparam access_creator_type The type of the callable that creates an instance of the C access structure to \p reference_to_object
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param reference_to_object Reference to the object to be passed
-     * @param handle The handle of the object to call the corresponding member function on
-     * @param function The function to be called
-     * @param access_creator Callable that creates an instance of the C access structure to \p reference_to_object
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] reference_to_object Reference to the object to be passed
+     * @param[in] handle The handle of the object to call the corresponding member function on
+     * @param[in] function The function to be called
+     * @param[in] access_creator Callable that creates an instance of the C access structure to \p reference_to_object
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws an exception of type \ref Exception if the \p function returns other than fep3_plugin_c_interface_error_none
      * @return The result of the function call, i. e. the content that was filled to the second parameter
      *          of \p function during the function call

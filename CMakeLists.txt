@@ -1,15 +1,19 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
-cmake_minimum_required(VERSION 3.13.1 FATAL_ERROR)
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
+cmake_minimum_required(VERSION 3.17.0 FATAL_ERROR)
 cmake_policy(SET CMP0011 NEW)
 
 # Disable extensions here and require the chosen CMAKE_CXX_STANDARD (coming from Conan)
@@ -24,7 +28,11 @@ if(CMAKE_CXX_STANDARD LESS 14)
     message(FATAL_ERROR "The FEP Participant library requires CMAKE_CXX_STANDARD >= 14")
 endif()
 
-project(fep3-participant-library VERSION 3.0.0)
+file(STRINGS version
+    VERSION
+    LIMIT_COUNT 1
+)
+project(fep3-participant-library VERSION ${VERSION})
 set(FEP3_PARTICIPANT_LIBRARY fep3_participant)
 
 set(FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
@@ -35,13 +43,13 @@ set(DOXYGEN_WARN_IF_UNDOCUMENTED "No")
 set(FEP3_PARTICIPANT_LIBRARY_VERSION "${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH}")
 
 # Enable strict compiler warnings
-if(MSVC)    
+if(MSVC)
     # TODO /WD4100 should be removed when ODAUTIL-167 is fixed
     # 4251 is currently deactivated because some dll exported classes use std types within their interface (e.g. ComponentRegistry)
     add_compile_options(/W4 /WX /wd4251 /wd4100)
 else()
     # TODO -Wno-comment should be removed when ODAUTIL-169 is fixed
-    add_compile_options(-Wall -Wno-unknown-pragmas -Wno-reorder -Werror -Wextra -pedantic -Wno-comment)   
+    add_compile_options(-Wall -Wno-unknown-pragmas -Wno-reorder -Werror -Wextra -pedantic -Wno-comment)
 endif()
 
 # check for conan
@@ -67,7 +75,6 @@ else()
         conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
     endif()
 
-    set(pkg_rpc_DIR ${CONAN_PKG_RPC_ROOT})
     set(DOXYGEN_ROOT ${CONAN_DOXYGEN_ROOT})
     set(gtest_search_mode CONFIG)
 endif()
@@ -91,13 +98,10 @@ if (UNIX)
     set(CMAKE_SKIP_BUILD_RPATH  OFF)
 endif(UNIX)
 
-find_package(a_util REQUIRED)
-find_package(pkg_rpc REQUIRED)
-
 if (FEP3_USE_RTIDDS)
-    set(fep3_participant_use_rtidds ON) 
+    set(fep3_participant_use_rtidds ON)
 else()
-    set(fep3_participant_use_rtidds OFF) 
+    set(fep3_participant_use_rtidds OFF)
 endif()
 
 option(fep3_participant_cmake_enable_documentation

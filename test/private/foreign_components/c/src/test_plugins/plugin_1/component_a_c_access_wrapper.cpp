@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "component_a_c_intf.h"
 #include "mock_component_a.h"
@@ -34,7 +43,7 @@ fep3_plugin_c_InterfaceError test_plugin_createComponentA
         );
     if(fep3::isOk(result))
     {
-        // for testing we need get the MockSimulationBus out of the plugin to be able to register mock expectations for it
+        // for testing we need to get the MockSimulationBus out of the plugin to be able to register mock expectations for it
         auto pointer_to_component_a = reinterpret_cast<::test_plugin_1::IComponentA*>(access_result->_handle);
         g_mock_component_a = dynamic_cast<::testing::StrictMock<::test_plugin_1::mock::MockComponentA>*>(pointer_to_component_a);
     }

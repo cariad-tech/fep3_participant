@@ -1,19 +1,27 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
 #include <gmock/gmock.h>
 
-#include <fep3/base/properties/properties.h>
 #include <fep3/base/properties/property_type.h>
 #include <fep3/components/clock/clock_base.h>
 #include <fep3/native_components/clock/local_clock_service.h>
@@ -37,11 +45,12 @@ namespace env
 using namespace ::testing;
 
 using LoggingService = fep3::mock::LoggingService;
-using Logger = NiceMock<fep3::mock::Logger>;
+using WarningLogger = NiceMock<fep3::mock::WarningLogger>;
 using Clock = NiceMock<fep3::mock::Clock>;
 using ServiceBusComponent = NiceMock<fep3::mock::ServiceBusComponent>;
 using RPCServer = NiceMock<fep3::mock::RPCServer>;
-using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationServiceComponent>;
+using RPCRequester = NiceMock<fep3::mock::RPCRequester>;
+using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationService<>>;
 
 struct NativeClockService : public ::testing::Test
 {
@@ -49,7 +58,8 @@ struct NativeClockService : public ::testing::Test
         : _component_registry(std::make_shared<fep3::ComponentRegistry>())
         , _service_bus(std::make_shared<ServiceBusComponent>())
         , _rpc_server(std::make_shared<RPCServer>())
-        , _logger(std::make_shared<Logger>())
+        , _rpc_requester(std::make_shared<RPCRequester>())
+        , _logger(std::make_shared<WarningLogger>())
         , _configuration_service_mock{ std::make_shared<ConfigurationServiceComponentMock>() }
     {
     }
@@ -72,7 +82,7 @@ struct NativeClockService : public ::testing::Test
                             _clock_service_property_node = node;
                         })),
                         ::testing::Return(Result())));
-                        
+
          EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK))
             .WillRepeatedly(InvokeWithoutArgs([this](){ return _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY); }));
 
@@ -117,7 +127,8 @@ struct NativeClockService : public ::testing::Test
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{};
     std::shared_ptr<ServiceBusComponent> _service_bus{ nullptr };
     std::shared_ptr<RPCServer> _rpc_server{};
-    std::shared_ptr<Logger> _logger{};
+    std::shared_ptr<RPCRequester> _rpc_requester{};
+    std::shared_ptr<WarningLogger> _logger{};
     fep3::IClockService* _clock_service_intf{nullptr};
     std::shared_ptr<fep3::native::LocalClockService> _clock_service_impl{ nullptr };
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};

@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -60,7 +69,7 @@ protected:
 
 private:
     /**
-    * @brief Cyclically wait for the configured clock cycle time and update the clock time.
+    * @brief Cyclically wait for the configured step size time interval and update the clock time.
     */
     void work();
 
@@ -69,7 +78,7 @@ private:
     /// Time point of the next discrete time step
     std::chrono::time_point<std::chrono::steady_clock>  _next_request_gettime;
     /// Duration of a single discrete time step in nanoseconds
-    Duration                                           _cycle_time;
+    Duration                                            _step_size;
     /// Factor to control the relation between simulated time and system time
     double                                              _time_factor;
 
@@ -84,10 +93,10 @@ public:
     /**
     * @brief Update the clock configuration.
     *
-    * @param cycle_time new clock cycle time in nanoseconds
-    * @param time_factor new clock time factor
+    * @param[in] step_size new clock step size in nanoseconds
+    * @param[in] time_factor new clock time factor
     */
-    void updateConfiguration(Duration cycle_time,
+    void updateConfiguration(Duration step_size,
                              double time_factor);
 };
 
@@ -121,7 +130,7 @@ public:
     /**
     * @brief Update the clock time.
     *
-    * @param new_time new clock time in nanoseconds
+    * @param[in] new_time new clock time in nanoseconds
     */
     void updateTime(Timestamp new_time) override;
 };

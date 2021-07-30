@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <string>
@@ -16,7 +24,7 @@
 #include <jsonrpccpp/server/abstractserverconnector.h>
 
 #include "rpc_intf.h"
-#include "fep_json_rpc.h" 
+#include "fep_json_rpc.h"
 #include "fep3/rpc_services/base/fep_rpc_client_intf.h"
 
 
@@ -34,26 +42,26 @@ namespace arya
     */
     template <typename rpc_stub, typename rpc_interface>
     class RPCServiceClient :
-        public ::rpc::jsonrpc_remote_object<rpc_stub, detail::JSONFEPClientConnector, detail::ClientConnectorInitializerType>,
-        public IRPCServiceClient
+        public ::rpc::jsonrpc_remote_object<rpc_stub, arya::detail::JSONFEPClientConnector, arya::detail::ClientConnectorInitializerType>,
+        public arya::IRPCServiceClient
     {
 
     protected:
         RPCServiceClient() = delete;
     public:
         /// The json rpc base class
-        typedef ::rpc::jsonrpc_remote_object<rpc_stub, detail::JSONFEPClientConnector, detail::ClientConnectorInitializerType> base_class;
+        typedef ::rpc::jsonrpc_remote_object<rpc_stub, arya::detail::JSONFEPClientConnector, arya::detail::ClientConnectorInitializerType> base_class;
 
         /**
          * CTOR
          *
-         * @param [in] service_name The name of the RPC object / RPC component we connect to
-         * @param [in] rpc_requester The RPC implementation
+         * @param[in] service_name The name of the RPC object / RPC component we connect to
+         * @param[in] rpc_requester The RPC implementation
          */
         explicit RPCServiceClient(const std::string& service_name,
-            const std::shared_ptr<IRPCRequester>& rpc_requester) :
+            const std::shared_ptr<fep3::arya::IRPCRequester>& rpc_requester) :
             _service_name(service_name),
-            base_class(detail::ClientConnectorInitializerType(service_name,
+            base_class(arya::detail::ClientConnectorInitializerType(service_name,
                                                               rpc_requester))
         {
             // Setting default timeout parameter of client to property tree
@@ -97,26 +105,26 @@ namespace arya
         */
     template <typename rpc_stub, typename rpc_interface>
     class RPCServiceClientProxy :
-        public ::rpc::jsonrpc_remote_interface<rpc_stub, rpc_interface, detail::JSONFEPClientConnector, detail::ClientConnectorInitializerType>,
-        public IRPCServiceClient
+        public ::rpc::jsonrpc_remote_interface<rpc_stub, rpc_interface, arya::detail::JSONFEPClientConnector, arya::detail::ClientConnectorInitializerType>,
+        public arya::IRPCServiceClient
     {
 
     protected:
         RPCServiceClientProxy() = delete;
     public:
         /// The json rpc base class
-        typedef ::rpc::jsonrpc_remote_interface<rpc_stub, rpc_interface, detail::JSONFEPClientConnector, detail::ClientConnectorInitializerType> base_class;
+        typedef ::rpc::jsonrpc_remote_interface<rpc_stub, rpc_interface, arya::detail::JSONFEPClientConnector, arya::detail::ClientConnectorInitializerType> base_class;
 
         /**
         * CTOR
         *
-        * @param [in] service_name The name of the RPC service / RPC component we connect to
-        * @param [in] rpc The RPC implementation
+        * @param[in] service_name The name of the RPC service / RPC component we connect to
+        * @param[in] rpc The RPC implementation
         */
         explicit RPCServiceClientProxy(const std::string& service_name,
-            const std::shared_ptr<IRPCRequester>& rpc) :
+            const std::shared_ptr<fep3::arya::IRPCRequester>& rpc) :
             _service_name(service_name),
-            base_class(detail::ClientConnectorInitializerType(
+            base_class(arya::detail::ClientConnectorInitializerType(
                 service_name, rpc))
         {
             // Setting default timeout parameter of client to property tree

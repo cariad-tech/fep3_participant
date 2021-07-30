@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <thread>
 #include <chrono>
@@ -50,7 +59,7 @@ TEST_F(ContinuousClockTest, ClockProvidesSteadyTime)
 
     ASSERT_EQ(local_system_real_clock.getNewTime(), Timestamp(0));
 
-    local_system_real_clock.resetTime();
+    local_system_real_clock.resetTime(last_time);
 
     local_system_real_clock.start(_event_sink_mock);
 
@@ -76,10 +85,10 @@ TEST_F(ContinuousClockTest, ClockReset)
 {
     LocalSystemRealClock local_system_real_clock;
     Timestamp reset_time(0), reference_time(0);
-
-    local_system_real_clock.resetTime();
+    const Timestamp sync_time(250ms);
 
     local_system_real_clock.start(_event_sink_mock);
+    local_system_real_clock.resetTime(sync_time);
 
     auto testidx = 0;
     //check if the clock correctly resets it's time
@@ -87,9 +96,9 @@ TEST_F(ContinuousClockTest, ClockReset)
     {
         std::this_thread::sleep_for(1ms);
         reference_time = local_system_real_clock.getNewTime();
-        reset_time = local_system_real_clock.resetTime();
-        ASSERT_GT(reference_time, reset_time);
+        reset_time = local_system_real_clock.resetTime(sync_time);
         testidx++;
+        ASSERT_GT(reference_time, reset_time);
     }
 
     local_system_real_clock.stop();

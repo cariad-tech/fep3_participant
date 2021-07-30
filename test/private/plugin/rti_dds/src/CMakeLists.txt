@@ -1,23 +1,27 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
-
-# TODO: Get rid of this hack as soon as Christoph  ##
-#       knows what causes the error                 #
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+# TODO: Get rid of this hack as soon as possible   ##
 set(CMAKE_BUILD_TYPE ${CONAN_SETTINGS_BUILD_TYPE})  #
 #####################################################
 
 include(../../../../../src/plugins/rti_dds/rti-macros.cmake)
 
-find_package(RTIConnextDDS EXACT "6.0.1" REQUIRED)
+changeHostSystemIfArm()
+find_package(RTIConnextDDS 6.1.0 EXACT REQUIRED)
+revertHostSystemIfArm()
+find_package(dev_essential REQUIRED COMPONENTS memory)
 
 add_executable(test_connext_dds_plugin tester_rti_common.cpp)
 add_test(NAME test_connext_dds_plugin
@@ -25,7 +29,11 @@ add_test(NAME test_connext_dds_plugin
     TIMEOUT 30
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
-target_link_libraries(test_connext_dds_plugin PRIVATE GTest::Main fep3_participant)
+target_link_libraries(test_connext_dds_plugin PRIVATE
+    GTest::gtest_main
+    GTest::gmock
+    fep3_participant
+)
 set_target_properties(test_connext_dds_plugin PROPERTIES FOLDER "test/private/plugins")
 
 target_link_libraries(test_connext_dds_plugin PRIVATE fep3_participant)
@@ -33,7 +41,7 @@ fep3_participant_deploy(test_connext_dds_plugin)
 
 
 
-add_executable(test_connext_dds_simulation_bus 
+add_executable(test_connext_dds_simulation_bus
     tester_dds_simbus.cpp
     USER_QOS_PROFILES.xml)
 
@@ -42,14 +50,21 @@ target_include_directories(test_connext_dds_simulation_bus PRIVATE
 
 add_test(NAME test_connext_dds_simulation_bus
     COMMAND test_connext_dds_simulation_bus
-    TIMEOUT 60
+    TIMEOUT 80
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
-target_link_libraries(test_connext_dds_simulation_bus PRIVATE GTest::Main fep3_participant a_util_memory fep3_participant_private_lib)
+target_link_libraries(test_connext_dds_simulation_bus PRIVATE
+    GTest::gtest_main
+    GTest::gmock_main
+    dev_essential::memory
+    fep3_participant_private_lib
+    participant_test_utils
+)
 set_target_properties(test_connext_dds_simulation_bus PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
 fep3_participant_deploy(test_connext_dds_simulation_bus)
+
 
 
 add_executable(test_connext_dds_simulation_bus_domain_id
@@ -64,14 +79,46 @@ add_test(NAME test_connext_dds_simulation_bus_domain_id
     TIMEOUT 40
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
-target_link_libraries(test_connext_dds_simulation_bus_domain_id PRIVATE GTest::Main fep3_participant a_util_memory fep3_participant_private_lib)
+target_link_libraries(test_connext_dds_simulation_bus_domain_id PRIVATE
+    GTest::gtest_main
+    GTest::gmock_main
+    dev_essential::memory
+    fep3_participant_private_lib
+    participant_test_utils
+)
 set_target_properties(test_connext_dds_simulation_bus_domain_id PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_domain_id PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
 fep3_participant_deploy(test_connext_dds_simulation_bus_domain_id)
 
 
-add_executable(test_connext_dds_simulation_bus_version 
+
+add_executable(test_connext_dds_simulation_bus_late_joiner
+    tester_dds_simbus_late_joiner.cpp
+    USER_QOS_PROFILES.xml)
+
+target_include_directories(test_connext_dds_simulation_bus_late_joiner PRIVATE
+    "${CMAKE_SOURCE_DIR}/src/plugins/rti_dds")
+
+add_test(NAME test_connext_dds_simulation_bus_late_joiner
+    COMMAND test_connext_dds_simulation_bus_late_joiner
+    TIMEOUT 40
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
+target_link_libraries(test_connext_dds_simulation_bus_late_joiner PRIVATE
+    GTest::gtest_main
+    dev_essential::memory
+    fep3_participant_private_lib
+    participant_test_utils
+)
+set_target_properties(test_connext_dds_simulation_bus_late_joiner PROPERTIES FOLDER "test/private/plugins")
+target_compile_definitions(test_connext_dds_simulation_bus_late_joiner PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
+
+fep3_participant_deploy(test_connext_dds_simulation_bus_late_joiner)
+
+
+
+add_executable(test_connext_dds_simulation_bus_version
     tester_dds_simbus_version.cpp
     USER_QOS_PROFILES.xml)
 
@@ -83,15 +130,15 @@ add_test(NAME test_connext_dds_simulation_bus_version
     TIMEOUT 30
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
-target_link_libraries(test_connext_dds_simulation_bus_version PRIVATE GTest::Main fep3_participant a_util_memory fep3_participant_private_lib)
+target_link_libraries(test_connext_dds_simulation_bus_version PRIVATE GTest::gtest_main GTest::gmock fep3_participant dev_essential::memory fep3_participant_private_lib)
 set_target_properties(test_connext_dds_simulation_bus_version PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_version PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
 fep3_participant_deploy(test_connext_dds_simulation_bus_version)
-rti_deploy(test_connext_dds_simulation_bus_version)
 
 
-add_executable(test_connext_dds_simulation_bus_performance 
+
+add_executable(test_connext_dds_simulation_bus_performance
     tester_dds_simbus_performance.cpp
     USER_QOS_PROFILES.xml)
 target_compile_definitions(test_connext_dds_simulation_bus_performance PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
@@ -106,7 +153,13 @@ target_include_directories(test_connext_dds_simulation_bus_performance PRIVATE
     #WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"       #
 #)                                                          #
 #############################################################
-target_link_libraries(test_connext_dds_simulation_bus_performance PRIVATE GTest::Main fep3_participant a_util_memory fep3_participant_private_lib)
+target_link_libraries(test_connext_dds_simulation_bus_performance PRIVATE
+    GTest::gtest_main
+    fep3_participant
+    dev_essential::memory
+    fep3_participant_private_lib
+    participant_test_utils
+)
 set_target_properties(test_connext_dds_simulation_bus_performance PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_performance PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 

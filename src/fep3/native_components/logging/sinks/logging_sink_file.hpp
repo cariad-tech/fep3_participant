@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -22,17 +32,16 @@
 namespace fep3
 {
 /**
-* @brief Implementation of the file logging. Can be used as a base class for a custom sink.
-*        Logs will be written to the file defined by the file_path property of the logging configuration.
-*/
-class LoggingSinkFile : public Properties<ILoggingService::ILoggingSink>
-{
+ * @brief Implementation of the file logging. Can be used as a base class for a custom sink.
+ *        Logs will be written to the file defined by the file_path property of this class.
+ */
+class LoggingSinkFile : public base::Properties<ILoggingService::ILoggingSink> {
 public:
     LoggingSinkFile() : _log_file(nullptr)
     {
     }
 
-    fep3::Result log(logging::LogMessage log) const override
+    fep3::Result log(LogMessage log) const override
     {
         if (_log_file && static_cast<bool>(*_log_file))
         {
@@ -57,7 +66,7 @@ public:
         return{};
     }
 
-    bool setProperty(const std::string& name, const std::string& type, const std::string& value) override
+    bool setProperty(const std::string& name, const std::string& value, const std::string& type) override
     {
         if (name == "file_path")
         {
@@ -87,7 +96,7 @@ public:
                 throw std::runtime_error(std::string("Unable to open log file ") + value);
             }
         }
-        return Properties<ILoggingSink>::setProperty(name, type, value);
+        return Properties<ILoggingSink>::setProperty(name, value, type);
     }
 
 

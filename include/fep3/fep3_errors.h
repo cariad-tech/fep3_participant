@@ -1,14 +1,22 @@
 /**
- * @file 
- * @copyright AUDI AG
- *            All right reserved.
- * 
- * This Source Code Form is subject to the terms of the 
- * Mozilla Public License, v. 2.0. 
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- * 
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #ifndef _FEP3_ERRORS_H
 #define _FEP3_ERRORS_H
 
@@ -89,8 +97,10 @@ namespace fep3
 }
 
 /**
- * @brief returns @param lhs if it is an error otherwise @param rhs
- * @return fep3::Result the merged result code
+ * @brief Compares two result objects
+ * @param[in] lhs the left hand side result
+ * @param[in] rhs the right hand side result
+ * @return @c lhs if lhs is an error result, @c rhs otherwise
  */
 inline fep3::Result operator|(const fep3::Result& lhs, const fep3::Result& rhs)
 {
@@ -102,8 +112,10 @@ inline fep3::Result operator|(const fep3::Result& lhs, const fep3::Result& rhs)
 }
 
 /**
- * @brief returns @param lhs if it is an error otherwise @param rhs
- * @return fep3::Result the merged result code
+ * @brief Compares two result objects and assigns the resulting object
+ * @param[in,out] lhs the left hand side result
+ * @param[in] rhs the right hand side result
+ * @return lhs if lhs is an error result, @c rhs otherwise
  */
 inline fep3::Result& operator|=(fep3::Result& lhs, const fep3::Result& rhs)
 {

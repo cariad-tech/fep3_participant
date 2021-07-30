@@ -1,14 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 set(NATIVE_COMPONENTS_LOGGING_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/logging)
 set(COMPONENTS_LOGGING_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/logging)
 
@@ -31,8 +35,9 @@ set(COMPONENTS_LOGGING_SOURCES_PRIVATE
     ${NATIVE_COMPONENTS_LOGGING_DIR}/logging_queue.h
 )
 
-set(COMPONENTS_LOGGING_SOURCES_PUBLIC  
+set(COMPONENTS_LOGGING_SOURCES_PUBLIC
     ${COMPONENTS_LOGGING_INCLUDE_DIR}/logging_service_intf.h
+    ${COMPONENTS_LOGGING_INCLUDE_DIR}/logger_intf.h
     ${COMPONENTS_LOGGING_INCLUDE_DIR}/easy_logger.h
 )
 
@@ -56,15 +61,15 @@ file(MAKE_DIRECTORY ${COMPONENTS_LOGGING_RPC_BINARY_DIR})
 jsonrpc_generate_server_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_service.json
                              fep3::rpc_stubs::RPCLoggingServiceStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_service_stub.h)
-                             
+
 jsonrpc_generate_client_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_service.json
                              fep3::rpc_stubs::RPCLoggingClientStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_client_stub.h)
-                             
+
 jsonrpc_generate_server_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_client.json
                              fep3::rpc_stubs::RPCLoggingRPCSinkClientServiceStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_client_service_stub.h)
-                             
+
 jsonrpc_generate_client_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_client.json
                              fep3::rpc_stubs::RPCLoggingRPCSinkClientClientStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_client_client_stub.h)
@@ -72,7 +77,7 @@ jsonrpc_generate_client_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_s
 jsonrpc_generate_server_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_service.json
                              fep3::rpc_stubs::RPCLoggingRPCSinkServiceServiceStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_service_service_stub.h)
-                             
+
 jsonrpc_generate_client_stub(${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_service.json
                              fep3::rpc_stubs::RPCLoggingRPCSinkServiceClientStub
                              ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_service_client_stub.h)
@@ -95,7 +100,7 @@ set(COMPONENTS_LOGGING_RPC_SOURCES
 
 source_group(components\\logging\\public\\rpc FILES ${COMPONENTS_LOGGING_RPC_SOURCES})
 
-install(FILES 
+install(FILES
     ${COMPONENTS_LOGGING_RPC_SOURCES}
     DESTINATION
     include/fep3/rpc_services/logging

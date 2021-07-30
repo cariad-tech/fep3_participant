@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #ifndef _FEP3_RPC_LOGGING_SERVICE_INTF_DEF_H_
 #define _FEP3_RPC_LOGGING_SERVICE_INTF_DEF_H_
 
@@ -26,11 +36,8 @@ namespace arya
     class IRPCLoggingServiceDef
     {
     protected:
-        /**
-        * @brief Destroy the IRPCLoggingserviceDef object
-        *
-        */
-        virtual ~IRPCLoggingServiceDef() = default;
+        /// DTOR
+        ~IRPCLoggingServiceDef() = default;
 
     public:
         ///definition of the FEP rpc service iid for the logging service interface
@@ -38,12 +45,16 @@ namespace arya
     };
 
     /**
-     * @brief Definition of the service interface of the RPC logging sink which is provided by the 
+     * @brief Definition of the service interface of the RPC logging sink which is provided by the
      *        RPC Logging Sink of the Logging Service
      * @see logging_rpc_sink_service.json
      */
     class IRPCLoggingSinkServiceDef
     {
+    protected:
+        /// DTOR
+        ~IRPCLoggingSinkServiceDef() = default;
+
     public:
         ///definition of the FEP rpc logging sink service iid for the rpc logging sink
         FEP_RPC_IID("logging_sink_service.arya.fep3.iid", "logging_sink_service");
@@ -55,6 +66,10 @@ namespace arya
      */
     class IRPCLoggingSinkClientDef
     {
+    protected:
+        /// DTOR
+        ~IRPCLoggingSinkClientDef() = default;
+
     public:
         ///definition of the FEP rpc logging sink client iid for the rpc logging sink
         FEP_RPC_IID("logging_sink_client.arya.fep3.iid", "logging_sink_client");

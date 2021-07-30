@@ -1,14 +1,18 @@
-##################################################################
-# @file
-# @copyright AUDI AG
-#            All right reserved.
 #
-# This Source Code Form is subject to the terms of the
-# Mozilla Public License, v. 2.0.
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright @ 2021 VW Group. All rights reserved.
+# 
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
 #
-##################################################################
+
 
 add_subdirectory(base)
 add_subdirectory(scenarios)
@@ -17,3 +21,4 @@ add_subdirectory(native_components/base/src)
 
 add_subdirectory(participant/cpp)
 add_subdirectory(participant/core)
+

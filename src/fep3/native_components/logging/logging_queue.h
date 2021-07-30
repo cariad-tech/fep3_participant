@@ -1,17 +1,28 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
 #include <atomic>   //std::atomic<int32_t>
 #include <string>
+#include <functional>
 
 #include "a_util/concurrency.h"
 #include "a_util/memory.h"
@@ -47,7 +58,7 @@ private: // override the worker function
 public:
     /**
      * adds a function that will be executed from the queue
-     * @param [in] std::function the function itself
+     * @param[in] fcn the function itself
      * @retval ERR_NOERROR The message could be queued.
      * @retval ERR_MEMORY too many items in queue,
      * number of characters too high or the queue is congested.

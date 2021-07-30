@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <a_util/filesystem.h>
 #include <a_util/strings.h>
@@ -94,12 +103,12 @@ SharedLibrary::~SharedLibrary()
     }
 }
 
-SharedLibrary::SharedLibrary(SharedLibrary&& rhs)
-    : _library_handle(std::move(rhs._library_handle))
-    , _file_path(std::move(rhs._file_path))
-    , _prevent_unloading(std::move(rhs._prevent_unloading))
+SharedLibrary::SharedLibrary(SharedLibrary&& other)
+    : _library_handle(std::move(other._library_handle))
+    , _file_path(std::move(other._file_path))
+    , _prevent_unloading(std::move(other._prevent_unloading))
 {
-    rhs._library_handle = nullptr;
+    other._library_handle = nullptr;
 }
 
 std::string SharedLibrary::getFilePath() const

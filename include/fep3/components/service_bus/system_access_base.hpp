@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <string>
@@ -36,7 +44,7 @@ namespace arya
  * \li \c SystemAccessBase::createAServer
  * \li \c SystemAccessBase::createARequester
  * \li \c SystemAccessBase::getDiscoveredServices
- * 
+ *
  */
 class SystemAccessBase : public fep3::arya::IServiceBus::ISystemAccess
 {
@@ -47,6 +55,10 @@ public:
      */
     class ISystemAccessBaseDefaultUrls
     {
+    protected:
+        /// DTOR
+        ~ISystemAccessBaseDefaultUrls() = default;
+
     public:
         /**
          * retrieve the default URL for the system access
@@ -71,13 +83,13 @@ protected:
     SystemAccessBase(const std::string& system_name,
                      const std::string& system_url,
                      const std::shared_ptr<ISystemAccessBaseDefaultUrls>& default_urls) :
-        _system_name(system_name), 
+        _system_name(system_name),
         _system_url(system_url),
         _access_default_urls(default_urls)
     {
         _locked = false;
     }
-    /** 
+    /**
      * assignment CTOR
      */
     SystemAccessBase(const SystemAccessBase&) = delete;
@@ -99,30 +111,30 @@ protected:
 public:
     /**
      * @brief create the server
-     * 
+     *
      * @param server_name name of the server that appear in the system
-     * @param server_url url of the server if necessary 
+     * @param server_url url of the server if necessary
      * @return the created server. throw if error occurs.
      */
-    virtual std::shared_ptr<IServiceBus::IParticipantServer> createAServer(
+    virtual std::shared_ptr<fep3::arya::IServiceBus::IParticipantServer> createAServer(
         const std::string& server_name,
         const std::string& server_url) = 0;
     /**
      * @brief create the requester
-     * 
+     *
      * @param far_server_name name of the far server that appears in the same system
-     * @param far_server_url url of the far server if necessary 
+     * @param far_server_url url of the far server if necessary
      * @return the created server. throw if error occurs.
      */
-    virtual std::shared_ptr<IServiceBus::IParticipantRequester> createARequester(
+    virtual std::shared_ptr<fep3::arya::IServiceBus::IParticipantRequester> createARequester(
         const std::string& far_server_name,
         const std::string& far_server_url) const = 0;
     /**
      * @brief retrieves a multimap with pairs of names of the server and their addresses
-     * 
+     *
      * @param timeout the time waiting for the discover message answers
      * @return the multimap with pairs of names of the server and their addresses
-     * 
+     *
      */
     virtual std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout) const = 0;
 
@@ -180,7 +192,7 @@ public:
     /**
      * @copydoc fep3::arya::IServiceBus::ISystemAccess::getServer
      */
-    std::shared_ptr<IServiceBus::IParticipantServer> getServer() const override
+    std::shared_ptr<fep3::arya::IServiceBus::IParticipantServer> getServer() const override
     {
         return _server;
     }
@@ -188,7 +200,7 @@ public:
     /**
      * @copydoc fep3::arya::IServiceBus::ISystemAccess::getRequester
      */
-    std::shared_ptr<IServiceBus::IParticipantRequester> getRequester(const std::string& far_participant_name) const override
+    std::shared_ptr<fep3::arya::IServiceBus::IParticipantRequester> getRequester(const std::string& far_participant_name) const override
     {
         std::string found_url;
         if (_server && far_participant_name == _server->getName())
@@ -248,7 +260,7 @@ public:
 
     /**
      * @brief Get the Url of the system_access
-     * 
+     *
      * @return std::string the url as string
      */
     std::string getUrl() const
@@ -257,7 +269,7 @@ public:
     }
 public:
     /**
-     * @brief lock creation of the server 
+     * @brief lock creation of the server
      *
      */
     void lock()
@@ -276,11 +288,11 @@ public:
 
 protected:
     /**
-     * @brief Get the object to retrieve the default url. 
-     * 
+     * @brief Get the object to retrieve the default url.
+     *
      * @return std::shared_ptr<ISystemAccessBaseDefaultUrls> the default. see also CTOR.
      */
-    std::shared_ptr<ISystemAccessBaseDefaultUrls> getDefaultUrls() const
+    std::shared_ptr<arya::SystemAccessBase::ISystemAccessBaseDefaultUrls> getDefaultUrls() const
     {
         return _access_default_urls;
     }
@@ -291,9 +303,9 @@ private:
     std::string _system_url;
 
     //the current server if created
-    std::shared_ptr<IServiceBus::IParticipantServer> _server;
+    std::shared_ptr<fep3::arya::IServiceBus::IParticipantServer> _server;
     //the default url object
-    std::shared_ptr<ISystemAccessBaseDefaultUrls> _access_default_urls;
+    std::shared_ptr<arya::SystemAccessBase::ISystemAccessBaseDefaultUrls> _access_default_urls;
     //locked server creation
     std::atomic<bool> _locked;
 };

@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -16,26 +26,25 @@
 
 #include <a_util/concurrency/mutex.h>
 
-#include <memory>
+#include <mutex>
 #include <iostream>
 
 namespace fep3
 {
 /**
-* @brief Implementation of the console logging. Can be used as a base class for a custom sink.
-*        This sink will write fatal and error to stderr and everything else to stdout.
-*/
-class LoggingSinkConsole : public Properties<ILoggingService::ILoggingSink>
-{
+ * @brief Implementation of the console logging. Can be used as a base class for a custom sink.
+ *        This sink will write fatal and error to stderr and everything else to stdout.
+ */
+class LoggingSinkConsole : public base::Properties<ILoggingService::ILoggingSink> {
 public:
     LoggingSinkConsole() {}
-    fep3::Result log(logging::LogMessage log) const override
+    fep3::Result log(LogMessage log) const override
     {
         std::string log_msg;
         native::formatLoggingString(log_msg, log);
 
         std::unique_lock<std::mutex> guard(getConsoleMutex());
-        if (logging::Severity::error == log._severity || logging::Severity::fatal == log._severity)
+        if (LoggerSeverity::error == log._severity || LoggerSeverity::fatal == log._severity)
         {
             std::cerr << log_msg << std::endl;
 #ifdef WIN32

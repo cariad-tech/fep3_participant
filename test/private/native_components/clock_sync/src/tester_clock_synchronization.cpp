@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -30,13 +39,12 @@ using namespace ::testing;
 using namespace fep3;
 using namespace fep3::native;
 
-using LoggerMock = StrictMock<fep3::mock::Logger>;
+using WarningLoggerMock = NiceMock<fep3::mock::WarningLogger>;
 using LoggingService = fep3::mock::LoggingService;
 using EventSinkMock = NiceMock<fep3::mock::EventSink>;
 using RPCClockSyncMasterMock = StrictMock<fep3::mock::RPCClockSyncMaster>;
 using ClockServiceComponentMock = StrictMock<fep3::mock::ClockService<>>;
-using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationServiceComponent>;
-using PropertyNodeMock = StrictMock<fep3::mock::PropertyNode>;
+using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationService<>>;
 
 /**
  * A clock sync master rpc proxy client.
@@ -50,7 +58,7 @@ public:
     using base_type::GetStub;
 
     ClockSyncMasterProxy(const char* server_object_name,
-        const std::shared_ptr<fep3::rpc::IRPCRequester> rpc)
+        const std::shared_ptr<fep3::IRPCRequester> rpc)
         : base_type(server_object_name, rpc)
     {
     }
@@ -68,7 +76,7 @@ public:
     using base_type::GetStub;
 
     ClockSyncSlaveProxy(const char* server_object_name,
-        const std::shared_ptr<fep3::rpc::IRPCRequester> rpc)
+        const std::shared_ptr<fep3::IRPCRequester> rpc)
         : base_type(server_object_name, rpc)
     {
     }
@@ -81,7 +89,7 @@ struct ClockSynchronizationBase : public ::testing::Test
 {
     ClockSynchronizationBase()
         : _service_bus{ std::make_shared<ServiceBus>() }
-        , _logger(std::make_shared<LoggerMock>())
+        , _logger(std::make_shared<WarningLoggerMock>())
         , _component_registry{ std::make_shared<ComponentRegistry>() }
         , _configuration_service_mock{std::make_shared<ConfigurationServiceComponentMock>()}
     {
@@ -96,7 +104,7 @@ struct ClockSynchronizationBase : public ::testing::Test
     }
 
     std::shared_ptr<ServiceBus> _service_bus{};
-    std::shared_ptr<LoggerMock> _logger{};
+    std::shared_ptr<WarningLoggerMock> _logger{};
     std::shared_ptr<ComponentRegistry> _component_registry{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
 };
@@ -136,7 +144,6 @@ struct ClockSyncSlaveServiceBase : public ClockSynchronizationBase
         , _rpc_clock_sync_master_mock(std::make_shared<RPCClockSyncMasterMock>())
         , _event_sink_mock(std::make_shared<EventSinkMock>())
         , _sync_service_impl(std::make_shared<ClockSynchronizationService>())
-        , _property_node_mock(std::make_shared<PropertyNodeMock>())
     {
     }
 
@@ -185,16 +192,15 @@ struct ClockSyncSlaveServiceBase : public ClockSynchronizationBase
         ASSERT_FEP3_NOERROR(_service_bus->getServer()->registerService(fep3::rpc::IRPCClockSyncMasterDef::getRPCDefaultName(),
             _rpc_clock_sync_master_mock));
 
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_TIMING_MASTER_PROPERTY),
-            native::testing::test_participant_name);
+            native::testing::participant_name_default);
     }
 
     std::shared_ptr<ClockServiceComponentMock> _clock_service_mock;
     std::shared_ptr<RPCClockSyncMasterMock> _rpc_clock_sync_master_mock;
     std::shared_ptr<EventSinkMock> _event_sink_mock;
     std::shared_ptr<ClockSynchronizationService> _sync_service_impl;
-    std::shared_ptr<PropertyNodeMock> _property_node_mock;
     std::shared_ptr<IPropertyNode> _clock_sync_service_property_node;
     std::shared_ptr<IClock> _synchronization_clock{};
 };
@@ -213,11 +219,7 @@ struct ContinuousClockSyncSlaveService : public ClockSyncSlaveServiceBase
     {
         ClockSyncSlaveServiceBase::SetUp();
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).WillRepeatedly(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).WillRepeatedly(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND));         
-
-        ASSERT_FEP3_NOERROR(_component_registry->initialize());
-        ASSERT_FEP3_NOERROR(_component_registry->tense());
+        EXPECT_CALL(*_clock_service_mock, getMainClockName()).WillRepeatedly(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND));
     }
 };
 
@@ -235,11 +237,7 @@ struct DiscreteClockSyncSlaveService : public ClockSyncSlaveServiceBase
     {
         ClockSyncSlaveServiceBase::SetUp();
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).WillRepeatedly(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).WillRepeatedly(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE));
-
-        ASSERT_FEP3_NOERROR(_component_registry->initialize());
-        ASSERT_FEP3_NOERROR(_component_registry->tense());
+        EXPECT_CALL(*_clock_service_mock, getMainClockName()).WillRepeatedly(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE));
     }
 };
 
@@ -255,15 +253,23 @@ TEST_F(ClockSyncMasterService, testRegisterUnregisterSyncSlave)
 
     const auto result_expected = 0;
     ClockSyncMasterProxy client(fep3::rpc::IRPCClockSyncMasterDef::getRPCDefaultName(),
-        _service_bus->getRequester(test_participant_name));
+        _service_bus->getRequester(participant_name_default));
+
+    EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
 
     // actual test
     {
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        (std::string() + "Successfully registered timing slave '" + participant_name_default)))
+            .WillOnce(Return(Result{}));
         ASSERT_EQ(client.registerSyncSlave(
             static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventIDFlag::register_for_time_updating),
-            test_participant_name),
+            participant_name_default),
             result_expected);
-        ASSERT_EQ(client.unregisterSyncSlave(test_participant_name), result_expected);
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        (std::string() + "Successfully unregistered timing slave '" + participant_name_default)))
+            .WillOnce(Return(Result{}));
+        ASSERT_EQ(client.unregisterSyncSlave(participant_name_default), result_expected);
     }
 }
 
@@ -279,11 +285,14 @@ TEST_F(ClockSyncMasterService, testUnregisterNonExistentSyncSlave)
 
     const auto result_expected = -1;
     ClockSyncMasterProxy client(fep3::rpc::IRPCClockSyncMasterDef::getRPCDefaultName(),
-        _service_bus->getRequester(test_participant_name));
+        _service_bus->getRequester(participant_name_default));
 
     // actual test
     {
-        ASSERT_EQ(client.unregisterSyncSlave(test_participant_name), result_expected);
+        EXPECT_CALL(*_logger, logWarning(fep3::mock::LogStringRegexMatcher
+        (std::string() + "Failure during deregistration of timing slave '" + participant_name_default)))
+            .WillOnce(Return(Result{}));
+        ASSERT_EQ(client.unregisterSyncSlave(participant_name_default), result_expected);
     }
 }
 
@@ -297,10 +306,15 @@ TEST_F(ClockSyncMasterService, testGetMasterTime)
 {
     const auto master_time_expected = "0";
     ClockSyncMasterProxy client(fep3::rpc::IRPCClockSyncMasterDef::getRPCDefaultName(),
-        _service_bus->getRequester(fep3::native::testing::test_participant_name));
+        _service_bus->getRequester(fep3::native::testing::participant_name_default));
+
+    EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
 
     // actual test
     {
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        (std::string() + "Retrieved master time request. Responding '0'")))
+            .WillOnce(Return(Result{}));
         ASSERT_EQ(client.getMasterTime(), master_time_expected);
     }
 }
@@ -315,16 +329,21 @@ TEST_F(ClockSyncMasterService, testGetMasterTime)
  {
      const auto master_type_expected = 0;
      ClockSyncMasterProxy client(fep3::rpc::IRPCClockSyncMasterDef::getRPCDefaultName(),
-         _service_bus->getRequester(fep3::native::testing::test_participant_name));
+         _service_bus->getRequester(fep3::native::testing::participant_name_default));
+
+     EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
 
      // actual test
      {
+         EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+         (std::string() + "Retrieved master clock type request. Responding '0'" + ".*" + "continuous")))
+             .WillOnce(Return(Result{}));
          ASSERT_EQ(client.getMasterType(), master_type_expected);
      }
  }
 
 /**
- * @detail Test whether the continuous clock sync slave rpc service successfully synchronizes with a clock sync master.
+ * @detail Test whether the continuous clock sync slave rpc service successfully synchronizes with a clock sync master and logs corresponding debug information.
  * This involves:
  * * requesting the master type
  * * registering as slave at the master
@@ -334,13 +353,54 @@ TEST_F(ClockSyncMasterService, testGetMasterTime)
  */
 TEST_F(ContinuousClockSyncSlaveService, testSyncSlave)
 {
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).WillOnce(Return(static_cast<int>(fep3::IClock::ClockType::continuous)));
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillOnce(Return(1));
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterTime()).WillRepeatedly(Return("100"));
-    _component_registry->start();
+    std::mutex mutex;
+    auto condition_variable = std::make_shared<std::condition_variable>();
 
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillOnce(Return(1));
-    _component_registry->stop();
+    EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
+
+    EXPECT_CALL(*_logger, logDebug(_))
+        .WillRepeatedly(Return(Result{}));
+
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Requesting timing master main clock type"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+        EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).Times(AtLeast(1)).WillRepeatedly(Return(static_cast<int>(fep3::IClock::ClockType::continuous)));
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("clock type '0'"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Requesting registration as timing slave at the timing master"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+        EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).Times(AtLeast(1)).WillRepeatedly(Return(1));
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Successfully registered as timing slave at the timing master"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Requesting master time"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+        EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterTime()).Times(AtLeast(1)).WillRepeatedly(DoAll(
+            Invoke([condition_variable]() {
+                condition_variable->notify_one();
+            }),
+            Return("100")));
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("master time: '"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+
+        ASSERT_FEP3_NOERROR(_component_registry->initialize());
+        ASSERT_FEP3_NOERROR(_component_registry->tense());
+        ASSERT_FEP3_NOERROR(_component_registry->start());
+        EXPECT_EQ(condition_variable->wait_for(lock, Duration{std::chrono::milliseconds{ 100 }}), std::cv_status::no_timeout);
+
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Requesting deregistration as timing slave from the timing master"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Successfully deregistered as timing slave from the timing master"))).Times(AtLeast(1)).WillRepeatedly(Return(Result{}));
+        EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillOnce(Return(1));
+        ASSERT_FEP3_NOERROR(_component_registry->stop());
+        EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(1).WillOnce(Return(Result()));
+        ASSERT_FEP3_NOERROR(_component_registry->relax());
+        ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
+    }
 }
 
 /**
@@ -359,9 +419,9 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
     const int time_update_repetitions = 5;
     const Duration timeout{ 1s };
 
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).WillRepeatedly(Return(static_cast<int>(IClock::ClockType::continuous)));
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillRepeatedly(Return(1));
-    EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).Times(AtLeast(1)).WillRepeatedly(Return(static_cast<int>(IClock::ClockType::continuous)));
+    EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).Times(AtLeast(1)).WillRepeatedly(Return(1));
+    EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).Times(AtLeast(1)).WillRepeatedly(Return(1));
 
     std::vector<time_point<steady_clock>> time_updates_default_freq{};
 
@@ -382,21 +442,23 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
                 Return("100"))
         );
 
-        _component_registry->start();
+        ASSERT_FEP3_NOERROR(_component_registry->initialize());
+        ASSERT_FEP3_NOERROR(_component_registry->tense());
+        ASSERT_FEP3_NOERROR(_component_registry->start());
 
         EXPECT_EQ(time_updates_received.wait_for(lock, timeout), std::cv_status::no_timeout);
 
-        _component_registry->stop();
+        ASSERT_FEP3_NOERROR(_component_registry->stop());
     }
 
-    EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(1).WillOnce(
+    EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(2).WillRepeatedly(
             Return(Result()));
 
     ASSERT_FEP3_NOERROR(_component_registry->relax());
     ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
 
-    setPropertyValue(*_clock_sync_service_property_node->getChild(
-        FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY), 10);
+	ASSERT_FEP3_NOERROR(fep3::base::setPropertyValue<int64_t>(*_clock_sync_service_property_node->getChild(
+        FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY), duration_cast<Duration>(10ms).count()));
 
     ASSERT_FEP3_NOERROR(_component_registry->initialize());
     ASSERT_FEP3_NOERROR(_component_registry->tense());
@@ -431,8 +493,11 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
     {
         const auto duration_syncs_default_freq = duration_cast<milliseconds>(time_updates_default_freq.back() - time_updates_default_freq.front());
         const auto duration_syncs_low_freq = duration_cast<milliseconds>(time_updates_low_freq.back() - time_updates_low_freq.front());
-        ASSERT_TRUE((duration_syncs_low_freq * 2) < duration_syncs_default_freq);
+        ASSERT_LT((duration_syncs_low_freq * 2), duration_syncs_default_freq);
     }
+
+    ASSERT_FEP3_NOERROR(_component_registry->relax());
+    ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
 }
 
  /**
@@ -450,25 +515,31 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
  TEST_F(DiscreteClockSyncSlaveService, testSyncSlave)
  {
      ClockSyncSlaveProxy client(fep3::rpc::IRPCClockSyncSlaveDef::getRPCDefaultName(),
-         _service_bus->getRequester(native::testing::test_participant_name));
+         _service_bus->getRequester(native::testing::participant_name_default));
 
      // actual test
      {
          EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).WillOnce(
              Return(static_cast<int>(fep3::IClock::ClockType::discrete)));
          EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillOnce(Return(1));
-		 EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
-		 EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
-         _component_registry->start();                  
+         EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
+         EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
 
-		 EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 }));
-		 ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "100", "0"), "100");
+         ASSERT_FEP3_NOERROR(_component_registry->initialize());
+         ASSERT_FEP3_NOERROR(_component_registry->tense());
+         ASSERT_FEP3_NOERROR(_component_registry->start());
+
+         EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 }));
+         ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "100", "0"), "100");
 
          EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 200 }));
          ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "200", "100"), "200");
 
          EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillOnce(Return(1));
-         _component_registry->stop(); 
+         EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(1).WillOnce(Return(Result()));
+         ASSERT_FEP3_NOERROR(_component_registry->stop());
+         ASSERT_FEP3_NOERROR(_component_registry->relax());
+         ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
      }
  }
 
@@ -483,39 +554,60 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
  TEST_F(DiscreteClockSyncSlaveService, testSyncSlaveUpdateEvents)
  {
      ClockSyncSlaveProxy client(fep3::rpc::IRPCClockSyncSlaveDef::getRPCDefaultName(),
-         _service_bus->getRequester(native::testing::test_participant_name));
+         _service_bus->getRequester(native::testing::participant_name_default));
 
      // actual test
       {
           EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).WillOnce(Return(static_cast<int>(fep3::IClock::ClockType::discrete)));
           EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillOnce(Return(1));
-		  EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
-		  EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
-		  _component_registry->start();         
+          EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
+          EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
+          ASSERT_FEP3_NOERROR(_component_registry->initialize());
+          ASSERT_FEP3_NOERROR(_component_registry->tense());
+          ASSERT_FEP3_NOERROR(_component_registry->start());
 
+          EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
+
+          EXPECT_CALL(*_logger, logDebug(_))
+              .WillRepeatedly(Return(fep3::Result{}));
          {
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '1', old time '0', new time '100'."))).WillOnce(Return(Result{}));
              EXPECT_CALL(*_event_sink_mock, timeUpdateBegin(Duration{ 0 }, Duration{ 100 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_update_before), "100", "0"), "0");
-			 EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 })).Times(1);
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '2', new time '100'."))).WillOnce(Return(Result{}));
+             EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "100", "0"), "100");
-			 EXPECT_CALL(*_event_sink_mock, timeUpdateEnd(Duration{ 100 })).Times(1);
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '3', new time '100'."))).WillOnce(Return(Result{}));
+             EXPECT_CALL(*_event_sink_mock, timeUpdateEnd(Duration{ 100 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_update_after), "100", "0"), "100");
          }
 
          {
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '1', old time '100', new time '200'."))).WillOnce(Return(Result{}));
              EXPECT_CALL(*_event_sink_mock, timeUpdateBegin(Duration{ 100 }, Duration{ 200 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_update_before), "200", "100"), "100");
-			 EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 200 })).Times(1);
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '2', new time '200'."))).WillOnce(Return(Result{}));
+             EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 200 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "200", "100"), "200");
-			 EXPECT_CALL(*_event_sink_mock, timeUpdateEnd(Duration{ 200 })).Times(1);
+             EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+             (std::string() + "Received master time event. Event id '3', new time '200'."))).WillOnce(Return(Result{}));
+             EXPECT_CALL(*_event_sink_mock, timeUpdateEnd(Duration{ 200 })).Times(1);
              ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_update_after), "200", "100"), "200");
          }
 
          EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillOnce(Return(1));
-         _component_registry->stop();
+         EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(1).WillOnce(Return(Result()));
+         ASSERT_FEP3_NOERROR(_component_registry->stop());
+         ASSERT_FEP3_NOERROR(_component_registry->relax());
+         ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
      }
  }
- 
+
  /**
 * @detail Test whether the discrete clock sync slave rpc service correctly receives and reacts to sync time reset events.
 * This comprises following events:
@@ -525,37 +617,42 @@ TEST_F(ContinuousClockSyncSlaveService, testSyncSlaveFrequencyConfiguration)
  TEST_F(DiscreteClockSyncSlaveService, testSyncSlaveResetEvents)
  {
      ClockSyncSlaveProxy client(fep3::rpc::IRPCClockSyncSlaveDef::getRPCDefaultName(),
-         _service_bus->getRequester(native::testing::test_participant_name));
+         _service_bus->getRequester(native::testing::participant_name_default));
 
      // actual test
      {
          EXPECT_CALL(*_rpc_clock_sync_master_mock, getMasterType()).WillOnce(Return(static_cast<int>(fep3::IClock::ClockType::discrete)));
-         EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillOnce(Return(1));       
-		 EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
-		 EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
-		 _component_registry->start();
+         EXPECT_CALL(*_rpc_clock_sync_master_mock, registerSyncSlave(_, _)).WillOnce(Return(1));
+         EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 0 }, Duration{ 0 }));
+         EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 }));
+         ASSERT_FEP3_NOERROR(_component_registry->initialize());
+         ASSERT_FEP3_NOERROR(_component_registry->tense());
+         ASSERT_FEP3_NOERROR(_component_registry->start());
 
-     	 // normal update
-		 {
-			 EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 })).Times(1);
-			 ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "100", "0"), "100");
-		 }
+          // normal update
+         {
+             EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 100 })).Times(1);
+             ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "100", "0"), "100");
+         }
 
          // normal update
-		 {
-			 EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 200 })).Times(1);
-			 ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "200", "100"), "200");
-		 }
+         {
+             EXPECT_CALL(*_event_sink_mock, timeUpdating(Duration{ 200 })).Times(1);
+             ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_updating), "200", "100"), "200");
+         }
 
          // reset
          {
             EXPECT_CALL(*_event_sink_mock, timeResetBegin(Duration{ 200 }, Duration{ 0 })).Times(1);
             EXPECT_CALL(*_event_sink_mock, timeResetEnd(Duration{ 0 })).Times(1);
-         	// time reset events do not propagate the "old time" parameter to the clock, therefore "100" is not used for the following reset begin/end events
+             // time reset events do not propagate the "old time" parameter to the clock, therefore "100" is not used for the following reset begin/end events
             ASSERT_EQ(client.syncTimeEvent(static_cast<int>(fep3::rpc::arya::IRPCClockSyncMasterDef::EventID::time_reset), "0", "100"), "0");
-         }    
+         }
 
          EXPECT_CALL(*_rpc_clock_sync_master_mock, unregisterSyncSlave(_)).WillOnce(Return(1));
-         _component_registry->stop();
+         EXPECT_CALL(*_clock_service_mock, unregisterClock(_)).Times(1).WillOnce(Return(Result()));
+         ASSERT_FEP3_NOERROR(_component_registry->stop());
+         ASSERT_FEP3_NOERROR(_component_registry->relax());
+         ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
      }
  }

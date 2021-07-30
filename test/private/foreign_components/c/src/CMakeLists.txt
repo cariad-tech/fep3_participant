@@ -1,17 +1,24 @@
-##################################################################
-# @file
-# Copyright &copy; AUDI AG. All rights reserved.
 #
-# This Source Code Form is subject to the terms of the
-# Mozilla Public License, v. 2.0.
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright @ 2021 VW Group. All rights reserved.
+# 
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
 #
-##################################################################
+
 
 ##################################################################
 #  test plugin 1
 ##################################################################
+
+find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
 
 set(TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET test_foreign_components_c_plugin_1)
 
@@ -41,10 +48,11 @@ target_include_directories(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PUBLIC
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
     )
 target_compile_definitions(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PRIVATE _FEP3_PARTICIPANT_INCLUDED_STATIC)
-target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PUBLIC a_util_result)
+target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PUBLIC dev_essential::result)
 target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
+    participant_test_utils
 )
 set_target_properties(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_1_TARGET} PROPERTIES FOLDER "test/private/foreign_components/c/test_plugin_1")
 
@@ -73,10 +81,11 @@ target_include_directories(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PUBLIC
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
     )
 target_compile_definitions(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PRIVATE _FEP3_PARTICIPANT_INCLUDED_STATIC)
-target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PUBLIC a_util_result)
+target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PUBLIC dev_essential::result)
 target_link_libraries(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
+    participant_test_utils
 )
 set_target_properties(${TEST_FOREIGN_COMPONENTS_C_PLUGIN_2_TARGET} PROPERTIES FOLDER "test/private/foreign_components/c/test_plugin_2")
 
@@ -93,16 +102,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    GTest::Main
-    GMock::Main
+    GTest::gtest_main
+    GTest::gmock_main
     ${CMAKE_DL_LIBS}
     fep3_participant_private_lib
+    participant_test_utils
     participant_private_test_utils
-    pkg_rpc
-)
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    a_util
-    a_util_result
+    dev_essential::pkg_rpc
 )
 
 add_test(NAME ${PROJECT_NAME}

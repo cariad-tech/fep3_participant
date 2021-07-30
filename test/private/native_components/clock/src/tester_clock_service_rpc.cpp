@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 
 #include <fep3/base/properties/properties.h>
@@ -32,10 +41,10 @@ namespace env
 
 using namespace ::testing;
 
-using Logger = NiceMock<fep3::mock::Logger>;
+using WarningLogger = NiceMock<mock::WarningLogger>;
 using ClockMock = NiceMock<mock::Clock>;
 using LoggingService = fep3::mock::LoggingService;
-using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationServiceComponent>;
+using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationService<>>;
 
 class TestClient : public fep3::rpc::RPCServiceClient<::test::rpc_stubs::TestClockServiceProxy, fep3::rpc::IRPCClockServiceDef>
 {
@@ -46,7 +55,7 @@ public:
     using base_type::GetStub;
 
     TestClient(const char* server_object_name,
-        const std::shared_ptr<fep3::rpc::IRPCRequester> rpc)
+        const std::shared_ptr<fep3::IRPCRequester> rpc)
     : base_type(server_object_name, rpc)
     {
     }
@@ -57,7 +66,7 @@ struct NativeClockServiceRPC : public ::testing::Test
     NativeClockServiceRPC()
         : _service_bus{ std::make_shared<fep3::native::ServiceBus>() }
         , _component_registry{ std::make_shared<fep3::ComponentRegistry>() }
-        , _logger(std::make_shared<Logger>())
+        , _logger(std::make_shared<WarningLogger>())
         , _configuration_service_mock{ std::make_shared<ConfigurationServiceComponentMock>() }
         , _clock_service{ std::make_shared<native::LocalClockService>() }
     {}
@@ -79,7 +88,7 @@ struct NativeClockServiceRPC : public ::testing::Test
 
     std::shared_ptr<fep3::native::ServiceBus> _service_bus{};
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{};
-    std::shared_ptr<Logger> _logger{};
+    std::shared_ptr<WarningLogger> _logger{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
     std::shared_ptr<native::LocalClockService> _clock_service{};
 };
@@ -87,7 +96,7 @@ struct NativeClockServiceRPC : public ::testing::Test
 TEST_F(NativeClockServiceRPC, testGetClockNames)
 {
     TestClient client(fep3::rpc::IRPCClockServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(fep3::native::testing::test_participant_name));
+        _service_bus->getRequester(fep3::native::testing::participant_name_default));
 
     // actual test
     {
@@ -111,7 +120,7 @@ TEST_F(NativeClockServiceRPC, testGetCurrentClock)
 {
     const auto current_clock_expected = "local_system_realtime";
     TestClient client(fep3::rpc::IRPCClockServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(fep3::native::testing::test_participant_name));
+        _service_bus->getRequester(fep3::native::testing::participant_name_default));
 
     // actual test
     {
@@ -124,7 +133,7 @@ TEST_F(NativeClockServiceRPC, testGetClockTime)
     const auto current_clock_expected = "0"
         , invalid_time_expected = "-1";
     TestClient client(fep3::rpc::IRPCClockServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(fep3::native::testing::test_participant_name));
+        _service_bus->getRequester(fep3::native::testing::participant_name_default));
 
     // actual test
     {
@@ -140,7 +149,7 @@ TEST_F(NativeClockServiceRPC, testGetClockType)
     const auto current_type_expected = 0
     , invalid_type_expected = -1;
     TestClient client(fep3::rpc::IRPCClockServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(fep3::native::testing::test_participant_name));
+        _service_bus->getRequester(fep3::native::testing::participant_name_default));
 
     // actual test
     {

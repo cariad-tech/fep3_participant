@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #ifndef _FEP_LOCKED_QUEUE_
 #define _FEP_LOCKED_QUEUE_
@@ -36,7 +46,7 @@ public:
 
 public:
     /// Push an element at end of queue and notify consumer
-    /// @param [in] t Element to add to the queue
+    /// @param[in] t Element to add to the queue
     void enqueue(const T& t)
     {
         _lock.lock();
@@ -45,9 +55,8 @@ public:
     }
 
     /// Try to copy the first element and remove it from the queue
-    /// @param [out] t The first element of the queue, if present
-    /// @retval true Element found
-    /// @retval false Queue is empty
+    /// @param[out] t The first element of the queue, if present
+    /// @retval @c true if element was found, @c false otherwise (queue is empty)
     bool tryDequeue(T& t)
     {
         _lock.lock();
@@ -64,10 +73,9 @@ public:
 
     /// Try to copy the first element and remove it from the queue.
     /// Unlock guard, when queue is empty.
-    /// @param [out] t The first element of the queue, if present
-    /// @param [in] guard Mutex to guard the queue
-    /// @retval true Element found
-    /// @retval false Queue is empty
+    /// @param[out] t The first element of the queue, if present
+    /// @param[in] guard Mutex to guard the queue
+    /// @retval @c true if element was found, @c false otherwise (queue is empty)
     template <class GUARD> bool tryDequeueAndUnlockGuardIfEmpty(T& t, GUARD& guard)
     {
         _lock.lock();
@@ -99,14 +107,14 @@ public:
 
 public:
     /// Push an element at end of queue and notify consumer
-    /// @param [in] t Element to add to the queue
+    /// @param[in] t Element to add to the queue
     void enqueue(const T& t)
     {
         _queue.push(t);
     }
 
     /// Try to copy the first element and remove it from the queue
-    /// @param [out] t The first element of the queue, if present
+    /// @param[out] t The first element of the queue, if present
     /// @retval true Element found
     /// @retval false Queue is empty
     bool tryDequeue(T& t)

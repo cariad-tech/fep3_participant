@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
@@ -28,7 +37,7 @@ using SchedulerMock = NiceMock<fep3::mock::Scheduler>;
 using LoggerMock = NiceMock<fep3::mock::Logger>;
 using LoggingService = fep3::mock::LoggingService;
 using ClockMockComponent = NiceMock<fep3::mock::ClockServiceComponentWithDefaultBehaviour>;
-using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationServiceComponent>;
+using ConfigurationServiceComponentMock = StrictMock<fep3::mock::ConfigurationService<>>;
 using ServiceBusComponentMock = StrictMock<fep3::mock::ServiceBusComponent>;
 using RPCServerMock = StrictMock<fep3::mock::RPCServer>;
 
@@ -46,7 +55,7 @@ struct SchedulerServiceWithSchedulerMock : ::testing::Test
     {
     }
 
-    void SetUp() override 
+    void SetUp() override
     {
         EXPECT_CALL(*_service_bus, getServer()).Times(2).WillRepeatedly(::testing::Return(_rpc_server));
         EXPECT_CALL(*_rpc_server, registerService(fep3::rpc::IRPCJobRegistryDef::getRPCDefaultName(),
@@ -70,7 +79,7 @@ struct SchedulerServiceWithSchedulerMock : ::testing::Test
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
             _service_bus));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            std::make_unique<fep3::native::JobRegistry>()));      
+            std::make_unique<fep3::native::JobRegistry>()));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ISchedulerService>(
             _scheduler_service_impl));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
@@ -98,11 +107,11 @@ struct SchedulerServiceWithSchedulerMock : ::testing::Test
 
     fep3::ISchedulerService* getSchedulerService() const
     {
-        const auto scheduler_service = _component_registry->getComponent<fep3::ISchedulerService>();    
+        const auto scheduler_service = _component_registry->getComponent<fep3::ISchedulerService>();
         return scheduler_service;
     }
 
-    std::unique_ptr<SchedulerMock> _scheduler_mock{};   
+    std::unique_ptr<SchedulerMock> _scheduler_mock{};
     std::shared_ptr<fep3::native::LocalSchedulerService> _scheduler_service_impl{};
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{};
     std::shared_ptr<LoggerMock> _logger_mock{};
@@ -131,9 +140,9 @@ TEST_F(SchedulerServiceWithSchedulerMock, RegisterCustomScheduler)
     const auto scheduler_name = _scheduler_mock->getName();
     // register scheduler
     {
-        fep3::setPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY), "my_custom_scheduler");
-        
-        ASSERT_FEP3_NOERROR(getSchedulerService()->registerScheduler(std::move(_scheduler_mock)));          
+        fep3::base::setPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY), "my_custom_scheduler");
+
+        ASSERT_FEP3_NOERROR(getSchedulerService()->registerScheduler(std::move(_scheduler_mock)));
     }
 
     ASSERT_FEP3_NOERROR(_component_registry->initialize());
@@ -195,7 +204,7 @@ TEST_F(SchedulerServiceWithSchedulerMock, AddRemoveSetInRunningFails)
 
         ASSERT_FEP3_RESULT(getSchedulerService()->unregisterScheduler("some_scheduler"), fep3::ERR_INVALID_STATE);
     }
-    
+
     ASSERT_FEP3_NOERROR(_component_registry->stop());
     ASSERT_FEP3_NOERROR(_component_registry->relax());
     ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
@@ -210,17 +219,17 @@ TEST_F(SchedulerServiceWithSchedulerMock, TwoSchedulerSameName)
 {
     auto scheduler_mock2 = std::make_unique<SchedulerMock>();
     ON_CALL(*scheduler_mock2, getName())
-        .WillByDefault(Return("my_scheduler"));    
+        .WillByDefault(Return("my_scheduler"));
 
     ASSERT_STREQ(scheduler_mock2->getName().c_str(), _scheduler_mock->getName().c_str());
 
     // actual test
     {
         EXPECT_CALL((*_logger_mock), logError(_)).Times(1).WillOnce(::testing::Return(::fep3::Result{}));
-        
+
         ASSERT_FEP3_NOERROR(getSchedulerService()->registerScheduler(std::move(_scheduler_mock)));
         ASSERT_FEP3_RESULT(getSchedulerService()->registerScheduler(std::move(scheduler_mock2)), fep3::ERR_RESOURCE_IN_USE);
-    }   
+    }
 }
 
 /**
@@ -231,21 +240,22 @@ TEST_F(SchedulerServiceWithSchedulerMock, ActivateNonExistingScheduler)
 {
     // actual test
     {
-        fep3::setPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY), "not_existing");
+        fep3::base::setPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY), "not_existing");
+
         ASSERT_FEP3_NOERROR(_component_registry->initialize());
         ASSERT_FEP3_RESULT_WITH_MESSAGE(_component_registry->tense(), fep3::ERR_NOT_FOUND,
             "Setting scheduler failed\\. A scheduler with the name 'not_existing' is not registered\\.");
-    } 
+    }
 }
 
 /**
-* @brief If the property FEP3_SCHEDULER_SERVICE_SCHEDULER is not set 
+* @brief If the property FEP3_SCHEDULER_SERVICE_SCHEDULER is not set
 * it should be set to FEP3_SCHEDULER_CLOCK_BASED
 * @req_id FEPSDK-2099
 */
 TEST_F(SchedulerServiceWithSchedulerMock, SchedulerPropertyIsInitializedToDefault)
 {
-    ASSERT_EQ(fep3::arya::getPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY)), FEP3_SCHEDULER_CLOCK_BASED);
+    ASSERT_EQ(fep3::base::getPropertyValue<std::string>(*_scheduler_service_property_node->getChild(FEP3_SCHEDULER_PROPERTY)), FEP3_SCHEDULER_CLOCK_BASED);
 }
 
 /**
@@ -260,8 +270,8 @@ TEST_F(SchedulerServiceWithSchedulerMock, IntegrationWithJobRegistryTest)
 
         auto scheduler_mock2 = std::make_unique<SchedulerMock>();
         ON_CALL(*scheduler_mock2, getName())
-            .WillByDefault(Return("clock_based_scheduler"));       
-      
+            .WillByDefault(Return("clock_based_scheduler"));
+
         ASSERT_FEP3_RESULT(getSchedulerService()->registerScheduler(std::move(scheduler_mock2)), fep3::ERR_RESOURCE_IN_USE);
     }
 
@@ -270,15 +280,15 @@ TEST_F(SchedulerServiceWithSchedulerMock, IntegrationWithJobRegistryTest)
         EXPECT_CALL((*_logger_mock), logError(_)).Times(1).WillOnce(::testing::Return(::fep3::Result{}));
 
         ASSERT_FEP3_RESULT(getSchedulerService()->unregisterScheduler("not_existing_scheduler"), fep3::ERR_NOT_FOUND);
-    }   
+    }
 
     // getActiveSchedulerName
     {
-        ASSERT_STREQ(getSchedulerService()->getActiveSchedulerName().c_str(), "clock_based_scheduler");       
+        ASSERT_STREQ(getSchedulerService()->getActiveSchedulerName().c_str(), "clock_based_scheduler");
     }
 
     // getSchedulerNames
     {
         ASSERT_EQ(getSchedulerService()->getSchedulerNames(), std::list<std::string>{"clock_based_scheduler"});
-    }    
+    }
 }

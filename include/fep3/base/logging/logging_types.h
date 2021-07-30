@@ -1,17 +1,25 @@
 /**
- * @file 
- * @copyright Audi AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
  //Guideline - FEP System Library API Exception
-#ifndef __FEP_BASE_LOGGING_TYPES_H
-#define __FEP_BASE_LOGGING_TYPES_H
+#ifndef _FEP_BASE_LOGGING_TYPES_H
+#define _FEP_BASE_LOGGING_TYPES_H
 
 #include <cstdint>
 #include <string>
@@ -19,13 +27,11 @@
 
 namespace fep3
 {
-namespace logging
-{
 /// Version namespace
 namespace arya
 {
 /// Filter for logging events, the smaller the number the less events will be given
-enum class Severity : uint8_t
+enum class LoggerSeverity : uint8_t
 {
     /// Intended to turn off logging
     off = 0,
@@ -47,10 +53,10 @@ enum class Severity : uint8_t
  */
 struct LogMessage
 {
-    /// The timestamp of the simulation time
+    /// The timestamp of the simulation time [ns]
     std::string _timestamp;
     /// The level of importance of the event
-    Severity _severity;
+    arya::LoggerSeverity _severity;
     /// The name of the participant
     std::string _participant_name;
     /// Name of the logger that created the log
@@ -60,21 +66,44 @@ struct LogMessage
 };
 
 /**
+ * @brief Gets the @p severity represented as string
+ * @param[in] severity The severity
+ * @return The severity represented as string
+ */
+inline std::string getString(arya::LoggerSeverity severity)
+{
+    switch (severity)
+    {
+    case LoggerSeverity::info:
+        return "Info";
+    case LoggerSeverity::warning:
+        return "Warning";
+    case LoggerSeverity::fatal:
+        return "Fatal";
+    case LoggerSeverity::error:
+        return "Error";
+    case LoggerSeverity::debug:
+        return "Debug";
+    default:
+        return "<Unknown>";
+    }
+}
+
+/**
 * Struct to describe a logging configuration
 */
 struct LoggerFilter
 {
     /// The maximum level that should be logged
-    Severity _severity;
+    arya::LoggerSeverity _severity;
     /// List of all enabled logging sinks. Natively supported are "file", "console" and "rpc"
     std::vector<std::string> _enabled_logging_sinks;
 };
 
 } // namespace arya
-using arya::Severity;
+using arya::LoggerSeverity;
 using arya::LogMessage;
 using arya::LoggerFilter;
-} // namespace logging
 } // namespace fep3
 
-#endif //__FEP_BASE_LOGGING_TYPES_H
+#endif //_FEP_BASE_LOGGING_TYPES_H

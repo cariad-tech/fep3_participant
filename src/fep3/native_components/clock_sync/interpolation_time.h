@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -23,9 +32,7 @@ namespace fep3
 class IInterpolationTime
 {
 public:
-    /**
-     * @brief DTOR
-     */
+    /// DTOR
     virtual ~IInterpolationTime() = default;
 
     /**
@@ -37,14 +44,14 @@ public:
 
     /**
      * Set a new reference time obtained from a request.
-     * @param [in] time  the reference time stamp.
-     * @param [in] roundtrip_time  The time it took to request the reference time and to get an answer.
+     * @param[in] time  the reference time stamp.
+     * @param[in] roundtrip_time  The time it took to request the reference time and to get an answer.
      */
     virtual void setTime(Timestamp time, Duration roundtrip_time) = 0;
 
     /**
      * Set a new reference time obtained without further delay.
-     * @param [in] time  the reference time stamp.
+     * @param[in] time  the reference time stamp.
      */
     virtual void resetTime(Timestamp time) = 0;
 };
@@ -57,7 +64,7 @@ public:
 class InterpolationTime : public IInterpolationTime
 {
 public:
-    /** 
+    /**
      * CTOR
      */
     InterpolationTime();

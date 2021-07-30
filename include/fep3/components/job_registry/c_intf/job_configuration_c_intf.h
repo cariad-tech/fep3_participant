@@ -1,15 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @attention Changes in this file must be reflected in the corresponding C++ interface file job_configuration.h
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @attention Changes in this file must be reflected in the corresponding C++ interface file job_configuration.h
 
 #pragma once
 
@@ -28,12 +35,6 @@ typedef struct
     bool _max_runtime_real_time_validity;
     int64_t _max_runtime_real_time;
     int32_t _runtime_violation_strategy;
-    void(*_dependee_job_names_callback)
-        (void* dependee_job_names_source
-        , void(*dependee_job_name_callback)(void*, const char*)
-        , void* dependee_job_name_destination
-        );
-    void* _dependee_job_names_source;
     /// @endcond no_documentation
 } fep3_arya_SJobConfiguration;
 

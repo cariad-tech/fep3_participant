@@ -1,21 +1,31 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/clock/clock_service_intf.h>
 #include <fep3/components/logging/logging_service_intf.h>
 #include "logging_config.h"
 #include "logging_rpc_service.h"
-#include <fep3/components/configuration/propertynode.h>
+#include <fep3/base/properties/propertynode.h>
 #include <fep3/components/configuration/configuration_service_intf.h>
 #include "sinks/logging_sink_rpc.hpp"
 
@@ -27,10 +37,9 @@ namespace arya
 {
 class LoggingServer;
 class LoggingQueue;
-struct LoggingConfigDescription;
 
-class LoggingService : public ComponentBase<ILoggingService>,
-                              Configuration
+class LoggingService : public base::Component<ILoggingService>,
+                              base::Configuration
 {
 public:
     class Logger : public ILogger
@@ -51,7 +60,7 @@ public:
         bool isDebugEnabled() const override;
 
     private:
-        fep3::Result log(const std::string& message, logging::Severity severity) const;
+        fep3::Result log(const std::string& message, LoggerSeverity severity) const;
         void releaseLogService();
 
     private:
@@ -63,8 +72,9 @@ public:
     LoggingService();
     ~LoggingService();
 
-    // Methods inherited from ComponentBase
+    // Methods inherited from base::Component
     fep3::Result create() override;
+    fep3::Result initialize() override;
     fep3::Result destroy() override;
 
     // Methods inherited from ILoggingService
@@ -75,23 +85,35 @@ public:
 
 public:
     // Methods of LoggingService
-    fep3::Result setFilter(const std::string& logger_filter_name,
-                           const logging::LoggerFilter& config);
+    /// Creates and sets an internal logging filter from a string reprensentation
+    fep3::Result setFilter(const std::string& logger_name,
+                           const LoggerFilter& filter,
+                           bool overwrite = true);
 
-    logging::LoggerFilter getFilter(const std::string& logger_filter_name) const;
+    /// Gets a string reprensentation from an internal logging filter
+    LoggerFilter getFilter(const std::string& logger_name) const;
+
+    /// Sets a logging filter
+    void setInternalFilter(const std::string& logger_name,
+                           const native::LoggerFilterInternal& filter,
+                           bool overwrite = true);
+
+    /// Gets the internal logging filter
+    const native::LoggerFilterInternal& getInternalFilter(const std::string& logger_name) const;
 
     std::shared_ptr<ILoggingSink> getSink(const std::string& name) const;
     std::vector<std::string> getLoggers() const;
     std::vector<std::string> getSinks() const;
 
 private:
-    /// RPC server object to set the logging configurations for this participant
+    /// RPC server object to set the logging filters for this participant
     std::shared_ptr<LoggingRPCService> _logging_rpc_service;
     /// Queue object so that loggers don't halt the main program
     std::unique_ptr<LoggingQueue> _queue;
     mutable a_util::concurrency::mutex _lock_queue;
     /// Configuration which logs should be filtered
-    LoggingConfigTree _configuration;
+    LoggingFilterTree _configuration;
+    mutable a_util::concurrency::mutex _sync_config;
     /// Pointer to the clock service to get the current timestamp for the log
     IClockService* _clock_service;
     std::string    _participant_name;
@@ -103,9 +125,11 @@ private:
     std::map<std::string, std::shared_ptr<ILoggingSink>> _sinks;
     mutable std::recursive_mutex _sync_sinks;
 
-    PropertyVariable<std::string> _default_sinks;
-    PropertyVariable<std::string> _default_file_sink_file;
-    PropertyVariable<int32_t> _default_severity;
+    base::PropertyVariable<std::string> _default_sinks{ std::string("console") };
+    base::PropertyVariable<std::string> _default_file_sink_file{};
+    base::PropertyVariable<int32_t> _default_severity{ static_cast<int32_t>(LoggerSeverity::info) };
+
+    bool _default_sinks_changed{false};
 };
 } // namespace arya
 using arya::LoggingService;

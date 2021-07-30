@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
@@ -52,7 +61,7 @@ TEST_F(SchedulerRegistryTest, SetSchedulerIsGetScheduler)
         ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));
         ASSERT_FEP3_NOERROR(scheduler_registry.setActiveScheduler(scheduler_name));
 
-        auto current_schduler = scheduler_registry.getActiveSchedulerName();        
+        auto current_schduler = scheduler_registry.getActiveSchedulerName();
         ASSERT_EQ(current_schduler, scheduler_name);
     }
 }
@@ -69,7 +78,7 @@ TEST_F(SchedulerRegistryTest, SetSchedulerThatWasNotRegistered)
 
     // actual test
     {
-        ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));        
+        ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));
     }
 }
 
@@ -81,11 +90,11 @@ TEST_F(SchedulerRegistryTest, RegisterUnregister)
 {
     auto scheduler_name = _scheduler_mock->getName();
     fep3::native::LocalSchedulerRegistry scheduler_registry(std::move(_default_scheduler));
-    
+
     // actual test
     {
-        ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));        
-        ASSERT_FEP3_NOERROR(scheduler_registry.unregisterScheduler(scheduler_name));             
+        ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));
+        ASSERT_FEP3_NOERROR(scheduler_registry.unregisterScheduler(scheduler_name));
     }
 }
 
@@ -105,7 +114,7 @@ TEST_F(SchedulerRegistryTest, RegisterTwoSchedulersWithSameName)
     // actual test
     {
         ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));
-        ASSERT_FEP3_RESULT(scheduler_registry.registerScheduler(std::move(_scheduler_same_name)), fep3::ERR_RESOURCE_IN_USE);                
+        ASSERT_FEP3_RESULT(scheduler_registry.registerScheduler(std::move(_scheduler_same_name)), fep3::ERR_RESOURCE_IN_USE);
     }
 }
 
@@ -114,7 +123,7 @@ TEST_F(SchedulerRegistryTest, RegisterTwoSchedulersWithSameName)
 * @req_id FEPSDK-2081, FEPSDK-2084
 */
 TEST_F(SchedulerRegistryTest, GetSchedulerList)
-{    
+{
     auto default_scheduler_name = _default_scheduler->getName();
     fep3::native::LocalSchedulerRegistry scheduler_registry(std::move(_default_scheduler));
 
@@ -130,7 +139,7 @@ TEST_F(SchedulerRegistryTest, GetSchedulerList)
         ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_two)));
 
         auto list = scheduler_registry.getSchedulerNames();
-        ASSERT_EQ(list, list_expected);        
+        ASSERT_EQ(list, list_expected);
     }
 }
 
@@ -145,7 +154,7 @@ TEST_F(SchedulerRegistryTest, DefaultSchedulerisActiveSchedulerIfNoSchedulerWasR
 
     // actual test
     {
-        auto current_schduler = scheduler_registry.getActiveSchedulerName();        
+        auto current_schduler = scheduler_registry.getActiveSchedulerName();
         ASSERT_EQ(current_schduler, "default_scheduler");
     }
 }
@@ -157,14 +166,14 @@ TEST_F(SchedulerRegistryTest, DefaultSchedulerisActiveSchedulerIfNoSchedulerWasR
 * @req_id FEPSDK-2099
 */
 TEST_F(SchedulerRegistryTest, UnregisterLastScheduler)
-{    
+{
     auto scheduler_name = _scheduler_mock->getName();
     fep3::native::LocalSchedulerRegistry scheduler_registry(std::move(_default_scheduler));
 
     // actual test
     {
         ASSERT_FEP3_NOERROR(scheduler_registry.registerScheduler(std::move(_scheduler_mock)));
-        ASSERT_FEP3_NOERROR(scheduler_registry.unregisterScheduler(scheduler_name));        
+        ASSERT_FEP3_NOERROR(scheduler_registry.unregisterScheduler(scheduler_name));
 
         auto current_schduler = scheduler_registry.getActiveSchedulerName();
         ASSERT_EQ(current_schduler, "default_scheduler");
@@ -176,27 +185,27 @@ TEST_F(SchedulerRegistryTest, UnregisterLastScheduler)
 * @req_id FEPSDK-2168
 */
 TEST_F(SchedulerRegistryTest, UnregisterDefaulfScheduler)
-{    
+{
     const auto default_scheduler_name = _default_scheduler->getName();
     fep3::native::LocalSchedulerRegistry scheduler_registry(std::move(_default_scheduler));
 
     // actual test
-    {      
-        ASSERT_FEP3_RESULT(scheduler_registry.unregisterScheduler(default_scheduler_name), fep3::ERR_INVALID_ARG);       
+    {
+        ASSERT_FEP3_RESULT(scheduler_registry.unregisterScheduler(default_scheduler_name), fep3::ERR_INVALID_ARG);
     }
 }
 
 /**
-* @brief A scheduler that is not existing is attempted to be unregistered. 
+* @brief A scheduler that is not existing is attempted to be unregistered.
 * @req_id FEPSDK-2082
 */
 TEST_F(SchedulerRegistryTest, UnregisterNotExistingScheduler)
-{    
+{
     const auto default_scheduler_name = _default_scheduler->getName();
     fep3::native::LocalSchedulerRegistry scheduler_registry(std::move(_default_scheduler));
 
     // actual test
-    {      
-        ASSERT_FEP3_RESULT(scheduler_registry.unregisterScheduler("not_existing_scheduler"), fep3::ERR_NOT_FOUND);       
+    {
+        ASSERT_FEP3_RESULT(scheduler_registry.unregisterScheduler("not_existing_scheduler"), fep3::ERR_NOT_FOUND);
     }
 }

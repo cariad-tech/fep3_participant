@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -74,7 +83,7 @@ protected:
 
         ASSERT_TRUE(_unique_ptr_to_component);
     }
-    
+
     std::shared_ptr<HostPlugin> getPlugin() const
     {
         return _plugin;
@@ -87,11 +96,11 @@ protected:
         //         we do it manually here:
         return dynamic_cast<component_interface_type*>(_unique_ptr_to_component.get());
     }
-    
+
     /**
      * @brief Extracts the component from this
      * @note Subsequent calls to @ref getComponent will return a nullptr
-     * 
+     *
      * @return Unique pointer to the component
      */
     std::unique_ptr<::fep3::IComponent> extractComponent()
@@ -114,7 +123,7 @@ private:
  * Test fixture class loading a single mocked component from within a C plugin
  */
 template<typename mocked_component_c_plugin_loader_type>
-class MockedComponentCPluginLoaderFixture 
+class MockedComponentCPluginLoaderFixture
     : public ::testing::Test
     , public mocked_component_c_plugin_loader_type
 {

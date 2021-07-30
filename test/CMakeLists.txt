@@ -1,14 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 option(fep3_participant_cmake_enable_functional_tests
        "Enable functional tests - requires googletest (default: OFF)" OFF)
 option(fep3_participant_cmake_enable_private_tests
@@ -34,17 +38,14 @@ if (NOT fep3_participant_cmake_integrated_tests)
         else()
             message(FATAL_ERROR "Conan build info can't be found.")
         endif()
-    
+
         if(CORTEX_WORKSPACE)
             conan_basic_setup(TARGETS)
         else()
             conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
         endif()
-        set(gtest_search_mode CONFIG)
     endif()
-    
-    find_package(a_util REQUIRED)
-    find_package(pkg_rpc REQUIRED)
+
     find_package(fep3_participant REQUIRED)
     find_package(fep3_participant_core REQUIRED)
     find_package(fep3_participant_cpp REQUIRED)
@@ -52,28 +53,7 @@ if (NOT fep3_participant_cmake_integrated_tests)
 endif ()
 
 find_package(Threads)
-find_package(GTest REQUIRED ${gtest_search_mode})
-find_package(GMock QUIET ${gtest_search_mode})
-
-if(NOT GMock_FOUND) # backup
-	get_target_property(GMOCK_LIB_DIRS GTest::GTest IMPORTED_LOCATION)
-	get_filename_component(GMOCK_LIB_DIRS ${GMOCK_LIB_DIRS} DIRECTORY)
-	# assuming gmock in the same location as gtest (hacky, I know)
-
-    add_library(GMock::GMock STATIC IMPORTED)
-	set_target_properties(GMock::GMock PROPERTIES
-	  INTERFACE_INCLUDE_DIRECTORIES "${GTEST_INCLUDE_DIRS}")
-	set_target_properties(GMock::GMock PROPERTIES
-	  IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
-	  IMPORTED_LOCATION "${GMOCK_LIB_DIRS}/gmock${CMAKE_STATIC_LIBRARY_SUFFIX}")
-
-    add_library(GMock::Main STATIC IMPORTED)
-	set_target_properties(GMock::Main PROPERTIES
-	  INTERFACE_INCLUDE_DIRECTORIES "${GTEST_INCLUDE_DIRS}")
-	set_target_properties(GMock::Main PROPERTIES
-	  IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
-	  IMPORTED_LOCATION "${GMOCK_LIB_DIRS}/gmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}")
-endif()
+find_package(GTest CONFIG REQUIRED COMPONENTS gtest gtest_main gmock gmock_main)
 
 include(GoogleTest)
 

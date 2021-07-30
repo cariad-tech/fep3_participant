@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <string>
 #include <gtest/gtest.h>
@@ -40,8 +49,52 @@ TEST_F(NativeClockSyncService, testDefaultConfiguration)
 
     // actual test case
     {
-        ASSERT_EQ(fep3::arya::getPropertyValue<std::string>(*_clock_sync_service_property_node->getChild(FEP3_TIMING_MASTER_PROPERTY)), timing_master_name_expectation);
-        ASSERT_EQ(fep3::arya::getPropertyValue<std::string>(*_clock_sync_service_property_node->getChild(FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY)), slave_sync_cycle_time_default_value);
+        ASSERT_EQ(fep3::base::getPropertyValue<std::string>(*_clock_sync_service_property_node->getChild(FEP3_TIMING_MASTER_PROPERTY)), timing_master_name_expectation);
+        ASSERT_EQ(fep3::base::getPropertyValue<std::string>(*_clock_sync_service_property_node->getChild(FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY)), slave_sync_cycle_time_default_value);
+    }
+}
+
+/**
+ * @detail Test whether the clock sync service logs the configured timing master name on initialization success.
+ */
+TEST_F(NativeClockSyncService, testLogTimingMasterNameOnInit)
+{
+    EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
+
+    auto main_clock_property_node = _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY);
+    ASSERT_TRUE(main_clock_property_node);
+    main_clock_property_node->setValue(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND);
+    fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
+        FEP3_TIMING_MASTER_PROPERTY),
+        "timing_master");
+
+    EXPECT_CALL(*_service_bus, getServer()).Times(1).WillOnce(Return(_rpc_server));
+    EXPECT_CALL(*_rpc_server, registerService(fep3::rpc::IRPCClockSyncSlaveDef::getRPCDefaultName(),_))
+        .Times(1).WillOnce(Return(fep3::Result()));
+    EXPECT_CALL(*_service_bus, getRequester("timing_master")).Times(1).WillOnce(Return(_rpc_requester));
+
+    // actual test case
+    {
+        EXPECT_CALL(*_logger, logDebug(_))
+            .WillRepeatedly(Return(fep3::Result{}));
+        EXPECT_CALL(*_logger, logDebug(fep3::mock::LogStringRegexMatcher
+        ("Participant 'timing_master' is"))).WillOnce(Return(fep3::Result{}));
+
+        const auto json_reply = R"({"id" : 1,"jsonrpc" : "2.0","result" : 0})";
+
+        EXPECT_CALL(*_rpc_requester, sendRequest(_, ContainsRegex("getMasterType"), _)).Times(1)
+            .WillOnce(DoAll(
+                WithArg<2>(Invoke([&json_reply](fep3::arya::IRPCRequester::IRPCResponse& response) {
+            response.set(json_reply);
+        })), Return(fep3::Result{})));
+
+        EXPECT_CALL(*_rpc_requester, sendRequest(_, ContainsRegex("registerSyncSlave"), _)).Times(1)
+            .WillOnce(DoAll(
+                WithArg<2>(Invoke([&json_reply](fep3::arya::IRPCRequester::IRPCResponse& response) {
+            response.set(json_reply);
+        })), Return(fep3::Result{})));
+
+        ASSERT_FEP3_NOERROR(_component_registry->initialize());
     }
 }
 
@@ -50,19 +103,20 @@ TEST_F(NativeClockSyncService, testDefaultConfiguration)
  *
  */
 TEST_F(NativeClockSyncService, testInitNoTimingMaster)
-{ 
+{
     // actual test case
     {
         EXPECT_CALL(*_logger, logError(ContainsRegex("timing master"))).Times(1).WillOnce(::testing::Return(::fep3::Result{}));
 
 
         // set properties to avoid getting an error which we do not test for in this test case
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_TIMING_MASTER_PROPERTY),
             "");
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).Times(1).WillOnce(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).Times(1).WillOnce(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND));
+        auto main_clock_property_node = _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY);
+        ASSERT_TRUE(main_clock_property_node);
+        main_clock_property_node->setValue(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND);
 
         ASSERT_FEP3_RESULT(_component_registry->initialize(), fep3::ERR_INVALID_ARG);
         ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
@@ -73,12 +127,13 @@ TEST_F(NativeClockSyncService, testInitNoTimingMaster)
         EXPECT_CALL(*_logger, logError(ContainsRegex("timing master"))).Times(1).WillOnce(::testing::Return(::fep3::Result{}));
 
         // set properties to avoid getting an error which we do not test for in this test case
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_TIMING_MASTER_PROPERTY),
             "");
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).Times(1).WillOnce(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).Times(1).WillOnce(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE));
+        auto main_clock_property_node = _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY);
+        ASSERT_TRUE(main_clock_property_node);
+        main_clock_property_node->setValue(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE);
 
         ASSERT_FEP3_RESULT(_component_registry->initialize(), fep3::ERR_INVALID_ARG);
     }
@@ -93,12 +148,13 @@ TEST_F(NativeClockSyncService, testInitNoMainClock)
     // actual test case
     {
         // set properties to avoid getting an error which we do not test for in this test case
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_TIMING_MASTER_PROPERTY),
             "TimingMaster");
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).Times(1).WillOnce(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).Times(1).WillOnce(Return(""));
+        auto main_clock_property_node = _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY);
+        ASSERT_TRUE(main_clock_property_node);
+        main_clock_property_node->setValue("");
 
         ASSERT_FEP3_NOERROR(_component_registry->initialize());
     }
@@ -110,22 +166,23 @@ TEST_F(NativeClockSyncService, testInitNoMainClock)
  */
 TEST_F(NativeClockSyncService, testInitInvalidSyncCycleTime)
 {
-    const int32_t invalid_sync_cycle_time = 0;
+    const int64_t invalid_sync_cycle_time = 0;
 
     // actual test case
     {
         EXPECT_CALL(*_logger, logError(ContainsRegex("sync cycle time"))).Times(1).WillOnce(::testing::Return(::fep3::Result{}));
 
         // set properties to avoid getting an error which we do not test for in this test case
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY),
             invalid_sync_cycle_time);
-        setPropertyValue(*_clock_sync_service_property_node->getChild(
+        fep3::base::setPropertyValue(*_clock_sync_service_property_node->getChild(
             FEP3_TIMING_MASTER_PROPERTY),
             "TimingMaster");
 
-        EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).Times(1).WillOnce(Return(_property_node_mock));
-        EXPECT_CALL(*_property_node_mock, getValue()).Times(1).WillOnce(Return(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE));
+        auto main_clock_property_node = _clock_service_property_node->getChild(FEP3_MAIN_CLOCK_PROPERTY);
+        ASSERT_TRUE(main_clock_property_node);
+        main_clock_property_node->setValue(FEP3_CLOCK_SLAVE_MASTER_ONDEMAND);
 
         ASSERT_FEP3_RESULT(_component_registry->initialize(), fep3::ERR_INVALID_ARG);
     }
@@ -137,11 +194,12 @@ TEST_F(NativeClockSyncService, testInitInvalidSyncCycleTime)
  */
 TEST_F(NativeClockSyncService, testInitNoMainClockPropertyNode)
 {
-	// actual test case
-	{
-		EXPECT_CALL(*_configuration_service_mock, getNode(FEP3_CLOCK_SERVICE_MAIN_CLOCK)).Times(1)
-		.WillOnce(Return(std::shared_ptr<IPropertyNode>()));
+    // actual test case
+    {
+        auto clock_property_node = dynamic_cast<fep3::base::arya::IPropertyWithExtendedAccess*>(_clock_service_property_node.get());
+        ASSERT_TRUE(clock_property_node);
+        clock_property_node->removeChild(FEP3_MAIN_CLOCK_PROPERTY);
 
-		ASSERT_FEP3_NOERROR(_component_registry->initialize());
-	}
+        ASSERT_FEP3_NOERROR(_component_registry->initialize());
+    }
 }

@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 
@@ -22,7 +30,7 @@ namespace service_bus_helper
 class ILogSink
 {
 protected:
-    virtual ~ILogSink() = default;
+    ~ILogSink() = default;
 public:
     virtual void internalLog(const std::string& message) = 0;
 };
@@ -33,7 +41,7 @@ private:
     Logger() = default;
 
 public:
-    
+
     static Logger& get()
     {
         static Logger logger;
@@ -65,8 +73,8 @@ public:
             std::cout << message << std::endl;
         }
     }
-private: 
-    std::list<ILogSink*> _log_sinks; 
+private:
+    std::list<ILogSink*> _log_sinks;
     std::recursive_mutex _sync_sink;
 };
 

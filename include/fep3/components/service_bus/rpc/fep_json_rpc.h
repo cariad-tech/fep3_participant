@@ -1,22 +1,30 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <string>
 #include <jsonrpccpp/client/iclientconnector.h>
 #include <jsonrpccpp/common/exception.h>
 #include <jsonrpccpp/server/abstractserverconnector.h>
-#include <rpc_pkg/rpc_server.h>
-#include <rpc_pkg/json_rpc.h>
+#include <rpc/rpc_server.h>
+#include <rpc/json_rpc.h>
 
 #include <fep3/fep3_participant_types.h>
 #include <fep3/components/service_bus/rpc/rpc_intf.h>
@@ -34,13 +42,13 @@ namespace detail
     {
         ClientConnectorInitializerType(
             const std::string& service_name,
-            const std::shared_ptr<IRPCRequester>& rpc) :
+            const std::shared_ptr<fep3::arya::IRPCRequester>& rpc) :
             _service_name(service_name),
             _rpc(rpc)
         {
         }
         std::string   _service_name;
-        std::shared_ptr<IRPCRequester> _rpc;
+        std::shared_ptr<fep3::arya::IRPCRequester> _rpc;
     };
 
     /**
@@ -49,7 +57,7 @@ namespace detail
     class JSONFEPClientConnector : public ::jsonrpc::IClientConnector
     {
         private:
-            struct StringResponse : public arya::IRPCRequester::IRPCResponse
+            struct StringResponse : public fep3::arya::IRPCRequester::IRPCResponse
             {
                 std::string& _bounded_string;
                 StringResponse(std::string& string_to_bind) : _bounded_string(string_to_bind)
@@ -65,7 +73,7 @@ namespace detail
             /**
                 * Constructor
                 */
-            JSONFEPClientConnector(const ClientConnectorInitializerType& rpc_service_client_info) :
+            JSONFEPClientConnector(const arya::detail::ClientConnectorInitializerType& rpc_service_client_info) :
                 _init_info(rpc_service_client_info)
             {
             }
@@ -85,8 +93,7 @@ namespace detail
                         response);
                     if (isFailed(res))
                     {
-                        throw std::runtime_error(
-                            "error while performing call : " + message + " - "+ std::string(res.getDescription()));
+                        throw jsonrpc::JsonRpcException(res.getDescription());
                     }
                 }
             }
@@ -128,9 +135,9 @@ namespace detail
     class FEPResponseToRPCResponse : public ::rpc::IResponse
     {
     protected:
-        ::fep3::rpc::IRPCRequester::IRPCResponse& _response_ref;
+        ::fep3::IRPCRequester::IRPCResponse& _response_ref;
     public:
-        FEPResponseToRPCResponse(::fep3::rpc::IRPCRequester::IRPCResponse& response_ref) :
+        FEPResponseToRPCResponse(::fep3::IRPCRequester::IRPCResponse& response_ref) :
             _response_ref(response_ref)
         {
         }

@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "service_bus.h"
 #include "rpc/http/http_systemaccess.h"
@@ -88,7 +96,7 @@ public:
             }
             else if (system_url.empty())
             {
-                //is valid we do not want to use discovery 
+                //is valid we do not want to use discovery
                 //we know all addresses from outside!
                 used_system_url = {};
             }
@@ -162,7 +170,7 @@ public:
         }
         SB_LOG_AND_RETURN_ERROR_DESCRIPTION(ERR_INVALID_ARG, "Can not find system access '%s' to destroy it",
             system_name.c_str());
-        
+
     }
     std::shared_ptr<IServiceBus::ISystemAccess> findSystemAccess(const std::string& system_name) const
     {
@@ -173,9 +181,15 @@ public:
                 return current_access;
             }
         }
+
+        if (system_name.empty())
+        {
+            return getDefaultAccess();
+        }
+
         return {};
     }
-    std::shared_ptr<IServiceBus::ISystemAccess> getDefaultAccess()
+    std::shared_ptr<IServiceBus::ISystemAccess> getDefaultAccess() const
     {
         return _default_system_access;
     }
@@ -215,7 +229,7 @@ ServiceBus::~ServiceBus()
 fep3::Result ServiceBus::createSystemAccess(const std::string& system_name,
     const std::string& system_discovery_url,
     bool is_default)
-{    
+{
     auto res = _impl->createSystemAccess(system_name,
                                          system_discovery_url,
                                          is_default);

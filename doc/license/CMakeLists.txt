@@ -1,5 +1,5 @@
 #
-# Copyright @ 2019 Audi AG. All rights reserved.
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
 #     This Source Code Form is subject to the terms of the Mozilla
 #     Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -10,10 +10,9 @@
 # relevant directory) where a recipient would be likely to look for such a notice.
 # 
 # You may add additional accurate notices of copyright ownership.
+# 
 #
-##################################################################
-install(FILES CONTRIBUTING.md
-              mpl.md
+install(FILES mpl.md
               MPL2.0.txt
         DESTINATION doc/license
 )

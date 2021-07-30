@@ -1,12 +1,20 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+ 
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ 
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+ 
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
 #pragma once
@@ -20,7 +28,7 @@
 #include <fep3/components/job_registry/job_intf.h>
 
 /**
-* @brief Name of the fep3 3 Timing native scheduler implementation.
+* @brief Name of the native scheduler implementation.
 */
 #define FEP3_SCHEDULER_CLOCK_BASED "clock_based_scheduler"
 
@@ -33,13 +41,10 @@ namespace arya
 * @brief Interface for a Scheduler
 *
 */
-class FEP3_PARTICIPANT_EXPORT IScheduler
+class IScheduler
 {
 public:
-    /**
-    * @brief DTOR
-    *
-    */
+    /// DTOR
     virtual ~IScheduler() = default;
 
     /**
@@ -56,8 +61,8 @@ public:
     * uses the clock service and configurations of every registered job to create a timer thread
     * for every job which triggers the job at the configured cycle time.
     *
-    * @param clock The local clock service
-    * @param jobs The configurations of all jobs registered at the job registry
+    * @param[in] clock The local clock service
+    * @param[in] jobs The configurations of all jobs registered at the job registry
     * @return fep3::Result
     * @retval ERR_NOERROR Everything went fine
     */

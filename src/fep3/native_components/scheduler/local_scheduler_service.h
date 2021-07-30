@@ -1,15 +1,22 @@
 /**
- * Declaration of the native scheduler service implementation.
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -19,8 +26,8 @@
 #include <memory>
 #include <string>
 
-#include <fep3/components/configuration/propertynode.h>
-#include <fep3/components/base/component_base.h>
+#include <fep3/base/properties/propertynode.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/scheduler/scheduler_service_intf.h>
 #include <fep3/native_components/scheduler/clock_based/local_clock_based_scheduler.h>
 #include <fep3/native_components/scheduler/local_scheduler_registry.h>
@@ -35,11 +42,11 @@ namespace fep3
 namespace native
 {
 
-class LoggerForward : public ILoggingService::ILogger
+class LoggerForward : public ILogger
 {
     public:
         LoggerForward() = default;
-        void setLogger(const std::shared_ptr<const fep3::ILoggingService::ILogger>& logger)
+        void setLogger(const std::shared_ptr<const fep3::ILogger>& logger)
         {
             _logger = logger;
         }
@@ -106,7 +113,7 @@ class LoggerForward : public ILoggingService::ILogger
         }
 
     private:
-        std::shared_ptr<const fep3::ILoggingService::ILogger> _logger;
+        std::shared_ptr<const fep3::ILogger> _logger;
 };
 
 class LocalSchedulerService;
@@ -130,7 +137,7 @@ private:
 /**
 * @brief Configuration for the LocalClockService
 */
-struct SchedulerServiceConfiguration : public Configuration
+struct SchedulerServiceConfiguration : public base::Configuration
 {
     SchedulerServiceConfiguration();
     ~SchedulerServiceConfiguration() = default;
@@ -139,17 +146,17 @@ struct SchedulerServiceConfiguration : public Configuration
     fep3::Result unregisterPropertyVariables() override;
 
 public:
-    PropertyVariable<std::string> _active_scheduler_name{ FEP3_SCHEDULER_CLOCK_BASED };
+    base::PropertyVariable<std::string> _active_scheduler_name{ FEP3_SCHEDULER_CLOCK_BASED };
 };
 
 class LocalSchedulerService
-    : public fep3::ComponentBase<fep3::ISchedulerService>
+    : public fep3::base::Component<fep3::ISchedulerService>
 {
 public:
     explicit LocalSchedulerService();
     ~LocalSchedulerService() = default;
 
-    // ComponentBase
+    // base::Component
     fep3::Result create() override;
     fep3::Result destroy() override;
     fep3::Result tense() override;
@@ -173,10 +180,9 @@ private:
  private:
     std::unique_ptr<fep3::native::LocalClockBasedScheduler> _local_clock_based_scheduler;
     std::unique_ptr<fep3::native::LocalSchedulerRegistry> _scheduler_registry;
-    std::function<fep3::Result()> _set_participant_to_error_state;
     std::atomic_bool _started{false};
-    
-    std::shared_ptr<const fep3::ILoggingService::ILogger> _logger;
+
+    std::shared_ptr<const fep3::ILogger> _logger;
     std::shared_ptr<LoggerForward> _logger_wrapper_forward;
 
     SchedulerServiceConfiguration _configuration;

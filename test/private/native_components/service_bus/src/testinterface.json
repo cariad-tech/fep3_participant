@@ -1,14 +1,14 @@
 [
     // returns a comma sperated list of RPC objects
     {
-        "name": "GetObjects",        
+        "name": "GetObjects",
         "returns": "Object1,Object2"
     },
 
     // returns the interface id of an RPC object
     {
         "name": "GetRPCIIDForObject",
-        "params": { 
+        "params": {
             "strObject": "Object1"
         },
         "returns": "InterfaceID"
@@ -16,14 +16,14 @@
 
     // returns the current runlevel
     {
-        "name": "GetRunlevel",        
+        "name": "GetRunlevel",
         "returns": 1
     },
 
     // changes the current runlevel
     {
-        "name": "SetRunlevel",        
-        "params": { 
+        "name": "SetRunlevel",
+        "params": {
             "nRunLevel": 1
         },
         "returns": {

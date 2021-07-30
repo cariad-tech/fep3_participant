@@ -1,17 +1,26 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include <fep3/components/simulation_bus/c_access_wrapper/simulation_bus_c_access_wrapper.h>
-// Note: a C plugin must not link against the fep3 participant private (object) library, so we need an 
-// explicit relative path to the mock class file; a better solution might be to create dedicated header-only 
+// Note: a C plugin must not link against the fep3 participant private (object) library, so we need an
+// explicit relative path to the mock class file; a better solution might be to create dedicated header-only
 // private library containing the mock files.
 #include "../../../../../../../src/fep3/components/simulation_bus/mock/mock_simulation_bus.h"
 
@@ -36,7 +45,7 @@ fep3_plugin_c_InterfaceError fep3_plugin_c_arya_createSimulationBus
                 {
                     // if the simulation bus has not explicitly been set from outside
                     // we assume that a dummy mock is needed, so we use NiceMock
-                    const auto& mock_simulation_bus 
+                    const auto& mock_simulation_bus
                         = new ::testing::NiceMock<::fep3::mock::SimulationBus<fep3::plugin::c::TransferableComponentBase>>();
                     return static_cast<::fep3::mock::SimulationBus<fep3::plugin::c::TransferableComponentBase>*>(mock_simulation_bus);
                 }

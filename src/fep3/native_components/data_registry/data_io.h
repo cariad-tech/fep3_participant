@@ -1,20 +1,27 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
-#include <thread>
-
 #include "data_registry.h"
-#include "data_queue_reuse.hpp"
+#include "data_reader_queue.hpp"
 
 namespace fep3
 {
@@ -63,7 +70,7 @@ class DataRegistry::DataReaderProxy : public IDataRegistry::IDataReader
 public:
     DataReaderProxy() = delete;
     explicit DataReaderProxy(std::shared_ptr<IDataRegistry::IDataReader> reader);
-    ~DataReaderProxy() = default;
+    ~DataReaderProxy() override = default;
 
     size_t size() const override;
     size_t capacity() const override;
@@ -82,7 +89,7 @@ class DataRegistry::DataWriterProxy : public IDataRegistry::IDataWriter
 public:
     DataWriterProxy() = delete;
     explicit DataWriterProxy(std::shared_ptr<IDataRegistry::IDataWriter> writer);
-    ~DataWriterProxy() = default;
+    ~DataWriterProxy() override = default;
 
     fep3::Result write(const IDataSample& data_sample) override;
     fep3::Result write(const IStreamType& stream_type) override;
@@ -91,6 +98,7 @@ public:
 private:
     const std::shared_ptr<IDataRegistry::IDataWriter> _data_writer{ nullptr };
 };
+
 } // namespace arya
 } // namespace native
 } // namespace fep3

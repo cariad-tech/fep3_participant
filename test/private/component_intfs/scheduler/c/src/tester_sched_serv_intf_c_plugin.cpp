@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -68,7 +77,7 @@ using SchedulerServiceLoaderFixture = MockedComponentCPluginLoaderFixture<Schedu
 /**
  * Test method fep3::ISchedulerService::getActiveSchedulerName of a scheduler service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2835
  */
 TEST_F(SchedulerServiceLoaderFixture, testMethod_getActiveSchedulerName)
 {
@@ -77,7 +86,7 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_getActiveSchedulerName)
     // setting of expectations
     {
         auto& mock_scheduler_service = getMockComponent();
-        
+
         EXPECT_CALL(mock_scheduler_service, getActiveSchedulerName())
             .WillOnce(::testing::Return(test_scheduler_name));
     }
@@ -89,7 +98,7 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_getActiveSchedulerName)
 /**
  * Test method fep3::ISchedulerRegistry::registerScheduler of a scheduler service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2835
  */
 TEST_F(SchedulerServiceLoaderFixture, testMethod_registerScheduler)
 {
@@ -98,8 +107,8 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_registerScheduler)
     // setting of expectations
     {
         auto& mock_scheduler_service = getMockComponent();
-        
-        // Note: Using a gMock matcher would suit better here than an action, but a matcher 
+
+        // Note: Using a gMock matcher would suit better here than an action, but a matcher
         // must not have any side effects and invoking a mock method has a side effect.
         EXPECT_CALL(mock_scheduler_service, registerScheduler_(::testing::_))
             .WillOnce(CheckScheduler(mock_scheduler.get()));
@@ -112,12 +121,12 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_registerScheduler)
 /**
  * Test method fep3::ISchedulerRegistry::unregisterScheduler of a scheduler service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2835
  */
 TEST_F(SchedulerServiceLoaderFixture, testMethod_unregisterScheduler)
 {
     const auto& test_scheduler_name = std::string("test_scheduler");
-    
+
     // setting of expectations
     {
         auto& mock_scheduler_service = getMockComponent();
@@ -133,7 +142,7 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_unregisterScheduler)
 /**
  * Test method fep3::ISchedulerRegistry::getSchedulerNames of a scheduler service
  * that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2835
  */
 TEST_F(SchedulerServiceLoaderFixture, testMethod_getSchedulerNames)
 {
@@ -146,7 +155,7 @@ TEST_F(SchedulerServiceLoaderFixture, testMethod_getSchedulerNames)
     // setting of expectations
     {
         auto& mock_scheduler_service = getMockComponent();
-        
+
         EXPECT_CALL(mock_scheduler_service, getSchedulerNames())
             .WillOnce(::testing::Return(test_scheduler_names));
     }
@@ -166,11 +175,11 @@ using SchedulerServiceLoaderWithAccessToSchedulers = MockedComponentCPluginLoade
     , Plugin1PathGetter
     , SetMockComponentFunctionSymbolGetter
     >;
-    
+
 /**
  * Test fixture class loading a single mocked component from within a C plugin
  */
-class SchedulerServiceWithAccessToSchedulersLoaderFixture 
+class SchedulerServiceWithAccessToSchedulersLoaderFixture
     : public ::testing::Test
     , public SchedulerServiceLoaderWithAccessToSchedulers
 {
@@ -181,7 +190,7 @@ protected:
         _get_schedulers_function = getPlugin()->get<fep3::IScheduler*(size_t)>("getScheduler");
         ASSERT_NE(nullptr, _get_schedulers_function);
     }
-    
+
     ::fep3::IScheduler* getScheduler(size_t index) const
     {
         return _get_schedulers_function(index);
@@ -192,7 +201,7 @@ private:
 
 /**
  * Test the interface fep3::IScheduler of a scheduler that resides in a C plugin
- * @req_id TODO
+ * @req_id FEPSDK-2835
  */
 TEST_F(SchedulerServiceWithAccessToSchedulersLoaderFixture, testSchedulerInterface)
 {
@@ -208,7 +217,6 @@ TEST_F(SchedulerServiceWithAccessToSchedulersLoaderFixture, testSchedulerInterfa
                     , ::fep3::Duration(2)
                     , ::fep3::Duration(3)
                     , ::fep3::JobConfiguration::TimeViolationStrategy::unknown
-                    , std::vector<std::string>{"other_job_a, other_job_b"}
                     }
                 }
             }}
@@ -221,7 +229,6 @@ TEST_F(SchedulerServiceWithAccessToSchedulersLoaderFixture, testSchedulerInterfa
                     , ::fep3::Duration(22)
                     , {}
                     , ::fep3::JobConfiguration::TimeViolationStrategy::ignore_runtime_violation
-                    , std::vector<std::string>{}
                     }
                 }
             }}
@@ -231,10 +238,10 @@ TEST_F(SchedulerServiceWithAccessToSchedulersLoaderFixture, testSchedulerInterfa
     {
         auto& mock_scheduler_service = getMockComponent();
         ::testing::InSequence call_sequence;
-        
+
         EXPECT_CALL(mock_scheduler_service, registerScheduler_(::testing::_))
             .WillOnce(::testing::Return(::fep3::Result{}));
-            
+
         EXPECT_CALL(*mock_scheduler.get(), getName())
             .WillOnce(::testing::Return(test_scheduler_name));
         EXPECT_CALL(*mock_scheduler.get(), initialize(::testing::_, fep3::mock::JobsMatcher(test_jobs)))
@@ -253,7 +260,7 @@ TEST_F(SchedulerServiceWithAccessToSchedulersLoaderFixture, testSchedulerInterfa
     const auto& scheduler = getScheduler(0);
     // we registered one scheduler before
     ASSERT_NE(nullptr, scheduler);
-    
+
     // now test the interface IScheduler of a scheduler that resides in a C plugin
     EXPECT_EQ(test_scheduler_name, scheduler->getName());
     fep3::mock::ClockService<fep3::plugin::c::TransferableComponentBase> mock_clock_service;

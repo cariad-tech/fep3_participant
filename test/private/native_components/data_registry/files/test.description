@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+ 
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ 
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+ 
+You may add additional accurate notices of copyright ownership.
+-->
+<adtf:ddl xmlns:adtf="adtf">
+ <header>
+  <language_version>3.00</language_version>
+  <author>fep_team</author>
+  <date_creation>20.02.2020</date_creation>
+  <date_change>20.02.2020</date_change>
+  <description>Simplistic DDL for testing purposes</description>
+ </header>
+ <units />
+ <datatypes>
+  <datatype description="predefined ADTF tBool datatype" name="tBool" size="8" />
+  <datatype description="predefined ADTF tChar datatype" name="tChar" size="8" />
+  <datatype description="predefined ADTF tUInt8 datatype" name="tUInt8" size="8" />
+  <datatype description="predefined ADTF tInt8 datatype" name="tInt8" size="8" />
+  <datatype description="predefined ADTF tUInt16 datatype" name="tUInt16" size="16" />
+  <datatype description="predefined ADTF tInt16 datatype" name="tInt16" size="16" />
+  <datatype description="predefined ADTF tUInt32 datatype" name="tUInt32" size="32" />
+  <datatype description="predefined ADTF tInt32 datatype" name="tInt32" size="32" />
+  <datatype description="predefined ADTF tUInt64 datatype" name="tUInt64" size="64" />
+  <datatype description="predefined ADTF tInt64 datatype" name="tInt64" size="64" />
+  <datatype description="predefined ADTF tFloat32 datatype" name="tFloat32" size="32" />
+  <datatype description="predefined ADTF tFloat64 datatype" name="tFloat64" size="64" />
+ </datatypes>
+ <enums>
+ </enums>
+ <structs>
+  <struct alignment="1" name="tTestStruct" version="1">
+   <element alignment="1" arraysize="1" byteorder="LE" bytepos="0" name="ui8First" type="tUInt8" default="0"/>
+   <element alignment="1" arraysize="1" byteorder="LE" bytepos="1" name="ui8Second" type="tUInt8" default="0"/>
+  </struct>
+ </structs>
+ <streams />
+</adtf:ddl>

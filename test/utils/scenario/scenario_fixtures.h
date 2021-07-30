@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -36,8 +46,8 @@ struct NParticipantSystem
             _executors.push_back(std::make_shared<fep3::core::ParticipantExecutor>(*participant));
             _executors.back()->exec();
             _participant_wrappers.push_back(std::make_shared<ParticipantWrapper>(participant));
-        }        
-        
+        }
+
         _master_name = master_name;
         _system = std::make_unique<SystemStateMachine>(_executors);
     }
@@ -61,7 +71,7 @@ struct NParticipantSystem
     std::vector<std::shared_ptr<fep3::Participant>> getTimingSlaves() const
     {
         std::vector<std::shared_ptr<fep3::Participant>> slaves;
-        
+
         auto participants = getParticipants();
         std::copy_if(participants.begin(), participants.end(),
             std::back_inserter(slaves), [this](std::shared_ptr<fep3::Participant> participant)
@@ -78,14 +88,14 @@ struct NParticipantSystem
             [name](std::shared_ptr<fep3::Participant> participant)
             {
                 return participant->getName() == name;
-            });  
+            });
 
         if(result == participants.end())
         {
             return nullptr;
         }
 
-        return result->get();        
+        return result->get();
     }
 
     ParticipantWrapper* getWrapper(const std::string& name) const
@@ -94,15 +104,15 @@ struct NParticipantSystem
             [name](std::shared_ptr<ParticipantWrapper> wrapper)
         {
             return wrapper->participant->getName() == name;
-        });  
+        });
 
         if(result == _participant_wrappers.end())
         {
             return nullptr;
         }
 
-        return result->get();        
-    } 
+        return result->get();
+    }
 
     std::vector<std::shared_ptr<fep3::Participant>> getParticipants() const
     {
@@ -114,7 +124,7 @@ struct NParticipantSystem
         return participants;
     }
 
-    fep3::Result configureTimingMaster(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties) 
+    fep3::Result configureTimingMaster(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties)
     {
         auto master = getParticipant(getTimingMasterName());
         if(!master)
@@ -124,15 +134,15 @@ struct NParticipantSystem
         return configureParticipant(pairs_of_properties, *master);
     }
 
-    fep3::Result configureTimingSlaves(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties) 
+    fep3::Result configureTimingSlaves(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties)
     {
        return configureParticipants(pairs_of_properties, getTimingSlaves());
-    } 
+    }
 
-    fep3::Result configureAllParticipants(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties) 
-    {       
+    fep3::Result configureAllParticipants(const std::vector<std::pair<std::string, std::string>>& pairs_of_properties)
+    {
         return configureParticipants(pairs_of_properties, getParticipants());
-    } 
+    }
 
     void Running() override
     {
@@ -146,9 +156,9 @@ struct NParticipantSystem
 public:
     std::string _system_name = "test_system";
     std::string _system_version = "test_version";
-   
+
 private:
-    std::string _master_name;    
+    std::string _master_name;
     std::vector<std::shared_ptr<ParticipantWrapper>> _participant_wrappers;
     std::vector<std::shared_ptr<fep3::core::ParticipantExecutor>> _executors;
     std::unique_ptr<SystemStateMachine> _system;
@@ -196,12 +206,12 @@ struct MasterSlaveSystem
     : public NParticipantSystem
 {
     void SetUp() override
-    {           
-        NParticipantSystem::SetUp(createParticipants(), getMasterName());        
+    {
+        NParticipantSystem::SetUp(createParticipants(), getMasterName());
     }
 
-    /**    
-     * Override to provide your own participants     
+    /**
+     * Override to provide your own participants
      */
     virtual std::vector<std::shared_ptr<fep3::Participant>> createParticipants() const
     {
@@ -209,7 +219,7 @@ struct MasterSlaveSystem
         const std::string slave_name {"test_timing_slave"};
 
         auto master = std::make_shared<fep3::Participant>(fep3::cpp::createParticipant<MyElement<MyCoreJob_100ms>>(
-            master_name, _system_name));  
+            master_name, _system_name));
 
         auto slave = std::make_shared<fep3::Participant>(fep3::cpp::createParticipant<MyElement<MyCoreJob_100ms>>(
             slave_name, _system_name));
@@ -217,13 +227,13 @@ struct MasterSlaveSystem
         return  { master, slave };
     }
 
-    /**    
-    * Override to provide timing master name    
+    /**
+    * Override to provide timing master name
     */
     std::string getMasterName() const
     {
         return "test_timing_master";
-    }   
+    }
 };
 
 struct MasterSlaveSystemDiscrete
@@ -240,6 +250,7 @@ struct MasterSlaveSystemDiscrete
             std::make_pair(FEP3_CLOCK_SERVICE_MAIN_CLOCK, FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE),
             std::make_pair(FEP3_CLOCKSYNC_SERVICE_CONFIG_TIMING_MASTER, getMasterName())}));
     }
+    static const int _number_of_time_resets = 1;
 };
 
 
@@ -258,6 +269,7 @@ struct MasterSlaveSystemContinuous
             std::make_pair(FEP3_CLOCKSYNC_SERVICE_CONFIG_TIMING_MASTER, getMasterName())}));
 
     }
+    static const int _number_of_time_resets = 2;
 };
 
 

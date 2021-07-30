@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <../3rdparty/lssdp-cpp/src/url/cxx_url.h>
@@ -45,7 +53,7 @@ class DDSServer : public fep3::base::arya::ServiceRegistryBase
 
     public: //rpc service ... needs to override it
         std::vector<std::string> getRegisteredServiceNames() const override;
-        std::shared_ptr<rpc::arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const override;
+        std::shared_ptr<arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const override;
 
     public: //internal rpc server... needs to override it
         fep3::Result registerService(const std::string& service_name,

@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 
 #include <fep3/cpp.h>
@@ -23,7 +32,7 @@ class MyJobSend : public DataJob
 public:
     MyJobSend() : DataJob("myjob_send", 100ms)
     {
-        my_out_data = addDataOut("my_data", fep3::StreamTypeString());
+        my_out_data = addDataOut("my_data", fep3::base::StreamTypeString());
         registerPropertyVariable(_value_to_send, "value_to_send");
     }
     fep3::Result process(fep3::Timestamp time) override
@@ -46,7 +55,7 @@ public:
     MyJobReceive() : DataJob("myjob_receive", 100ms)
     {
         _counter = 0;
-        my_in_data = addDataIn("my_data", fep3::StreamTypeString());
+        my_in_data = addDataIn("my_data", fep3::base::StreamTypeString());
     }
     fep3::Result process(fep3::Timestamp /*time*/) override
     {
@@ -88,7 +97,7 @@ std::string MyJobReceive::_last_value;
  * @req_id FEPSDK-Sample
  */
 TEST(CPPAPITester, testSimpleUse)
-{     
+{
     using namespace fep3::cpp;
     Participant partsender = createParticipant<DataJobElement<MyJobSend>>("test_sender", "system_name");
     fep3::core::ParticipantExecutor executor_sender(partsender);
@@ -103,6 +112,10 @@ TEST(CPPAPITester, testSimpleUse)
     ASSERT_TRUE(executor_receiver.load());
 
     ASSERT_TRUE(executor_sender.initialize());
+    ASSERT_TRUE(executor_receiver.initialize());
+
+    // check behavior on reinitialization
+    ASSERT_TRUE(executor_receiver.deinitialize());
     ASSERT_TRUE(executor_receiver.initialize());
 
     ASSERT_TRUE(executor_receiver.start());

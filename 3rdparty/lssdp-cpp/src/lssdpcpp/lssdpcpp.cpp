@@ -101,7 +101,7 @@ namespace
     constexpr static const char* const LSSDP_MSEARCH = "M-SEARCH";
     constexpr static const char* const LSSDP_NOTIFY = "NOTIFY";
     constexpr static const char* const LSSDP_RESPONSE = "OK";
-    
+
     constexpr static const char* const LSSDP_NOTIFY_NTS_ALIVE = "ssdp:alive";
     constexpr static const char* const LSSDP_NOTIFY_NTS_BYEBYE = "ssdp:byebye";
 
@@ -133,7 +133,7 @@ namespace
 }
 #define LSSDP_LOG_DEBUG_MESSAGE(_expr_) do { logDebugMessage( _expr_ );  } while(false)
 #else //LSSDP_DEBUGGING_ON
-#define LSSDP_LOG_DEBUG_MESSAGE(_expr_) 
+#define LSSDP_LOG_DEBUG_MESSAGE(_expr_)
 #endif
 
 namespace lssdp
@@ -182,20 +182,20 @@ public:
 /*******************************************************************************************************/
 /* Helper Packet Parser */
 /*******************************************************************************************************/
-struct LSSDPPacket 
+struct LSSDPPacket
 {
     char            _method[LSSDP_FIELD_LEN];      // M-SEARCH, NOTIFY, RESPONSE
     char            _st[LSSDP_FIELD_LEN];          // Search Target
     char            _usn[LSSDP_FIELD_LEN];         // Unique Service Name
     char            _location[LSSDP_LOCATION_LEN]; // Location
-    char            _nts[LSSDP_FIELD_LEN];         // nts 
+    char            _nts[LSSDP_FIELD_LEN];         // nts
 
     /* Additional SSDP Header Fields */
     char            _sm_id[LSSDP_FIELD_LEN];
     char            _device_type[LSSDP_FIELD_LEN];
 
     std::chrono::system_clock::time_point _update_time;
-    
+
     uint32_t        _received_from;
 
     LSSDPPacket() : _update_time(),
@@ -263,7 +263,7 @@ struct LSSDPPacket
         {
             return _strnicmp(src, dest, len);
         }
-    #endif 
+    #endif
 
     bool parse_field_line(const char * data, size_t start, size_t end) {
         // 1. find the colon
@@ -447,7 +447,7 @@ struct NetworkInterface::Impl
 {
     Impl(const std::string& name,
                   const std::string& ip4,
-                  const std::string& netmask_ip4) : 
+                  const std::string& netmask_ip4) :
         _name(name),
         _ip4(ip4),
         _netmask_ip4(netmask_ip4),
@@ -493,7 +493,7 @@ NetworkInterface::NetworkInterface(const std::string& name,
 {
 }
 
-NetworkInterface::NetworkInterface(const NetworkInterface& other) : 
+NetworkInterface::NetworkInterface(const NetworkInterface& other) :
     _impl(new Impl(other.getName(), other.getIp4(), other.getNetMaskIp4()))
 {
 }
@@ -578,7 +578,7 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
         FREE(p_adaptersinfo);
         throw std::runtime_error("Call to GetAdaptersAddresses failed with error: " + std::to_string(dwRetVal));
     }
-    
+
     new_interfaces.emplace_back(NetworkInterface("localhost", LSSDP_ADDR_LOCALHOST, LSSDP_ADDR_LOCALHOST_MASK));
 
     PIP_ADAPTER_INFO current_p_adaptersinfo = p_adaptersinfo;
@@ -597,7 +597,7 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
              current_address = current_address->Next;
         }
          current_p_adaptersinfo = current_p_adaptersinfo->Next;
-        
+
     }
     FREE(p_adaptersinfo);
 
@@ -608,9 +608,9 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
 
     // in lin create UDP socket
     SOCKET_TYPE fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0) 
+    if (fd < 0)
     {
-        throw std::runtime_error(std::string("create socket failed, errno = ") 
+        throw std::runtime_error(std::string("create socket failed, errno = ")
                                  + getErrorAsString());
     }
 #define LOCAL_BUFFER_LEN    2048
@@ -622,11 +622,11 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
 
     if (ioctl(fd, SIOCGIFCONF, &ifc) < 0)
     {
-        throw std::runtime_error(std::string("ioctl SIOCGIFCONF failed, errno = ") 
+        throw std::runtime_error(std::string("ioctl SIOCGIFCONF failed, errno = ")
                                  + getErrorAsString());
     }
 
-    // set to new interfaces 
+    // set to new interfaces
     int i;
     struct ifreq * ifr;
     for (i = 0; i < ifc.ifc_len; i += _SIZEOF_ADDR_IFREQ(*ifr))
@@ -643,7 +643,7 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
         // get network mask
         struct ifreq netmask = {};
         strcpy(netmask.ifr_name, ifr->ifr_name);
-        if (ioctl(fd, SIOCGIFNETMASK, &netmask) != 0) 
+        if (ioctl(fd, SIOCGIFNETMASK, &netmask) != 0)
         {
             continue;
         }
@@ -653,11 +653,11 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
                                                      addr->sin_addr.s_addr,
                                                      netmask_addr->sin_addr.s_addr));
     }
-       
+
     // close socket
     if (fd >= 0 && close(fd) != 0)
     {
-       throw std::runtime_error(std::string("closing of socket failed, errno = ") 
+       throw std::runtime_error(std::string("closing of socket failed, errno = ")
                                  + getErrorAsString());
     }
 
@@ -675,7 +675,7 @@ bool updateNetworkInterfaces(std::vector<NetworkInterface>& interfaces)
 }
 
 /*****************************************************************************************/
-ServiceDescription::ServiceDescription() : 
+ServiceDescription::ServiceDescription() :
     _location_url(),
     _unique_service_name(),
     _search_target(),
@@ -771,7 +771,7 @@ public:
 
         // create UDP socket
         _socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (_socket < 0) 
+        if (_socket < 0)
         {
             std::string throw_msg = std::string("create socket failed, errno = ")
                 + getErrorAsString();
@@ -817,7 +817,7 @@ public:
 #endif // WIN32
 
 #ifdef WIN32
-       //found no solution for that in WinSock API 
+       //found no solution for that in WinSock API
 #else
         // set FD_CLOEXEC (http://kaivy2001.pixnet.net/blog/post/32726732)
         int sock_opt = fcntl(_socket, F_GETFD);
@@ -846,7 +846,7 @@ public:
         addr.sin_family = AF_INET;
         addr.sin_port = htons(multicast_socket_port);
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        
+
         if (bind(_socket, (struct sockaddr *)&addr, sizeof(addr)) != 0)
         {
             std::string throw_msg = std::string("bind failed to ADDR ANY for multicast, errno = ")
@@ -864,7 +864,7 @@ public:
         memset(&imr, 0, sizeof(imr));
         imr.imr_multiaddr.s_addr = multicast_address.s_addr;
         imr.imr_interface.s_addr = htonl(INADDR_ANY);
-        
+
 #ifdef WIN32
         if (setsockopt(_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&imr, sizeof(imr)) != 0)
         {
@@ -946,7 +946,7 @@ public:
             throw std::runtime_error(throw_msg);
         }
 
-        // 3. enable IP_MULTICAST_LOOP for us, because we want that if the 
+        // 3. enable IP_MULTICAST_LOOP for us, because we want that if the
         //    option "send to myself is set"
         if (LSSDP_SEND_TO_LOCALHOST)
         {
@@ -972,12 +972,12 @@ public:
         dest_addr.sin_family = AF_INET;
         dest_addr.sin_port = htons(port);
         dest_addr.sin_addr.s_addr = _multicast_socket_addr;
-        
+
         // 5. send data
         int send_data_size = sendto(fd, data, (int)data_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         if (send_data_size < 0)
         {
-            std::string throw_msg = std::string("sendto ") + inet_ntoa(addr.sin_addr) + ":" + std::to_string(port) 
+            std::string throw_msg = std::string("sendto ") + inet_ntoa(addr.sin_addr) + ":" + std::to_string(port)
                 + " for multicast address "+ inet_ntoa(dest_addr.sin_addr) + ":" + std::to_string(port)
                 + " failed, errno = "
                 + getErrorAsString();
@@ -988,7 +988,7 @@ public:
         {
             LSSDP_LOG_DEBUG_MESSAGE(std::to_string(send_data_size) + " size sent");
         }
-        
+
         closeSocket(&fd);
     }
 
@@ -1053,7 +1053,7 @@ struct Service::Impl : public ServiceDescription
         std::string product_name,
         std::string product_version,
         std::string sm_id,
-        std::string device_type) 
+        std::string device_type)
         : ServiceDescription(location_url,
                              unique_service_name,
                              search_target,
@@ -1079,7 +1079,7 @@ struct Service::Impl : public ServiceDescription
         _address = inet_addr(url.host().c_str());
 
         //prepare notify alive message
-        _notify_alive_message = 
+        _notify_alive_message =
             std::string(LSSDP_HEADER_NOTIFY)
             + "HOST:" + url.host() + ":" + url.port() + "\r\n"
             + "CACHE-CONTROL:max-age=" + std::to_string(max_age.count()) + "\r\n"
@@ -1089,7 +1089,7 @@ struct Service::Impl : public ServiceDescription
             + "NT:" + getSearchTarget() + "\r\n"
             + "NTS:" + LSSDP_NOTIFY_NTS_ALIVE + "\r\n"
             + "USN:" + getUniqueServiceName() + "\r\n";
-            
+
         if (!getSMID().empty())
         {
             _notify_alive_message += "SM_ID:" + getSMID() + "\r\n";
@@ -1101,14 +1101,14 @@ struct Service::Impl : public ServiceDescription
         _notify_alive_message += std::string("\r\n");
 
         //prepare notify byebye message
-        _notify_byebye_message = 
+        _notify_byebye_message =
             std::string(LSSDP_HEADER_NOTIFY)
             + "HOST:" + url.host() + ":" + url.port() + "\r\n"
             + "NT:" + getSearchTarget() + "\r\n"
             + "NTS:" + LSSDP_NOTIFY_NTS_BYEBYE + "\r\n"
             + "USN:" + getUniqueServiceName() + "\r\n"
             + std::string("\r\n");
-        
+
         //prepare response message
         _response_message =
             std::string(LSSDP_HEADER_RESPONSE)
@@ -1130,7 +1130,7 @@ struct Service::Impl : public ServiceDescription
         }
         _response_message += std::string("\r\n");
 
-        //open the socket NOW for the NOTIFY Messages 
+        //open the socket NOW for the NOTIFY Messages
         ::lssdp::updateNetworkInterfaces(_network_interfaces);
         openSocket();
     }
@@ -1267,7 +1267,7 @@ struct Service::Impl : public ServiceDescription
         _send_errors.clear();
         return created_message;
     }
-    
+
 
 private:
     friend class Service;
@@ -1280,7 +1280,7 @@ private:
     std::string _notify_alive_message;
     std::string _notify_byebye_message;
     std::string _response_message;
-   
+
 
     std::vector<NetworkInterface>   _network_interfaces;
     NonBlockingMulticastSocket      _multicast_socket;
@@ -1332,7 +1332,6 @@ bool Service::checkForMSearchAndSendResponse(std::chrono::milliseconds timeout)
     FD_SET(_impl->_multicast_socket._socket, &fs);
     struct timeval tv;
     memset(&tv, 0, sizeof(tv));
-    tv.tv_usec = 100 * 1000;   // 100 ms
 
     auto begin_time = std::chrono::system_clock::now();
     bool return_value = true;
@@ -1346,6 +1345,9 @@ bool Service::checkForMSearchAndSendResponse(std::chrono::milliseconds timeout)
         #else
         int used_socket_in_select = _impl->_multicast_socket._socket + 1;
         #endif
+
+        // select() on Linux will change the timeout(man select). Assign the correct tv in loop.
+        tv.tv_usec = 100 * 1000;   // 100 ms
         int ret = select(used_socket_in_select, &fs, NULL, NULL, &tv);
         if (ret < 0)
         {
@@ -1418,7 +1420,7 @@ public:
     {
         closeSocket();
     }
-    
+
     Impl(const Impl& other)
     {
         //todo : make that ready !
@@ -1448,8 +1450,8 @@ public:
              throw std::runtime_error("The given url " + discover_url + " does not contain a IPv4 multicast address for host");
          }
          _address = inet_addr(url.host().c_str());
-         
-         //set to ssdp:all 
+
+         //set to ssdp:all
          if (_search_target.empty())
          {
              _search_target = LSSDP_SEARCH_TARGET_ALL;
@@ -1466,7 +1468,7 @@ public:
                              + " " + product_name + "/" + product_version + "\r\n"
              + std::string("\r\n");
 
-         //open the socket NOW for the M SEARCH AND NOTIFY Messages 
+         //open the socket NOW for the M SEARCH AND NOTIFY Messages
          ::lssdp::updateNetworkInterfaces(_network_interfaces);
          //open socket
          openSocket();
@@ -1528,7 +1530,7 @@ public:
         return (!error_occured);
     }
 
-    std::string getSendErrors() 
+    std::string getSendErrors()
     {
         std::string created_message;
         for (const auto& current : _send_errors)
@@ -1566,8 +1568,8 @@ ServiceFinder::ServiceFinder(const std::string& url,
                              const std::string& product_name,
                              const std::string& product_version,
                              const std::string& search_target,
-                             const std::string& device_type_filter) 
-    : _impl(std::make_unique<Impl>(url, 
+                             const std::string& device_type_filter)
+    : _impl(std::make_unique<Impl>(url,
                                    product_name,
                                    product_version,
                                    search_target,
@@ -1598,7 +1600,6 @@ bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdat
     FD_SET(_impl->_multicast_socket._socket, &fs);
     struct timeval tv;
     memset(&tv, 0, sizeof(tv));
-    tv.tv_usec = 100 * 1000;   // 100 ms
 
     auto begin_time = std::chrono::system_clock::now();
     bool return_value = true;
@@ -1610,6 +1611,8 @@ bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdat
         #else
         int used_socket_in_select = _impl->_multicast_socket._socket + 1;
         #endif
+        // select() on Linux will change the timeout(man select). Assign the correct tv in loop.
+        tv.tv_usec = 100 * 1000;   // 100 ms
         int ret = select(used_socket_in_select, &fs, NULL, NULL, &tv);
         if (ret < 0)
         {
@@ -1619,7 +1622,7 @@ bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdat
             _impl->_send_errors[_impl->_discover_url] = error_msg;
             go_ahead = false;
             return_value = false;
-        } 
+        }
         else if (ret == 0)
         {
             FD_SET(_impl->_multicast_socket._socket, &fs);
@@ -1687,18 +1690,18 @@ bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdat
                 }
             }
         }
-        
+
         //timeout check
         if ((std::chrono::system_clock::now() - begin_time) >= timeout)
         {
             go_ahead = false;
         }
-        
+
     } while (go_ahead);
     return return_value;
 }
 
-std::string ServiceFinder::getLastSendErrors() const 
+std::string ServiceFinder::getLastSendErrors() const
 {
     return _impl->getSendErrors();
 }

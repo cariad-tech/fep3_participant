@@ -1,14 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 set(SERVICE_BUS_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus)
 set(SERVICE_BUS_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus)
 set(RPC_SERVICES_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services)
@@ -20,11 +24,11 @@ set(RPC_SERVICES_INCLUDE_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_servi
 ########################################################
 
 file(MAKE_DIRECTORY ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info)
-jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json 
-                             fep3::rpc::arya::ParticipantInfoClientStub
+jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json
+                             fep3::rpc_stubs::RPCParticipantInfoClientStub
                              ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_client_stub.h)
-jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json 
-                             fep3::rpc::arya::ParticipantInfoServiceStub
+jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json
+                             fep3::rpc_stubs::RPCParticipantInfoServiceStub
                              ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_service_stub.h)
 
 set(SERVICE_BUS_SOURCES_GENERATED
@@ -118,7 +122,7 @@ set(FEP3_SOURCES ${FEP3_SOURCES} ${SERVICE_BUS_SOURCES_GENERATED})
 # install the generated
 ######################################
 
-install(FILES 
+install(FILES
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_client_stub.h
     DESTINATION

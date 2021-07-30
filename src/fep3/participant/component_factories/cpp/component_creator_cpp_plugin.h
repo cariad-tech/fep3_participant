@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -30,8 +39,8 @@ class ComponentCreatorCPPPlugin
 public:
     /**
      * Creates one component with @p iid from within the @p plugin
-     * @param plugin The plugin to create the component from within
-     * @param iid The IID of the component to be created
+     * @param[in] plugin The plugin to create the component from within
+     * @param[in] iid The IID of the component to be created
      * @throw std::runtime_error if the plugin does not expose an appropriate function @ref SYMBOL_fep3_getFactory
      * @return Unique pointer to the component if the plugin was capable to create a component with @ iid
      *         , empty unique pointer otherwise
@@ -43,7 +52,7 @@ public:
         if("arya" == plugin_version_namespace)
         {
             // create an instance of the component factory from within the plugin
-            if(const auto& component_factory = plugin.create<arya::ICPPPluginComponentFactory>(SYMBOL_fep3_plugin_cpp_arya_getFactory))
+            if(const auto& component_factory = plugin.create<plugin::cpp::arya::ICPPPluginComponentFactory>(SYMBOL_fep3_plugin_cpp_arya_getFactory))
             {
                 return component_factory->createComponent(iid);
             }

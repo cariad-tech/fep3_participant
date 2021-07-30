@@ -1,29 +1,37 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <fep3/components/service_bus/rpc/rpc_intf.h>
 
 #pragma warning( push )
 #pragma warning( disable : 4290)
-#include <rpc_pkg.h>
-#pragma warning( pop ) 
+#include <rpc/rpc.h>
+#pragma warning( pop )
 
 namespace fep3
 {
 namespace native
 {
 
-class HttpClientConnector : public rpc::arya::IRPCRequester
+class HttpClientConnector : public arya::IRPCRequester
 {
     public:
         explicit HttpClientConnector(const std::string& server_address);

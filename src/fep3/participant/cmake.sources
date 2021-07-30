@@ -1,14 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 
 
 set(PARTICIPANT_DIR ${PROJECT_SOURCE_DIR}/src/fep3/participant)
@@ -21,11 +25,11 @@ set(RPC_SERVICES_INCLUDE_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_servi
 ########################################################
 
 file(MAKE_DIRECTORY ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine)
-jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json 
-                             fep3::rpc::arya::ParticipantStateMachineClientStub
+jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
+                             fep3::rpc_stubs::RPCParticipantStateMachineClientStub
                              ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h)
-jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json 
-                             fep3::rpc::arya::ParticipantStateMachineServiceStub
+jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
+                             fep3::rpc_stubs::RPCParticipantStateMachineServiceStub
                              ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h)
 
 
@@ -40,6 +44,8 @@ set(PARTICIPANT_SOURCES_PRIVATE
     ${PARTICIPANT_DIR}/element_manager/element_manager.h
     ${PARTICIPANT_DIR}/component_source_type.h
     ${PARTICIPANT_DIR}/component_source_type.cpp
+    ${PARTICIPANT_DIR}/console_logger.h
+    ${PARTICIPANT_DIR}/console_logger.cpp
     # sub directory "component_factories"
     ${PARTICIPANT_DIR}/component_factories/component_factory_base.h
     ${PARTICIPANT_DIR}/component_factories/built_in/component_factory_built_in.h
@@ -52,12 +58,12 @@ set(PARTICIPANT_SOURCES_PRIVATE
     # sub directory "component_registry_factory"
     ${PARTICIPANT_DIR}/component_registry_factory/component_registry_factory.cpp
     ${PARTICIPANT_DIR}/component_registry_factory/component_registry_factory.h
-    ${PARTICIPANT_DIR}/component_registry_factory/components_file.cpp
-    ${PARTICIPANT_DIR}/component_registry_factory/components_file.h
+    ${PARTICIPANT_DIR}/component_registry_factory/components_configuration.cpp
+    ${PARTICIPANT_DIR}/component_registry_factory/components_configuration.h
     # sub directory "state_machine"
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.cpp
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.h
-    
+
 )
 
 set(PARTICIPANT_SOURCES_PUBLIC
@@ -86,7 +92,7 @@ set(FEP3_SOURCES ${FEP3_SOURCES} ${PARTICIPANT_SOURCES})
 # install the generated
 ######################################
 
-install(FILES 
+install(FILES
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h
     DESTINATION

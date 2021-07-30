@@ -1,18 +1,22 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 set(NATIVE_COMPONENTS_CLOCK_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/clock)
 set(NATIVE_COMPONENTS_CLOCK_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/clock)
 
-set(NATIVE_COMPONENTS_CLOCK_SOURCES_PRIVATE 
+set(NATIVE_COMPONENTS_CLOCK_SOURCES_PRIVATE
     ${NATIVE_COMPONENTS_CLOCK_DIR}/local_clock_service.h
     ${NATIVE_COMPONENTS_CLOCK_DIR}/local_clock_service.cpp
     ${NATIVE_COMPONENTS_CLOCK_DIR}/local_clock_service_master.h
@@ -64,7 +68,7 @@ set(NATIVE_COMPONENTS_CLOCK_RPC_SOURCES
 
 source_group(components\\clock\\rpc FILES ${NATIVE_COMPONENTS_CLOCK_RPC_SOURCES})
 
-install(FILES 
+install(FILES
     ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}/clock_service_stub.h
     ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}/clock_client_stub.h
     DESTINATION

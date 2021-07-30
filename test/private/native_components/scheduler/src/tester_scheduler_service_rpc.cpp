@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 
 #include "test_scheduler_service_client_stub.h"
@@ -33,7 +42,7 @@ using namespace ::testing;
 
 using LoggingServiceMock = mock::LoggingService;
 using LoggerMock = StrictMock<mock::Logger>;
-using ConfigurationServiceComponentMock = StrictMock<mock::ConfigurationServiceComponent>;
+using ConfigurationServiceComponentMock = StrictMock<mock::ConfigurationService<>>;
 using SchedulerMock = NiceMock<mock::Scheduler>;
 
 class TestClient : public rpc::RPCServiceClient<::test::rpc_stubs::TestSchedulerServiceClientStub, rpc::IRPCSchedulerServiceDef>
@@ -45,7 +54,7 @@ public:
     using base_type::GetStub;
 
     TestClient(const std::string& server_object_name,
-        const std::shared_ptr<rpc::IRPCRequester>& rpc_requester)
+        const std::shared_ptr<IRPCRequester>& rpc_requester)
         : base_type(server_object_name, rpc_requester)
     {
     }
@@ -89,11 +98,11 @@ struct NativeSchedulerServiceRPC : public Test
 TEST_F(NativeSchedulerServiceRPC, testGetSchedulerNames)
 {
     TestClient client(rpc::IRPCSchedulerServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(native::testing::test_participant_name));
+        _service_bus->getRequester(native::testing::participant_name_default));
 
     // actual test
     {
-        ASSERT_EQ("clock_based_scheduler", client.getSchedulerNames());
+        ASSERT_EQ(FEP3_SCHEDULER_CLOCK_BASED, client.getSchedulerNames());
 
         std::unique_ptr<SchedulerMock> scheduler_mock{ std::make_unique<SchedulerMock>() };
 
@@ -101,23 +110,22 @@ TEST_F(NativeSchedulerServiceRPC, testGetSchedulerNames)
             .WillByDefault(Return("my_custom_scheduler"));
         _scheduler_service->registerScheduler(std::move(scheduler_mock));
 
-        ASSERT_EQ("clock_based_scheduler,my_custom_scheduler", client.getSchedulerNames());
+        ASSERT_EQ(FEP3_SCHEDULER_CLOCK_BASED",my_custom_scheduler", client.getSchedulerNames());
 
         _scheduler_service->unregisterScheduler("my_custom_scheduler");
 
-        ASSERT_EQ("clock_based_scheduler", client.getSchedulerNames());
+        ASSERT_EQ(FEP3_SCHEDULER_CLOCK_BASED, client.getSchedulerNames());
     }
 }
 
 TEST_F(NativeSchedulerServiceRPC, testGetActiveSchedulerName)
 {
-    const auto scheduler_name_expected = "clock_based_scheduler";
     TestClient client(rpc::IRPCSchedulerServiceDef::getRPCDefaultName(),
-        _service_bus->getRequester(native::testing::test_participant_name));
+        _service_bus->getRequester(native::testing::participant_name_default));
 
     // actual test
     {
-        ASSERT_EQ(scheduler_name_expected, client.getActiveSchedulerName());
+        ASSERT_EQ(FEP3_SCHEDULER_CLOCK_BASED, client.getActiveSchedulerName());
     }
 }
 
