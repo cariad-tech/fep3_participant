@@ -2,7 +2,7 @@
 Copyright @ 2021 VW Group. All rights reserved.
  
      This Source Code Form is subject to the terms of the Mozilla
-     Public License, v. 2.0. A copy of the MPL licence can be found in doc/license/MPL2.0.txt
+     Public License, v. 2.0. A copy of the MPL licence can be found in LICENSE
  
 If it is not possible or desirable to put the notice in a particular file, then
 You may include the notice in a location (such as a LICENSE file in a

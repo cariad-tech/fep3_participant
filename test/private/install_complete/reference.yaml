@@ -13,7 +13,7 @@
 common:
     files:
         - doc/license/mpl.md
-        - doc/license/MPL2.0.txt
+        - LICENSE
         - doc/license/used_licenses/.+
         - fep3_participant-config-version.cmake
         - fep3_participant-config.cmake
