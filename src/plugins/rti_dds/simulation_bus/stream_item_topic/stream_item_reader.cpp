@@ -1,271 +1,90 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
-#include <fep3/base/sample/data_sample.h>
-#include <plugins/rti_dds/simulation_bus/converter.h>
 
 #include "stream_item_reader.h"
-#include <a_util/result.h>
-#include <iostream>
 
 using namespace dds::all;
 using namespace fep3;
 
 StreamItemDataReader::StreamItemDataReader(const std::shared_ptr<StreamItemTopic> & topic
     , size_t /*queue_capacity*/
-    , const std::shared_ptr<dds::core::QosProvider> & qos_provider)
+    , const std::weak_ptr<base::SimulationDataAccessCollection<ReaderItemQueue>>& data_access_collection
+    , const std::shared_ptr<fep3::ILogger>& logger)
     : _topic(topic)
+    , _item_queue(std::make_shared<ReaderItemQueue>
+        (_logger
+        , topic
+        ))
+    , _data_access_collection{data_access_collection}
+    , _logger(logger)
+
 {
-    _subscriber = std::make_unique<Subscriber>(topic->getDomainParticipant(), qos_provider->subscriber_qos(FEP3_QOS_PARTICIPANT));
-
-    auto qos = qos_provider->datareader_qos(topic->getQosProfile());
-    /*
-    @TODO make use of capacity limit
-    if (queue_capacity > 0)
+    if (!_logger)
     {
-        qos->resource_limits->max_samples(static_cast<int32_t>(queue_capacity));
-    }*/
-    _sample_reader = std::make_unique<DataReader<fep3::ddstypes::Sample>>(*_subscriber, topic->getSampleTopic(), qos, this, dds::core::status::StatusMask::none());
-    _streamtype_reader = std::make_unique<DataReader<fep3::ddstypes::StreamType>>(*_subscriber, topic->getStreamTypeTopic(), qos_provider->datareader_qos(FEP3_QOS_STREAM_TYPE));
-
-    _waitset += ReadCondition(*_sample_reader, SampleState::not_read());
-    _waitset += ReadCondition(*_streamtype_reader, SampleState::not_read());
-    _waitset += _gurad_condition;
+        throw std::invalid_argument("logger argument is null");
+    }
 }
-
 
 StreamItemDataReader::~StreamItemDataReader()
-{
-    _waitset = nullptr;
-    _gurad_condition = nullptr;
-    _sample_reader->close();
-    _streamtype_reader->close();
-    _subscriber->close();
-}
+{}
 
 size_t StreamItemDataReader::size() const
 {
-    try
-    {
-        return _sample_reader->extensions().datareader_cache_status().sample_count();
-    }
-    catch (Exception & exception)
-    {
-        logError(convertExceptionToResult(exception));
-    }
-    return 0;
+    return _item_queue->size();
 }
 
 size_t StreamItemDataReader::capacity() const
 {
-    try
-    {
-        return _sample_reader->qos().delegate().history.depth();
-    }
-    catch (Exception & exception)
-    {
-        logError(convertExceptionToResult(exception));
-    }
-    return 0;
+    return _item_queue->capacity();
 }
 
 bool StreamItemDataReader::pop(fep3::ISimulationBus::IDataReceiver& receiver)
 {
-    try
-    {
-        if (!_sample_reader->is_nil())
-        {
-            CoherentAccess coherent_access(*_subscriber);
-
-            std::vector<AnyDataReader> readers;
-            int num_readers =
-                find(*_subscriber
-                    , dds::sub::status::DataState::any()
-                    , std::back_inserter(readers));
-            
-            // readers contains a list of reader, i.e.:
-            // _sample_reader
-            // _sample_reader
-            // _streamtype_reader
-            // _sample_reader
-            // _sample_reader
-            // depending on the recieve order
-
-            if(num_readers > 0)
-            {
-                
-                if (readers[0] == *_sample_reader)
-                {
-                    for (auto sample : _sample_reader->select()
-                        .max_samples(1)
-                        .take())
-                    {
-                       receiver(createSample(sample, sample.info()));
-                    }
-                }
-                else
-                {
-                    for (auto streamtype : _streamtype_reader->select()
-                        .max_samples(1)
-                        .take())
-                    {
-                        receiver(createStreamType(streamtype, streamtype.info()));
-                    }
-                }
-                return true;
-            }
-        }
-    }
-    catch (Exception & exception)
-    {
-        logError(convertExceptionToResult(exception));
-    }
-    return false;
+    return _item_queue->pop(receiver);
 }
 
-void StreamItemDataReader::receive(fep3::arya::ISimulationBus::IDataReceiver& receiver)
+void StreamItemDataReader::reset(const std::shared_ptr<fep3::ISimulationBus::IDataReceiver>& receiver)
 {
-    _gurad_condition->trigger_value(false);
-    _running = true;
-
-    // Run until ::stop was called
-    while (_running)
+    const auto& data_access_collection = _data_access_collection.lock();
+    // remove the previous receiver (if any)
+    if(_data_access_iterator)
     {
-        // Block until one condition was emited:
-        // * ReadCondition(*_sample_reader, SampleState::not_read());
-        // * ReadCondition(*_streamtype_reader, SampleState::not_read());
-        // * dds::core::cond::GuardCondition;
-        // * or timeout 1s
-        WaitSet::ConditionSeq conditions = _waitset.wait(Duration(1));
-        for (Condition const & condition : conditions)
+        if(data_access_collection)
         {
-            if (condition != _gurad_condition)
-            {
-                while(pop(receiver));
-            }
+            data_access_collection->remove(_data_access_iterator.value());
+        }
+        _data_access_iterator.reset();
+        if (_logger->isDebugEnabled())
+        {
+            _logger->logDebug(a_util::strings::format("Replaced already registered data receiver for reader from topic '%s'.", _topic->GetTopic().c_str()));
         }
     }
-}
 
-void StreamItemDataReader::stop()
-{
-    _running = false;
-    _gurad_condition->trigger_value(true);
+    if(data_access_collection && receiver)
+    {
+        // add the new receiver
+        _data_access_iterator = data_access_collection->add(receiver, _item_queue);
+    }
 }
 
 Optional<Timestamp> StreamItemDataReader::getFrontTime() const
 {
-    CoherentAccess coherent_access(*_subscriber);
-
-    std::vector<AnyDataReader> readers;
-    int num_readers =
-        find(*_subscriber
-            , dds::sub::status::DataState::new_data()
-            , std::back_inserter(readers));
-
-    if (num_readers > 0)
-    {
-        if (readers[0] == *_sample_reader)
-        {
-            auto sample = *_sample_reader->select()
-                .max_samples(1)
-                .read().begin();
-            
-            return convertTimestamp(sample.info().source_timestamp());
-        }
-        else
-        {
-            auto streamtype = *_streamtype_reader->select()
-                .max_samples(1)
-                .read().begin();
-            
-            return convertTimestamp(streamtype.info().source_timestamp());
-        } 
-    }
-    return {};
-}
-
-void StreamItemDataReader::logError(const fep3::Result& res) const
-{
-    if (_logger)
-    {
-        if (_logger->isErrorEnabled())
-        {
-            _logger->logError(a_util::result::toString(res));
-        }
-    }
-}
-
-void StreamItemDataReader::on_data_available(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/)
-{
-}
-
-void StreamItemDataReader::on_requested_deadline_missed(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::RequestedDeadlineMissedStatus& /*status*/)
-{
-    //std::cout << "           on_requested_deadline_missed" << std::endl;
-}
-
-void StreamItemDataReader::on_requested_incompatible_qos(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::RequestedIncompatibleQosStatus& /*status*/)
-{
-    //std::cout << "           on_requested_incompatible_qos" << std::endl;
-}
-
-void StreamItemDataReader::on_sample_rejected(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::SampleRejectedStatus& /*status*/)
-{
-    //std::cout << "           on_requested_incompatible_qos" << std::endl;
-}
-
-void StreamItemDataReader::on_liveliness_changed(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::LivelinessChangedStatus& /*status*/)
-{
-    //std::cout << "           on_requested_incompatible_qos" << std::endl;
-}
-
-void StreamItemDataReader::on_subscription_matched(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::SubscriptionMatchedStatus& /*status*/)
-{
-    //std::cout << "           on_subscription_matched" << std::endl;
-}
-
-void StreamItemDataReader::on_sample_lost(
-    dds::sub::DataReader<fep3::ddstypes::Sample>& /*reader*/,
-    const dds::core::status::SampleLostStatus& /*status*/)
-{
-    //std::cout << "           on_sample_lost" << std::endl;
-}
-
-std::shared_ptr<IStreamType> createStreamType(const fep3::ddstypes::StreamType& dds_streamtype, const dds::sub::SampleInfo& /*sample_info*/)
-{
-    auto streamtype = std::make_shared<fep3::StreamType>(dds_streamtype.metatype());
-    for (auto dds_property : dds_streamtype.properties())
-    {
-        streamtype->setProperty(dds_property.name(), dds_property.value(), dds_property.type());
-    }
-    return streamtype;
-}
-
-std::shared_ptr<IDataSample> createSample(const fep3::ddstypes::Sample& dds_sample, const dds::sub::SampleInfo& sample_info)
-{
-    auto sample = std::make_shared<DataSample>();
-    sample->set(dds_sample.data().data(), dds_sample.data().size());
-    sample->setTime(convertTimestamp(sample_info.source_timestamp()));
-    sample->setCounter(static_cast<uint32_t>(sample_info.extensions().publication_sequence_number().value()));
-    return sample;
+    return _item_queue->getFrontTime();
 }

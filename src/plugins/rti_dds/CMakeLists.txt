@@ -1,17 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
-
-# TODO: Get rid of this hack as soon as Christoph  ##
-#       knows what causes the error                 #
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+# TODO: Get rid of this hack as soon as possible   ##
 set(CMAKE_BUILD_TYPE ${CONAN_SETTINGS_BUILD_TYPE})  #
 #####################################################
 
@@ -25,22 +26,19 @@ set(CONNEXTDDS_ARCH $ENV{CONNEXTDDS_ARCH} CACHE STRING "RTI platform string RTI 
 include(rti-macros.cmake)
 
 # Hack (*shiver*) to convince RTI Connext DDS find script to support native armv8 compiling
-set(CONNEXTDDS_DISABLE_VERSION_CHECK True)
-set(TEMPORARY_CMAKE_HOST_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64")
-    set(CMAKE_HOST_SYSTEM_PROCESSOR "x86_64")
-endif()
+changeHostSystemIfArm()
 
 # Execute (now hacked) find package script
-find_package(RTIConnextDDS EXACT "6.0.1" REQUIRED)
+find_package(RTIConnextDDS 6.1.0 EXACT REQUIRED)
+find_package(dev_essential REQUIRED COMPONENTS pkg_rpc system filesystem)
 
 # Undo hack
-set(CMAKE_HOST_SYSTEM_PROCESSOR ${TEMPORARY_CMAKE_HOST_SYSTEM_PROCESSOR})
+revertHostSystemIfArm()
 
 set(PLUGIN_NAME fep3_connext_dds_plugin)
-add_library(${PLUGIN_NAME} SHARED 
+add_library(${PLUGIN_NAME} SHARED
             fep_connext_dds_plugin.cpp
-            
+
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_client.h
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_client.cpp
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_server.h
@@ -59,10 +57,12 @@ add_library(${PLUGIN_NAME} SHARED
 
             types/stream_types.cxx
             types/stream_typesPlugin.cxx
-            
+
             simulation_bus/topic_intf.h
-            simulation_bus/converter.h            
+            simulation_bus/converter.h
             simulation_bus/converter.cpp
+            simulation_bus/reader_item_queue.h
+            simulation_bus/reader_item_queue.cpp
             simulation_bus/vector_raw_memory.hpp
 
             simulation_bus/stream_item_topic/stream_item_reader.h
@@ -72,12 +72,12 @@ add_library(${PLUGIN_NAME} SHARED
             simulation_bus/stream_item_topic/stream_item_writer.h
             simulation_bus/stream_item_topic/stream_item_writer.cpp
 
-			simulation_bus/internal_topic/internal_topic.h
-			simulation_bus/internal_topic/internal_topic.cpp
+            simulation_bus/internal_topic/internal_topic.h
+            simulation_bus/internal_topic/internal_topic.cpp
 
             simulation_bus/fep_connext_dds_simulation_bus.cpp
             simulation_bus/fep_connext_dds_simulation_bus.h
-            
+
             simulation_bus/bus_info/bus_info.h
             simulation_bus/bus_info/bus_info.cpp
 
@@ -91,20 +91,22 @@ add_library(${PLUGIN_NAME} SHARED
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/find_free_port.cpp
             ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.h
             ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.cpp
-    
+
             USER_QOS_PROFILES.xml)
 
 set_target_properties(${PLUGIN_NAME} PROPERTIES FOLDER "plugins/cpp")
 
-target_link_libraries(${PLUGIN_NAME} PRIVATE 
-            fep3_participant_cpp_plugin 
-            pkg_rpc 
+target_link_libraries(${PLUGIN_NAME} PRIVATE
+            fep3_participant_cpp_plugin
             RTIConnextDDS::cpp2_api
-            a_util_filesystem
-            a_util_system 
-            a_util_concurrency)
+            dev_essential::pkg_rpc
+            dev_essential::filesystem
+            dev_essential::system
+            )
 
 if(MSVC)
+    # warning coming from dds headers
+    target_compile_options(${PLUGIN_NAME} PRIVATE /wd4245)
     target_link_libraries(${PLUGIN_NAME} PRIVATE "Iphlpapi.lib")
     install(FILES $<TARGET_PDB_FILE:${PLUGIN_NAME}> DESTINATION lib/rti OPTIONAL)
 endif()

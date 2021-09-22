@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -34,27 +43,33 @@ public:
     DataSignal(const DataSignal&) = default;
     DataSignal& operator=(DataSignal&&) = default;
     DataSignal& operator=(const DataSignal&) = default;
-    DataSignal(const std::string name, const IStreamType& type, bool dynamic_type) :
-        _name(std::move(name)), _type(type), _dynamic_type(dynamic_type){}
+    DataSignal(const std::string name, const std::string alias, const IStreamType& type, bool dynamic_type) :
+        _name(std::move(name)), _alias(std::move(alias)), _type(type), _dynamic_type(dynamic_type){}
     virtual ~DataSignal() = default;
 
     std::string getName() const;
-    StreamType getType() const;
+    std::string getAlias() const;
+    void setAlias(const std::string &);
+    base::StreamType getType() const;
+    void setType(const IStreamType& type);
 
     bool hasDynamicType() const;
 
 private:
     std::string _name{};
-    StreamType  _type{ fep3::arya::meta_type_raw };
+    std::string _alias{};
+    base::StreamType _type{fep3::base::arya::meta_type_raw};
     bool _dynamic_type{ false };
 };
 
 /**
- * Internal input signal class that holds a list of all readers registered at the simulation bus
+ * Internal input signal class that holds the reader registered at the simulation bus
  * and that redirects all incoming data of its signal to all registered data receive listeners.
  */
-class DataRegistry::DataSignalIn : public DataSignal,
-    public ISimulationBus::IDataReceiver
+class DataRegistry::DataSignalIn
+    : public DataSignal
+    , public ISimulationBus::IDataReceiver
+    , public std::enable_shared_from_this<ISimulationBus::IDataReceiver>
 {
 public:
     DataSignalIn() = delete;
@@ -62,15 +77,18 @@ public:
     DataSignalIn(const DataSignalIn&) = default;
     DataSignalIn& operator=(DataSignalIn&&) = default;
     DataSignalIn& operator=(const DataSignalIn&) = default;
-    DataSignalIn(const std::string& name, const IStreamType& type, bool dynamic_type) : DataSignal(name, type, dynamic_type) {}
+    DataSignalIn(const std::string& name, const std::string& alias, const IStreamType& type, bool dynamic_type) : DataSignal(name, alias, type, dynamic_type) {}
     ~DataSignalIn() override;
 
     fep3::Result registerAtSimulationBus(ISimulationBus& simulation_bus);
     void unregisterFromSimulationBus();
 
+    fep3::Result registerAtSignalMapping(SignalMapping& mapping);
+
     void registerDataListener(const std::shared_ptr<IDataReceiver>& listener);
     void unregisterDataListener(const std::shared_ptr<IDataReceiver>& listener);
 
+    // Creates a new reader, adds it to the internal list and returns a proxy object to it
     std::unique_ptr<IDataRegistry::IDataReader> getReader(const size_t queue_capacity);
 
 public:
@@ -83,15 +101,12 @@ private:
     typedef std::list<std::weak_ptr<DataRegistry::DataReader>> DataReaderList;
     std::shared_ptr<DataReaderList> _readers{ std::make_shared<DataReaderList>() };
     std::vector<std::shared_ptr<IDataReceiver>> _listeners{};
-    std::thread _receive_thread;
 
     size_t getMaxQueueSize() const;
-    fep3::Result startReceiving();
-    fep3::Result stopReceiving();
 };
 
 /**
- * Internal output signal class that holds a list of all writers registered at the simulation bus.
+ * Internal output signal class that holds the writer registered at the simulation bus.
  */
 class DataRegistry::DataSignalOut : public DataSignal, public ISimulationBus::IDataWriter
 {
@@ -101,12 +116,13 @@ public:
     DataSignalOut(const DataSignalOut&) = default;
     DataSignalOut& operator=(DataSignalOut&&) = default;
     DataSignalOut& operator=(const DataSignalOut&) = default;
-    DataSignalOut(const std::string& name, const IStreamType& type, bool dynamic_type) : DataSignal(name, type, dynamic_type) {}
+    DataSignalOut(const std::string& name, const std::string& alias, const IStreamType& type, bool dynamic_type) : DataSignal(name, alias, type, dynamic_type) {}
     ~DataSignalOut() override;
 
     fep3::Result registerAtSimulationBus(ISimulationBus& simulation_bus);
     void unregisterFromSimulationBus();
 
+    // Creates a new writer, adds it to the internal list and returns a proxy object to it
     std::unique_ptr<IDataRegistry::IDataWriter> getWriter(const size_t queue_capacity);
 
 public:

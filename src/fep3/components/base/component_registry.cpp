@@ -1,13 +1,22 @@
- /**
-  * @file
-  * Copyright &copy; AUDI AG. All rights reserved.
-  *
-  * This Source Code Form is subject to the terms of the
-  * Mozilla Public License, v. 2.0.
-  * If a copy of the MPL was not distributed with this
-  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
-  *
-  */
+/**
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #include <functional>
 #include <list>
@@ -16,7 +25,7 @@
 #include <a_util/result/result_type.h>
 #include <a_util/result/error_def.h>
 
-#include "fep3/components/base/component_registry.h"
+#include "component_registry.h"
 #include "fep3/components/base/component_intf.h"
 #include "fep3/fep3_errors.h"
 
@@ -61,7 +70,7 @@ namespace arya
         }
         return nullptr;
     }
-    
+
     std::shared_ptr<IComponent> ComponentRegistry::findComponentByPtr(IComponent* component) const
     {
         for (const auto& comp : _components)
@@ -217,7 +226,7 @@ namespace arya
             }
             catch (const std::exception& ex)
             {
-                res |= fep3::Result(ERR_UNEXPECTED, 
+                res |= fep3::Result(ERR_UNEXPECTED,
                     std::string(std::string("Exception occured while relax: ") + ex.what()).c_str(),
                     __LINE__, __FILE__, "ComponentRegistry::relax");
             }
@@ -276,7 +285,7 @@ namespace arya
             }
             catch (const std::exception& ex)
             {
-                res |= fep3::Result(ERR_UNEXPECTED, 
+                res |= fep3::Result(ERR_UNEXPECTED,
                     std::string(std::string("Exception occured while stop: ") + ex.what()).c_str(),
                     __LINE__, __FILE__, "ComponentRegistry::stop");
             }
@@ -286,16 +295,9 @@ namespace arya
 
     fep3::Result ComponentRegistry::pause()
     {
-        //pause or fallback if one of it failed
-        return raiseWithFallback(_components,
-            [&](IComponent& comp)-> fep3::Result
-        {
-            return comp.pause();
-        },
-            [&](IComponent& comp)-> fep3::Result
-        {
-            return comp.stop();
-        }, "pause");
+        //return an error because pause is not implemented by any native component yet
+        RETURN_ERROR_DESCRIPTION(ERR_NOT_IMPL, "The feature 'Pause' is not supported yet.");
+
     }
 
     void ComponentRegistry::clear()

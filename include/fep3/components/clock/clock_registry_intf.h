@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -29,7 +38,7 @@ namespace arya
 * @brief Interface of the clock registry
 * The clock registry may be used to register clocks.
 */
-class FEP3_PARTICIPANT_EXPORT IClockRegistry
+class IClockRegistry
 {
 public:
     /**
@@ -37,11 +46,9 @@ public:
      */
     using Clocks = std::map<std::string, std::shared_ptr<arya::IClock>>;
 
-public:
-    /**
-     * @brief DTOR
-     */
-    virtual ~IClockRegistry() = default;
+protected:
+    /// DTOR
+    ~IClockRegistry() = default;
 
 public:
 
@@ -49,7 +56,7 @@ public:
     * @brief Register a clock.
     * The name of the clock must be unique within this registry.
     *
-    * @param clock The clock to register
+    * @param[in] clock The clock to register
     * @return fep3::Result
     * @retval ERR_INVALID_ARG       A clock with the same name as @p clock is already registered.
     * @retval ERR_INVALID_STATE     Clock service is in state running in which registration of clocks is not allowed.
@@ -59,7 +66,7 @@ public:
     /**
     * @brief Unregister a clock by name.
     *
-    * @param clock_name The name of the clock
+    * @param[in] clock_name The name of the clock
     * @return fep3::Result
     * @retval ERR_INVALID_ARG       The clock with name @p clock_name is a default clock or
     *                               no clock with name @p clock_name is registered.
@@ -77,7 +84,7 @@ public:
     /**
     * @brief Get a clock by name.
     *
-    * @param clock_name The name of the clock
+    * @param[in] clock_name The name of the clock
     * @return The clock with name @p clock_name
     */
     virtual std::shared_ptr<arya::IClock> findClock(const std::string& clock_name) const = 0;

@@ -1,14 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @note All methods are defined inline to provide the functionality as header only.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @note All methods are defined inline to provide the functionality as header only.
 
 #pragma once
 
@@ -54,12 +62,12 @@ public:
     /**
      * CTOR
      *
-     * @param access Access to the remote object
-     * @param shared_binary Shared pointer to the binary this resides in
+     * @param[in] access Access to the remote object
+     * @param[in] shared_binary Shared pointer to the binary this resides in
      */
     inline ClockService
         (const Access& access
-        , const std::shared_ptr<ISharedBinary>& shared_binary
+        , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
         );
     /**
      * DTOR destroying the corresponding remote object
@@ -69,9 +77,9 @@ public:
     // methods implementing fep3::arya::IClockService
     /// @cond no_documentation
     inline fep3::arya::Timestamp getTime() const override;
-    inline Optional<fep3::arya::Timestamp> getTime(const std::string& clock_name) const override;
-    inline IClock::ClockType getType() const override;
-    inline Optional<IClock::ClockType> getType(const std::string& clock_name) const override;
+    inline fep3::arya::Optional<fep3::arya::Timestamp> getTime(const std::string& clock_name) const override;
+    inline fep3::arya::IClock::ClockType getType() const override;
+    inline fep3::arya::Optional<fep3::arya::IClock::ClockType> getType(const std::string& clock_name) const override;
     inline std::string getMainClockName() const override;
     inline fep3::Result registerEventSink(const std::weak_ptr<::fep3::arya::IClock::IEventSink>& clock_event_sink) override;
     inline fep3::Result unregisterEventSink(const std::weak_ptr<::fep3::arya::IClock::IEventSink>& clock_event_sink) override;
@@ -101,10 +109,10 @@ namespace arya
 /**
  * Wrapper class for interface @ref fep3::arya::IClockService
  */
-class ClockService : private Helper<fep3::arya::IClockService>
+class ClockService : private arya::Helper<fep3::arya::IClockService>
 {
 private:
-    using Helper = Helper<fep3::arya::IClockService>;
+    using Helper = arya::Helper<fep3::arya::IClockService>;
     using Handle = fep3_arya_HIClockService;
 
 public:
@@ -137,7 +145,7 @@ public:
             {
                 if((nullptr != validity) && (nullptr != result))
                 {
-                    const Optional<fep3::arya::Timestamp>& optional_timestamp = pointer_to_object->getTime(clock_name);
+                    const fep3::arya::Optional<fep3::arya::Timestamp>& optional_timestamp = pointer_to_object->getTime(clock_name);
                     *validity = optional_timestamp.operator bool();
                     if(*validity)
                     {
@@ -167,8 +175,8 @@ public:
     {
         return Helper::callWithResultParameter
             (handle
-            , static_cast<::fep3::arya::IClock::ClockType(fep3::arya::IClockService::*)()const>(&fep3::arya::IClockService::getType)
-            , [](IClock::ClockType clock_type)
+            , static_cast<fep3::arya::IClock::ClockType(fep3::arya::IClockService::*)()const>(&fep3::arya::IClockService::getType)
+            , [](fep3::arya::IClock::ClockType clock_type)
                 {
                     return static_cast<int32_t>(clock_type);
                 }
@@ -188,7 +196,7 @@ public:
             {
                 if((nullptr != validity) && (nullptr != result))
                 {
-                    const Optional<fep3::arya::IClock::ClockType>& optional_clock_type = pointer_to_object->getType(clock_name);
+                    const fep3::arya::Optional<fep3::arya::IClock::ClockType>& optional_clock_type = pointer_to_object->getType(clock_name);
                     *validity = optional_clock_type.operator bool();
                     if(*validity)
                     {
@@ -230,70 +238,64 @@ public:
     }
     static inline fep3_plugin_c_InterfaceError registerEventSink
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_IClock_SIEventSink event_sink_access
         ) noexcept
     {
-        return Helper::transferWeakPtrWithResultParameter<::fep3::plugin::c::access::arya::Clock::EventSink>
+        return Helper::transferWeakPtrWithResultCallback<::fep3::plugin::c::access::arya::Clock::EventSink>
             (handle
-            , std::bind
-                (&fep3::arya::IClockService::registerEventSink
-                , std::placeholders::_1
-                , std::placeholders::_2
-                )
-            , [](const Result& fep_result)
+            , [](auto&& clock_service, auto&& event_sink)
                 {
-                    return fep_result.getErrorCode();
+                    return clock_service->registerEventSink(std::forward<decltype(event_sink)>(event_sink));
                 }
-            , result
+
+            , result_callback
+            , result_destination
+            , &getResult
             , destruction_manager_access_result
             , event_sink_access
             );
     }
     static inline fep3_plugin_c_InterfaceError unregisterEventSink
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_IClock_SIEventSink event_sink_access
         ) noexcept
     {
-        return Helper::transferWeakPtrWithResultParameter<access::arya::Clock::EventSink>
+        return Helper::transferWeakPtrWithResultCallback<access::arya::Clock::EventSink>
             (handle
-            , std::bind
-                (&fep3::arya::IClockService::unregisterEventSink
-                , std::placeholders::_1
-                , std::placeholders::_2
-                )
-            , [](const Result& fep_result)
+            , [](auto&& clock_service, auto&& event_sink)
                 {
-                    return fep_result.getErrorCode();
+                    return clock_service->unregisterEventSink(std::forward<decltype(event_sink)>(event_sink));
                 }
-            , result
+            , result_callback
+            , result_destination
+            , &getResult
             , destruction_manager_access_result
             , event_sink_access
             );
     }
     static inline fep3_plugin_c_InterfaceError registerClock
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , fep3_plugin_c_arya_SDestructionManager reference_manager_access
         , fep3_arya_SIClock clock_access
         ) noexcept
     {
-        return Helper::transferSharedPtrWithResultParameter<::fep3::plugin::c::access::arya::Clock>
+        return transferSharedPtrWithResultCallback<access::arya::Clock>
             (handle
-            , std::bind
-                // using static_cast to disambiguate the address of the overload
-                (&fep3::arya::IClockRegistry::registerClock
-                , std::placeholders::_1
-                , std::placeholders::_2
-                )
-            , [](const Result& fep_result)
+            , [](auto&& clock_registry, auto&& clock)
                 {
-                    return fep_result.getErrorCode();
+                    return clock_registry->registerClock(std::forward<decltype(clock)>(clock));
                 }
-            , result
+            , result_callback
+            , result_destination
+            , &getResult
             , reference_manager_access
             , clock_access
             );
@@ -301,18 +303,17 @@ public:
 
     static inline fep3_plugin_c_InterfaceError unregisterClock
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , const char* clock_name
         ) noexcept
     {
-        return Helper::callWithResultParameter
+        return callWithResultCallback
             (handle
             , &fep3::arya::IClockRegistry::unregisterClock
-            , [](const Result& fep_result)
-                {
-                    return fep_result.getErrorCode();
-                }
-            , result
+            , result_callback
+            , result_destination
+            , &getResult
             , clock_name
             );
     }
@@ -450,9 +451,9 @@ inline fep3_plugin_c_InterfaceError createClockService
 /**
  * Creates a clock service object of type \p clock_service_type
  * @tparam clock_service_type The type of the clock service object to be created
- * @param result Pointer to the access structure to the created clock service object
- * @param shared_binary_access Access strcuture to the shared binary the clock service object resides in
- * @param iid The interface ID of the clock service interface of the created object
+ * @param[in,out] result Pointer to the access structure to the created clock service object
+ * @param[in] shared_binary_access Access strcuture to the shared binary the clock service object resides in
+ * @param[in] iid The interface ID of the clock service interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_result_pointer The @p result is null
@@ -486,9 +487,9 @@ namespace arya
 
 ClockService::ClockService
     (const Access& access
-    , const std::shared_ptr<ISharedBinary>& shared_binary
+    , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
     )
-    : ComponentBase<fep3::arya::IClockService>
+    : arya::ComponentBase<fep3::arya::IClockService>
         (access._component
         , shared_binary
         )
@@ -498,7 +499,7 @@ ClockService::ClockService
 /// @cond no_documentation
 fep3::arya::Timestamp ClockService::getTime() const
 {
-    return fep3::arya::Timestamp(Helper::callWithResultParameter
+    return fep3::arya::Timestamp(arya::Helper::callWithResultParameter
         (_access._handle
         , _access.getTime
         ));
@@ -524,7 +525,7 @@ fep3::arya::Optional<fep3::arya::Timestamp> ClockService::getTime(const std::str
 
 fep3::arya::IClock::ClockType ClockService::getType() const
 {
-    return static_cast<fep3::arya::IClock::ClockType>(Helper::callWithResultParameter
+    return static_cast<fep3::arya::IClock::ClockType>(arya::Helper::callWithResultParameter
         (_access._handle
         , _access.getType
         ));
@@ -550,19 +551,24 @@ fep3::arya::Optional<fep3::arya::IClock::ClockType> ClockService::getType(const 
 
 std::string ClockService::getMainClockName() const
 {
-    return Helper::callWithResultCallback<std::string>
+    return arya::Helper::callWithResultCallback<std::string>
         (_access._handle
         , _access.getMainClockName
+        , [](auto result)
+            {
+                return result;
+            }
         );
 }
 
 fep3::Result ClockService::registerEventSink(const std::weak_ptr<::fep3::arya::IClock::IEventSink>& event_sink)
 {
-    return Helper::transferWeakPtrWithResultParameter<fep3::Result>
+    return arya::Helper::transferWeakPtrWithResultCallback<fep3::Result>
         (event_sink
         , _remote_event_sink_object_destructors
         , _access._handle
         , _access.registerEventSink
+        , &getResult
         , [](const auto& pointer_to_event_sink)
             {
                 return ::fep3::plugin::c::wrapper::arya::Clock::EventSink::AccessCreator()(pointer_to_event_sink);
@@ -572,11 +578,12 @@ fep3::Result ClockService::registerEventSink(const std::weak_ptr<::fep3::arya::I
 
 fep3::Result ClockService::unregisterEventSink(const std::weak_ptr<::fep3::arya::IClock::IEventSink>& event_sink)
 {
-    return Helper::transferWeakPtrWithResultParameter<fep3::Result>
+    return arya::Helper::transferWeakPtrWithResultCallback<fep3::Result>
         (event_sink
         , _remote_event_sink_object_destructors
         , _access._handle
         , _access.unregisterEventSink
+        , &getResult
         , [](const auto& pointer_to_event_sink)
             {
                 return ::fep3::plugin::c::wrapper::arya::Clock::EventSink::AccessCreator()(pointer_to_event_sink);
@@ -586,10 +593,11 @@ fep3::Result ClockService::unregisterEventSink(const std::weak_ptr<::fep3::arya:
 
 fep3::Result ClockService::registerClock(const std::shared_ptr<fep3::arya::IClock>& clock)
 {
-    return Helper::transferSharedPtrWithResultParameter<fep3::Result>
+    return arya::Helper::transferSharedPtrWithResultCallback<fep3::Result>
         (clock
         , _access._handle
         , _access.registerClock
+        , &getResult
         , [](const auto& pointer_to_clock)
             {
                 return fep3_arya_SIClock
@@ -607,16 +615,17 @@ fep3::Result ClockService::registerClock(const std::shared_ptr<fep3::arya::ICloc
 
 fep3::Result ClockService::unregisterClock(const std::string& clock_name)
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultCallback<fep3::Result>
         (_access._handle
         , _access.unregisterClock
+        , &getResult
         , clock_name.c_str()
         );
 }
 
 std::list<std::string> ClockService::getClockNames() const
 {
-    return Helper::callWithRecurringResultCallback<std::list<std::string>, const char*>
+    return arya::Helper::callWithRecurringResultCallback<std::list<std::string>, const char*>
         (_access._handle
         , _access.getClockNames
         , [](const char* clock_name)
@@ -629,7 +638,7 @@ std::list<std::string> ClockService::getClockNames() const
 
 std::shared_ptr<fep3::arya::IClock> ClockService::findClock(const std::string& clock_name) const
 {
-    return Helper::getSharedPtr<::fep3::plugin::c::access::arya::Clock, fep3_arya_SIClock>
+    return arya::Helper::getSharedPtr<::fep3::plugin::c::access::arya::Clock, fep3_arya_SIClock>
         (_access._handle
         , _access.findClock
         , clock_name.c_str()
@@ -646,9 +655,9 @@ std::shared_ptr<fep3::arya::IClock> ClockService::findClock(const std::string& c
 
 /**
  * Gets access to a clock service object as identified by @p handle_to_component
- * @param access_result Pointer to the access structure to the clock service object
- * @param iid The interface ID of the clock service interface to get
- * @param handle_to_component Handle to the interface of the object to get
+ * @param[in,out] access_result Pointer to the access structure to the clock service object
+ * @param[in] iid The interface ID of the clock service interface to get
+ * @param[in] handle_to_component Handle to the interface of the object to get
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle_to_component is null

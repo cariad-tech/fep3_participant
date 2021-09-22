@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -34,7 +43,7 @@ struct JobComponentRegistryWithJobRegistry : ::testing::Test
     }
 
     void createComponents()
-    {    
+    {
         auto job_registry = std::make_unique<fep3::mock::JobRegistryComponent<>>();
         ASSERT_FEP3_RESULT(_component_registry->registerComponent<fep3::IJobRegistry>(std::move(job_registry)), fep3::ERR_NOERROR);
     }
@@ -44,15 +53,15 @@ struct JobComponentRegistryWithJobRegistry : ::testing::Test
         _job_registry_mock = _component_registry->getComponent<fep3::mock::JobRegistry>();
         ASSERT_NE(_job_registry_mock, nullptr);
     }
-  
+
     fep3::mock::JobRegistry* _job_registry_mock;
-    std::shared_ptr<fep3::ComponentRegistry> _component_registry;  
+    std::shared_ptr<fep3::ComponentRegistry> _component_registry;
 };
 
 struct JobComponentRegistryWithoutJobRegistry : ::testing::Test
 {
     void SetUp() override {
-        _component_registry = std::make_shared<fep3::ComponentRegistry>();    
+        _component_registry = std::make_shared<fep3::ComponentRegistry>();
 
         ASSERT_FEP3_RESULT(_component_registry->create(), fep3::ERR_NOERROR);
     }
@@ -91,7 +100,7 @@ TEST_F(JobComponentRegistryWithJobRegistry, JobRegistryWillBeCalled)
 */
 TEST_F(JobComponentRegistryWithoutJobRegistry, ErrorRetrievingJobRegistry)
 {
-    { // add     
+    { // add
         const std::vector<std::shared_ptr<Job>> jobs{
             std::make_shared<Job>("Job1", Duration(1)),
             std::make_shared<Job>("Job2", Duration(1))
@@ -107,7 +116,7 @@ TEST_F(JobComponentRegistryWithoutJobRegistry, ErrorRetrievingJobRegistry)
 
 /**
  * @brief Two jobs are added with success
- * 
+ *
  */
 TEST(Job, AddJobWithSuccesss)
 {
@@ -116,8 +125,8 @@ TEST(Job, AddJobWithSuccesss)
     EXPECT_CALL(*job_registry, addJob(_,_,_)).Times(2).WillRepeatedly(::testing::Return(fep3::Result{}));
 
     const std::vector<std::shared_ptr<Job>> jobs{
-        std::make_shared<Job>("Job1", Duration(1)), 
-        std::make_shared<Job>("Job2", Duration(1)) 
+        std::make_shared<Job>("Job1", Duration(1)),
+        std::make_shared<Job>("Job2", Duration(1))
         };
     ASSERT_FEP3_NOERROR(fep3::core::arya::addJobsToJobRegistry(jobs, *job_registry));
 }
@@ -134,7 +143,7 @@ TEST(Job, AddJobsWithError)
         .Times(2)
         .WillOnce(::testing::Return(fep3::Result{}))
         .WillOnce(::testing::Return(CREATE_ERROR_DESCRIPTION(fep3::ERR_FAILED, "error adding Job2")));
-    
+
     const std::vector<std::shared_ptr<Job>> jobs{
             std::make_shared<Job>("Job1", Duration(1)),
             std::make_shared<Job>("Job2", Duration(1)),
@@ -159,7 +168,7 @@ TEST(Job, RemoveJobsWithSuccess)
 
 /**
 * @brief Four jobs are removed. Removing fails for Job2 and Job4
-* @details Job1 and Job3 will be removed. 
+* @details Job1 and Job3 will be removed.
 *               The last error code will be returned.
 *               A message containing of error description for Job2 and Job4 will be created.
 */

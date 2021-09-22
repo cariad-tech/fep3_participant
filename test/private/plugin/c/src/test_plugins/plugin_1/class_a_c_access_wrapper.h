@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -91,8 +100,8 @@ namespace detail
  * @note This template function must be instantiated in the plugin's code (cpp file).
  *
  * @tparam ClassA The type of the object A to be created
- * @param [out] result Pointer to an access structure to be filled; if null, no object will be created
- * @param shared_binary_access Access structure to the shared binary the created object will reside in
+ * @param[out] result Pointer to an access structure to be filled; if null, no object will be created
+ * @param[in]shared_binary_access Access structure to the shared binary the created object will reside in
  * @return C Interface error: fep3_plugin_c_interface_error_none if no error occurred, error code otherwise
  */
 template<typename class_a_factory_type>

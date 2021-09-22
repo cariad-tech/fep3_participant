@@ -1,14 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @note All methods are defined inline to provide the functionality as header only.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @note All methods are defined inline to provide the functionality as header only.
 
 #pragma once
 
@@ -17,14 +25,14 @@
 
 #include <fep3/fep3_macros.h>
 #include <fep3/components/simulation_bus/c_intf/simulation_bus_c_intf.h>
-#include <fep3/base/streamtype/c_intf/stream_type_c_intf.h>
-#include <fep3/base/streamtype/c_access_wrapper/stream_type_c_access_wrapper.h>
+#include <fep3/base/stream_type/c_intf/stream_type_c_intf.h>
+#include <fep3/base/stream_type/c_access_wrapper/stream_type_c_access_wrapper.h>
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
 #include <fep3/plugin/c/c_access/c_access_helper.h>
 #include <fep3/plugin/c/c_wrapper/c_wrapper_helper.h>
 #include <fep3/plugin/c/c_wrapper/destructor_c_wrapper.h>
 #include <fep3/plugin/c/shared_binary_intf.h>
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/base/c_access_wrapper/component_base_c_access.h>
 #include <fep3/components/base/c_access_wrapper/component_c_wrapper.h>
 #include <fep3/base/sample/c_access_wrapper/data_sample_c_access_wrapper.h>
@@ -61,12 +69,12 @@ public:
     /**
      * CTOR
      *
-     * @param access Access to the remote object
-     * @param shared_binary Shared pointer to the binary this resides in
+     * @param[in] access Access to the remote object
+     * @param[in] shared_binary Shared pointer to the binary this resides in
      */
     inline SimulationBus
         (const Access& access
-        , const std::shared_ptr<ISharedBinary>& shared_binary
+        , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
         );
     /**
      * DTOR destroying the corresponding remote object
@@ -79,7 +87,7 @@ public:
      */
     class DataReader
         : public fep3::arya::ISimulationBus::IDataReader
-        , private DestructionManager
+        , private c::arya::DestructionManager
     {
     public:
         /// Type of access structure
@@ -87,12 +95,12 @@ public:
 
         /**
          * @brief CTOR
-         * @param access Access to the remote object
-         * @param destructors List of destructors to be called upon destruction of this
+         * @param[in] access Access to the remote object
+         * @param[in] destructors List of destructors to be called upon destruction of this
          */
         inline DataReader
             (const Access& access
-            , std::deque<std::unique_ptr<IDestructor>> destructors
+            , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
             );
         inline ~DataReader() override = default;
 
@@ -101,9 +109,8 @@ public:
         inline size_t size() const override;
         inline size_t capacity() const override;
         inline bool pop(IDataReceiver& receiver) override;
-        inline void receive(IDataReceiver& receiver) override;
-        inline void stop() override;
-        inline Optional<Timestamp> getFrontTime() const override;
+        inline void reset(const std::shared_ptr<IDataReceiver>& receiver) override;
+        inline fep3::arya::Optional<fep3::arya::Timestamp> getFrontTime() const override;
         /// @endcond no_documentation
 
     private:
@@ -116,7 +123,7 @@ public:
      */
     class DataReceiver
         : public fep3::arya::ISimulationBus::IDataReceiver
-        , private DestructionManager
+        , private c::arya::DestructionManager
     {
     public:
         /// Type of access structure
@@ -124,19 +131,19 @@ public:
 
         /**
          * @brief CTOR
-         * @param access Access to the remote object
-         * @param destructors List of destructors to be called upon destruction of this
+         * @param[in] access Access to the remote object
+         * @param[in] destructors List of destructors to be called upon destruction of this
          */
         inline DataReceiver
             (const Access& access
-            , std::deque<std::unique_ptr<IDestructor>> destructors
+            , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
             );
         inline ~DataReceiver() override = default;
 
         /// @cond no_documentation
         // methods implementing fep3::arya::IDataReceiver
-        inline void operator()(const data_read_ptr<const IStreamType>& type) override;
-        inline void operator()(const data_read_ptr<const IDataSample>& sample) override;
+        inline void operator()(const data_read_ptr<const fep3::arya::IStreamType>& type) override;
+        inline void operator()(const data_read_ptr<const fep3::arya::IDataSample>& sample) override;
         /// @endcond no_documentation
 
     private:
@@ -150,7 +157,7 @@ public:
      */
     class DataWriter
         : public fep3::arya::ISimulationBus::IDataWriter
-        , private DestructionManager
+        , private c::arya::DestructionManager
     {
     public:
         /// Type of access structure
@@ -158,12 +165,12 @@ public:
 
         /**
          * @brief CTOR
-         * @param access Access to the remote object
-         * @param destructors List of destructors to be called upon destruction of this
+         * @param[in] access Access to the remote object
+         * @param[in] destructors List of destructors to be called upon destruction of this
          */
         inline DataWriter
             (const Access& access
-            , std::deque<std::unique_ptr<IDestructor>> destructors
+            , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
             );
         inline ~DataWriter() override = default;
 
@@ -180,25 +187,27 @@ public:
 
     /// @cond no_documentation
     // methods implementing fep3::arya::ISimulationBus
-    inline bool isSupported(const IStreamType& stream_type) const override;
-    inline std::unique_ptr<IDataReader> getReader
+    inline bool isSupported(const fep3::arya::IStreamType& stream_type) const override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> getReader
         (const std::string& name
-        , const IStreamType& stream_type
+        , const fep3::arya::IStreamType& stream_type
         ) override;
-    inline std::unique_ptr<IDataReader> getReader
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> getReader
         (const std::string& name
         , const fep3::arya::IStreamType& stream_type
         , size_t queue_capacity
         ) override;
-    inline std::unique_ptr<IDataReader> getReader(const std::string& name) override;
-    inline std::unique_ptr<IDataReader> getReader(const std::string& name, size_t queue_capacity) override;
-    inline std::unique_ptr<IDataWriter> getWriter
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> getReader(const std::string& name) override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> getReader(const std::string& name, size_t queue_capacity) override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> getWriter
         (const std::string& name,
         const fep3::arya::IStreamType& stream_type
         ) override;
-    inline std::unique_ptr<IDataWriter> getWriter(const std::string& name, const fep3::arya::IStreamType& stream_type, size_t queue_capacity) override;
-    inline std::unique_ptr<IDataWriter> getWriter(const std::string& name) override;
-    inline std::unique_ptr<IDataWriter> getWriter(const std::string& name, size_t queue_capacity) override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> getWriter(const std::string& name, const fep3::arya::IStreamType& stream_type, size_t queue_capacity) override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> getWriter(const std::string& name) override;
+    inline std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> getWriter(const std::string& name, size_t queue_capacity) override;
+    inline void startBlockingReception(const std::function<void()>& reception_preparation_done_callback) override;
+    inline void stopBlockingReception() override;
     /// @endcond no_documentation
 
 private:
@@ -216,13 +225,13 @@ namespace arya
 /**
  * Wrapper class for interface @ref fep3::arya::ISimulationBus
  */
-class SimulationBus : private Helper<fep3::arya::ISimulationBus>
+class SimulationBus : private arya::Helper<fep3::arya::ISimulationBus>
 {
 public:
     /**
      * Wrapper class for interface @ref fep3::arya::ISimulationBus::IDataReader
      */
-    class DataReader : private Helper<fep3::arya::ISimulationBus::IDataReader>
+    class DataReader : private arya::Helper<fep3::arya::ISimulationBus::IDataReader>
     {
     public:
         /**
@@ -233,25 +242,24 @@ public:
             /**
              * Creates an access structure to the data reader as pointed to by @p pointer_to_data_reader
              *
-             * @param pointer_to_data_reader Pointer to the data reader to create an access structure for
+             * @param[in] pointer_to_data_reader Pointer to the data reader to create an access structure for
              * @return Access structure to the data reader
              */
-            fep3_arya_ISimulationBus_SIDataReader operator()(fep3::arya::ISimulationBus::IDataReader* pointer_to_data_reader)
+            fep3_arya_ISimulationBus_SIDataReader operator()(fep3::arya::ISimulationBus::IDataReader* pointer_to_data_reader) const noexcept
             {
                 return fep3_arya_ISimulationBus_SIDataReader
                     {reinterpret_cast<SimulationBus::DataReader::Handle>(pointer_to_data_reader)
                     , SimulationBus::DataReader::size
                     , SimulationBus::DataReader::capacity
                     , SimulationBus::DataReader::pop
-                    , SimulationBus::DataReader::receive
-                    , SimulationBus::DataReader::stop
+                    , SimulationBus::DataReader::reset
                     , SimulationBus::DataReader::getFrontTime
                     };
             }
         };
 
         /// Alias for the helper
-        using Helper = Helper<fep3::arya::ISimulationBus::IDataReader>;
+        using Helper = arya::Helper<fep3::arya::ISimulationBus::IDataReader>;
         /// Alias for the type of the handle to a wrapped object of type \ref fep3::arya::ISimulationBus::IDataReader
         using Handle = fep3_arya_ISimulationBus_HIDataReader;
 
@@ -289,11 +297,10 @@ public:
         {
             return passReferenceWithResultParameter<access::arya::SimulationBus::DataReceiver>
                 (handle
-                , std::bind
-                    (&fep3::arya::ISimulationBus::IDataReader::pop
-                    , std::placeholders::_1
-                    , std::placeholders::_2
-                    )
+                , [](auto&& data_reader, auto&& receiver)
+                    {
+                        return data_reader->pop(std::forward<decltype(receiver)>(receiver));
+                    }
                 , [](bool result)
                     {
                         return result;
@@ -302,28 +309,20 @@ public:
                 , data_receiver_access
                 );
         }
-        static inline fep3_plugin_c_InterfaceError receive
+        static inline fep3_plugin_c_InterfaceError reset
             (Handle handle
+            , fep3_plugin_c_arya_SDestructionManager reference_manager_access
             , fep3_arya_ISimulationBus_SIDataReceiver data_receiver_access
             ) noexcept
         {
-            return passReference<access::arya::SimulationBus::DataReceiver>
+            return transferSharedPtr<access::arya::SimulationBus::DataReceiver>
                 (handle
-                , std::bind
-                    (&fep3::arya::ISimulationBus::IDataReader::receive
-                    , std::placeholders::_1
-                    , std::placeholders::_2
-                    )
+                , [](auto&& data_reader, auto&& receiver)
+                    {
+                        data_reader->reset(receiver);
+                    }
+                , reference_manager_access
                 , data_receiver_access
-                );
-        }
-        static inline fep3_plugin_c_InterfaceError stop
-            (Handle handle
-            ) noexcept
-        {
-            return Helper::call
-                (handle
-                , &fep3::arya::ISimulationBus::IDataReader::stop
                 );
         }
         static inline fep3_plugin_c_InterfaceError getFrontTime
@@ -334,10 +333,10 @@ public:
             return Helper::callWithResultParameter
                 (handle
                 , &fep3::arya::ISimulationBus::IDataReader::getFrontTime
-                , [](const Optional<Timestamp>& timestamp)
+                , [](const fep3::arya::Optional<fep3::arya::Timestamp>& timestamp)
                     {
                         // use min() as special value for invalid timestamp
-                        return timestamp.value_or((Timestamp::min)()).count();
+                        return timestamp.value_or((fep3::arya::Timestamp::min)()).count();
                     }
                 , result
                 );
@@ -348,7 +347,7 @@ public:
     /**
      * Wrapper class for interface @ref fep3::arya::ISimulationBus::IDataReceiver
      */
-    class DataReceiver : private Helper<fep3::arya::ISimulationBus::IDataReceiver>
+    class DataReceiver : private arya::Helper<fep3::arya::ISimulationBus::IDataReceiver>
     {
     public:
         /**
@@ -359,10 +358,10 @@ public:
             /**
              * Creates an access structure to the data receiver as pointed to by @p pointer_to_data_receiver
              *
-             * @param pointer_to_data_receiver Pointer to the data receiver to create an access structure for
+             * @param[in] pointer_to_data_receiver Pointer to the data receiver to create an access structure for
              * @return Access structure to the data receiver
              */
-            fep3_arya_ISimulationBus_SIDataReceiver operator()(fep3::arya::ISimulationBus::IDataReceiver* pointer_to_data_receiver)
+            fep3_arya_ISimulationBus_SIDataReceiver operator()(fep3::arya::ISimulationBus::IDataReceiver* pointer_to_data_receiver) const noexcept
             {
                 return fep3_arya_ISimulationBus_SIDataReceiver
                     {reinterpret_cast<wrapper::arya::SimulationBus::DataReceiver::Handle>(pointer_to_data_receiver)
@@ -373,7 +372,7 @@ public:
         };
 
         /// Alias for the helper
-        using Helper = Helper<fep3::arya::ISimulationBus::IDataReceiver>;
+        using Helper = arya::Helper<fep3::arya::ISimulationBus::IDataReceiver>;
         /// Alias for the type of the handle to a wrapped object of type \ref fep3::arya::ISimulationBus::IDataReceiver
         using Handle = fep3_arya_ISimulationBus_HIDataReceiver;
 
@@ -381,17 +380,15 @@ public:
         static inline fep3_plugin_c_InterfaceError call
             (Handle handle
             , fep3_plugin_c_arya_SDestructionManager reference_manager_access
-            , fep3_arya_SIStreamType stream_type_access
+            , fep3_arya_const_SIStreamType stream_type_access
             ) noexcept
         {
             return Helper::transferSharedPtr<access::arya::StreamType>
                 (handle
-                , std::bind
-                    // using static_cast to disambiguate the address of the overload
-                    (static_cast<void(fep3::arya::ISimulationBus::IDataReceiver::*)(const data_read_ptr<const fep3::arya::IStreamType>&)>(&fep3::arya::ISimulationBus::IDataReceiver::operator())
-                    , std::placeholders::_1
-                    , std::placeholders::_2
-                    )
+                , [](auto&& data_receiver, auto&& stream_type)
+                    {
+                        return data_receiver->operator()(std::forward<decltype(stream_type)>(stream_type));
+                    }
                 , reference_manager_access
                 , stream_type_access
                 );
@@ -399,17 +396,15 @@ public:
         static inline fep3_plugin_c_InterfaceError call
             (Handle handle
             , fep3_plugin_c_arya_SDestructionManager reference_manager_access
-            , fep3_arya_SIDataSample data_sample_access
+            , fep3_arya_const_SIDataSample data_sample_access
             ) noexcept
         {
             return Helper::transferSharedPtr<access::arya::DataSample>
                 (handle
-                , std::bind
-                    // using static_cast to disambiguate the address of the overload
-                    (static_cast<void(fep3::arya::ISimulationBus::IDataReceiver::*)(const data_read_ptr<const fep3::arya::IDataSample>&)>(&fep3::arya::ISimulationBus::IDataReceiver::operator())
-                    , std::placeholders::_1
-                    , std::placeholders::_2
-                    )
+                , [](auto&& data_receiver, auto&& data_sample)
+                    {
+                        return data_receiver->operator()(std::forward<decltype(data_sample)>(data_sample));
+                    }
                 , reference_manager_access
                 , data_sample_access
                 );
@@ -420,7 +415,7 @@ public:
     /**
      * Wrapper class for interface @ref fep3::arya::ISimulationBus::IDataWriter
      */
-    class DataWriter : private Helper<fep3::arya::ISimulationBus::IDataWriter>
+    class DataWriter : private arya::Helper<fep3::arya::ISimulationBus::IDataWriter>
     {
     public:
         /**
@@ -431,10 +426,10 @@ public:
             /**
              * Creates an access structure to the data writer as pointed to by @p pointer_to_data_writer
              *
-             * @param pointer_to_data_writer Pointer to the data writer to create an access structure for
+             * @param[in] pointer_to_data_writer Pointer to the data writer to create an access structure for
              * @return Access structure to the data writer
              */
-            fep3_arya_ISimulationBus_SIDataWriter operator()(fep3::arya::ISimulationBus::IDataWriter* pointer_to_data_writer)
+            fep3_arya_ISimulationBus_SIDataWriter operator()(fep3::arya::ISimulationBus::IDataWriter* pointer_to_data_writer) const noexcept
             {
                 return fep3_arya_ISimulationBus_SIDataWriter
                     {reinterpret_cast<SimulationBus::DataWriter::Handle>(pointer_to_data_writer)
@@ -446,69 +441,66 @@ public:
         };
 
         /// Alias for the helper
-        using Helper = Helper<fep3::arya::ISimulationBus::IDataWriter>;
+        using Helper = arya::Helper<fep3::arya::ISimulationBus::IDataWriter>;
         /// Alias for the type of the handle to a wrapped object of type \ref fep3::arya::ISimulationBus::IDataWriter
         using Handle = fep3_arya_ISimulationBus_HIDataWriter;
 
         /// @cond no_documentation
         static inline fep3_plugin_c_InterfaceError writeDataSample
             (Handle handle
-            , int32_t* result
-            , fep3_arya_SIDataSample data_sample_access
+            , fep3_result_callback_type result_callback
+            , void* result_destination
+            , fep3_arya_const_SIDataSample data_sample_access
             ) noexcept
         {
-            return Helper::callWithResultParameter
+            return Helper::callWithResultCallback
                 (handle
                 // using static_cast to disambiguate the address of the appropriate overload
                 , static_cast<fep3::Result(fep3::arya::ISimulationBus::IDataWriter::*)(const fep3::arya::IDataSample&)>
                     (&fep3::arya::ISimulationBus::IDataWriter::write)
-                , [](const fep3::Result& result)
-                    {
-                        return result.getErrorCode();
-                    }
-                , result
+                , result_callback
+                , result_destination
+                , getResult
                 , access::arya::DataSample(data_sample_access, {})
                 );
         }
         static inline fep3_plugin_c_InterfaceError writeStreamType
             (Handle handle
-            , int32_t* result
-            , fep3_arya_SIStreamType stream_type_access
+            , void(*result_callback)(void* destination, fep3_SResult result)
+            , void* result_destination
+            , fep3_arya_const_SIStreamType stream_type_access
             ) noexcept
         {
-            return Helper::callWithResultParameter
+            return Helper::callWithResultCallback
                 (handle
                 // using static_cast to disambiguate the address of the appropriate overload
                 , static_cast<fep3::Result(fep3::arya::ISimulationBus::IDataWriter::*)(const fep3::arya::IStreamType&)>
                     (&fep3::arya::ISimulationBus::IDataWriter::write)
-                , [](const fep3::Result& result)
-                    {
-                        return result.getErrorCode();
-                    }
-                , result
+                , result_callback
+                , result_destination
+                , getResult
                 , access::arya::StreamType(stream_type_access, {})
                 );
         }
         static inline fep3_plugin_c_InterfaceError transmit
             (Handle handle
-            , int32_t* result
+            , fep3_result_callback_type result_callback
+            , void* result_destination
             ) noexcept
         {
-            return Helper::callWithResultParameter
+            return Helper::callWithResultCallback
                 (handle
                 , &fep3::arya::ISimulationBus::IDataWriter::transmit
-                , [](const fep3::Result& result)
-                    {
-                        return result.getErrorCode();
-                    }
-                , result
+                , result_callback
+                , result_destination
+                , getResult
                 );
         }
         /// @endcond no_documentation
     };
 
 private:
-    using Helper = Helper<fep3::arya::ISimulationBus>;
+    using Helper = arya::Helper<fep3::arya::ISimulationBus>;
     using Handle = fep3_arya_HISimulationBus;
 
 public:
@@ -516,7 +508,7 @@ public:
     static inline fep3_plugin_c_InterfaceError isSupported
         (Handle handle
         , bool* result
-        , fep3_arya_SIStreamType stream_type_access
+        , fep3_arya_const_SIStreamType stream_type_access
         )
     {
         return Helper::callWithResultParameter
@@ -535,7 +527,7 @@ public:
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_ISimulationBus_SIDataReader* data_reader_access_result
         , const char* name
-        , fep3_arya_SIStreamType stream_type_access
+        , fep3_arya_const_SIStreamType stream_type_access
         )
     {
         return Helper::getUniquePtr
@@ -545,7 +537,7 @@ public:
                 (&fep3::arya::ISimulationBus::getReader)
             , destruction_manager_access_result
             , data_reader_access_result
-            , DataReader::AccessCreator()
+            , arya::SimulationBus::DataReader::AccessCreator()
             , name
             , access::arya::StreamType(stream_type_access, {})
             );
@@ -555,7 +547,7 @@ public:
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_ISimulationBus_SIDataReader* data_reader_access_result
         , const char* name
-        , fep3_arya_SIStreamType stream_type_access
+        , fep3_arya_const_SIStreamType stream_type_access
         , size_t queue_capacity
         )
     {
@@ -566,7 +558,7 @@ public:
                 (&fep3::arya::ISimulationBus::getReader)
             , destruction_manager_access_result
             , data_reader_access_result
-            , DataReader::AccessCreator()
+            , arya::SimulationBus::DataReader::AccessCreator()
             , name
             , access::arya::StreamType(stream_type_access, {})
             , queue_capacity
@@ -585,7 +577,7 @@ public:
             , static_cast<std::unique_ptr<fep3::arya::ISimulationBus::IDataReader>(fep3::arya::ISimulationBus::*)(const std::string&)>(&fep3::arya::ISimulationBus::getReader)
             , destruction_manager_access_result
             , data_reader_access_result
-            , DataReader::AccessCreator()
+            , arya::SimulationBus::DataReader::AccessCreator()
             , name
             );
     }
@@ -603,7 +595,7 @@ public:
             , static_cast<std::unique_ptr<fep3::arya::ISimulationBus::IDataReader>(fep3::arya::ISimulationBus::*)(const std::string&, size_t)>(&fep3::arya::ISimulationBus::getReader)
             , destruction_manager_access_result
             , data_reader_access_result
-            , DataReader::AccessCreator()
+            , arya::SimulationBus::DataReader::AccessCreator()
             , name
             , queue_capacity
             );
@@ -613,7 +605,7 @@ public:
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_ISimulationBus_SIDataWriter* data_writer_access_result
         , const char* name
-        , fep3_arya_SIStreamType stream_type_access
+        , fep3_arya_const_SIStreamType stream_type_access
         )
     {
         return Helper::getUniquePtr
@@ -625,7 +617,7 @@ public:
             , data_writer_access_result
             , [](const auto& pointer_to_data_writer)
                 {
-                    return DataWriter::AccessCreator()(pointer_to_data_writer);
+                    return arya::SimulationBus::DataWriter::AccessCreator()(pointer_to_data_writer);
                 }
             , name
             , access::arya::StreamType(stream_type_access, {})
@@ -636,7 +628,7 @@ public:
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , fep3_arya_ISimulationBus_SIDataWriter* data_writer_access_result
         , const char* name
-        , fep3_arya_SIStreamType stream_type_access
+        , fep3_arya_const_SIStreamType stream_type_access
         , size_t queue_capacity
         )
     {
@@ -649,7 +641,7 @@ public:
             , data_writer_access_result
             , [](const auto& pointer_to_data_writer)
                 {
-                    return DataWriter::AccessCreator()(pointer_to_data_writer);
+                    return arya::SimulationBus::DataWriter::AccessCreator()(pointer_to_data_writer);
                 }
             , name
             , access::arya::StreamType(stream_type_access, {})
@@ -671,7 +663,7 @@ public:
             , data_writer_access_result
             , [](const auto& pointer_to_data_writer)
                 {
-                    return DataWriter::AccessCreator()(pointer_to_data_writer);
+                    return arya::SimulationBus::DataWriter::AccessCreator()(pointer_to_data_writer);
                 }
             , name
             );
@@ -692,11 +684,29 @@ public:
             , data_writer_access_result
             , [](const auto& pointer_to_data_writer)
                 {
-                    return DataWriter::AccessCreator()(pointer_to_data_writer);
+                    return arya::SimulationBus::DataWriter::AccessCreator()(pointer_to_data_writer);
                 }
             , name
             , queue_capacity
             );
+    }
+    static inline fep3_plugin_c_InterfaceError startBlockingReception(Handle handle, void(*reception_preparation_done_callback)(const void* context), const void* context)
+    {
+        return Helper::call
+            (handle
+            , &fep3::arya::ISimulationBus::startBlockingReception
+            , [reception_preparation_done_callback, context]()
+                {
+                    if(nullptr != reception_preparation_done_callback)
+                    {
+                        reception_preparation_done_callback(context);
+                    }
+                }
+            );
+    }
+    static inline fep3_plugin_c_InterfaceError stopBlockingReception(Handle handle)
+    {
+        return Helper::call(handle, &fep3::arya::ISimulationBus::stopBlockingReception);
     }
     /// @endcond no_documentation
 
@@ -734,6 +744,8 @@ inline fep3_plugin_c_InterfaceError getSimulationBus
                         , wrapper::arya::SimulationBus::getWriterByNameAndStreamTypeAndQueueCapacity
                         , wrapper::arya::SimulationBus::getWriterByName
                         , wrapper::arya::SimulationBus::getWriterByNameAndQueueCapacity
+                        , wrapper::arya::SimulationBus::startBlockingReception
+                        , wrapper::arya::SimulationBus::stopBlockingReception
                         };
                 }
             );
@@ -774,6 +786,8 @@ inline fep3_plugin_c_InterfaceError createSimulationBus
                         , wrapper::arya::SimulationBus::getWriterByNameAndStreamTypeAndQueueCapacity
                         , wrapper::arya::SimulationBus::getWriterByName
                         , wrapper::arya::SimulationBus::getWriterByNameAndQueueCapacity
+                        , wrapper::arya::SimulationBus::startBlockingReception
+                        , wrapper::arya::SimulationBus::stopBlockingReception
                         };
                 }
             );
@@ -791,9 +805,9 @@ inline fep3_plugin_c_InterfaceError createSimulationBus
 /**
  * Creates a simulation bus object of type \p simulation_bus_type
  * @tparam simulation_bus_type The type of the simulation bus object to be created
- * @param result Pointer to the access structure to the created simulation bus object
- * @param shared_binary_access Access strcuture to the shared binary the simulation bus object resides in
- * @param iid The interface ID of the simulation bus interface of the created object
+ * @param[out] result Pointer to the access structure to the created simulation bus object
+ * @param[in] shared_binary_access Access strcuture to the shared binary the simulation bus object resides in
+ * @param[in] iid The interface ID of the simulation bus interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_result_pointer The @p result is null
@@ -827,7 +841,7 @@ namespace arya
 
 SimulationBus::DataReader::DataReader
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(std::move(access))
 {
@@ -837,17 +851,17 @@ SimulationBus::DataReader::DataReader
 /// @cond no_documentation
 size_t SimulationBus::DataReader::size() const
 {
-    return Helper::callWithResultParameter(_access._handle, _access.size);
+    return arya::Helper::callWithResultParameter(_access._handle, _access.size);
 }
 
 size_t SimulationBus::DataReader::capacity() const
 {
-    return Helper::callWithResultParameter(_access._handle, _access.capacity);
+    return arya::Helper::callWithResultParameter(_access._handle, _access.capacity);
 }
 
 bool SimulationBus::DataReader::pop(IDataReceiver& receiver)
 {
-    return Helper::passReferenceWithResultParameter<bool>
+    return arya::Helper::passReferenceWithResultParameter<bool>
         (receiver
         , _access._handle
         , _access.pop
@@ -858,12 +872,12 @@ bool SimulationBus::DataReader::pop(IDataReceiver& receiver)
         );
 }
 
-void SimulationBus::DataReader::receive(IDataReceiver& receiver)
+void SimulationBus::DataReader::reset(const std::shared_ptr<IDataReceiver>& receiver)
 {
-    Helper::passReference
+    arya::Helper::transferSharedPtr
         (receiver
         , _access._handle
-        , _access.receive
+        , _access.reset
         , [](const auto& pointer_to_receiver)
             {
                 return ::fep3::plugin::c::wrapper::arya::SimulationBus::DataReceiver::AccessCreator()(pointer_to_receiver);
@@ -871,28 +885,23 @@ void SimulationBus::DataReader::receive(IDataReceiver& receiver)
         );
 }
 
-void SimulationBus::DataReader::stop()
+fep3::arya::Optional<fep3::arya::Timestamp> SimulationBus::DataReader::getFrontTime() const
 {
-    Helper::call(_access._handle, _access.stop);
-}
-
-Optional<Timestamp> SimulationBus::DataReader::getFrontTime() const
-{
-    const auto next_time = Helper::callWithResultParameter(_access._handle, _access.getFrontTime);
-    if((Timestamp::min)().count() == next_time)
+    const auto next_time = arya::Helper::callWithResultParameter(_access._handle, _access.getFrontTime);
+    if((fep3::arya::Timestamp::min)().count() == next_time)
     {
         return {};
     }
     else
     {
-        return Timestamp(next_time);
+        return fep3::arya::Timestamp(next_time);
     }
 }
 /// @endcond no_documentation
 
 SimulationBus::DataReceiver::DataReceiver
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(std::move(access))
 {
@@ -900,28 +909,28 @@ SimulationBus::DataReceiver::DataReceiver
 }
 
 /// @cond no_documentation
-void SimulationBus::DataReceiver::operator()(const data_read_ptr<const IStreamType>& type)
+void SimulationBus::DataReceiver::operator()(const data_read_ptr<const fep3::arya::IStreamType>& type)
 {
-    Helper::transferSharedPtr
+    arya::Helper::transferSharedPtr
         (type
         , _access._handle
         , _access.callByStreamType
         , [](const auto& pointer_to_type)
             {
-                return ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(pointer_to_type));
+                return ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(pointer_to_type);
             }
         );
 }
 
-void SimulationBus::DataReceiver::operator()(const data_read_ptr<const IDataSample>& sample)
+void SimulationBus::DataReceiver::operator()(const data_read_ptr<const fep3::arya::IDataSample>& sample)
 {
-    Helper::transferSharedPtr
+    arya::Helper::transferSharedPtr
         (sample
         , _access._handle
         , _access.callByDataSample
         , [](const auto& pointer_to_sample)
             {
-                return ::fep3::plugin::c::wrapper::arya::DataSample::AccessCreator()(const_cast<IDataSample*>(pointer_to_sample));
+                return ::fep3::plugin::c::wrapper::arya::DataSample::AccessCreator()(pointer_to_sample);
             }
         );
 }
@@ -929,7 +938,7 @@ void SimulationBus::DataReceiver::operator()(const data_read_ptr<const IDataSamp
 
 SimulationBus::DataWriter::DataWriter
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(std::move(access))
 {
@@ -939,36 +948,39 @@ SimulationBus::DataWriter::DataWriter
 /// @cond no_documentation
 fep3::Result SimulationBus::DataWriter::write(const fep3::arya::IDataSample& data_sample)
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultCallback<fep3::Result>
         (_access._handle
         , _access.writeDataSample
-        , ::fep3::plugin::c::wrapper::arya::DataSample::AccessCreator()(const_cast<fep3::arya::IDataSample*>(&data_sample))
+        , &getResult
+        , wrapper::arya::DataSample::AccessCreator()(&data_sample)
         );
 }
 
 fep3::Result SimulationBus::DataWriter::write(const fep3::arya::IStreamType& stream_type)
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultCallback<fep3::Result>
         (_access._handle
         , _access.writeStreamType
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , &getResult
+        , wrapper::arya::StreamType::AccessCreator()(&stream_type)
         );
 }
 
 fep3::Result SimulationBus::DataWriter::transmit()
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultCallback<fep3::Result>
         (_access._handle
         , _access.transmit
+        , &getResult
         );
 }
 /// @endcond no_documentation
 
 SimulationBus::SimulationBus
     (const Access& access
-    , const std::shared_ptr<ISharedBinary>& shared_binary
+    , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
     )
-    : ComponentBase<fep3::arya::ISimulationBus>
+    : arya::ComponentBase<fep3::arya::ISimulationBus>
         (access._component
         , shared_binary
         )
@@ -976,45 +988,45 @@ SimulationBus::SimulationBus
 {}
 
 /// @cond no_documentation
-bool SimulationBus::isSupported(const IStreamType& stream_type) const
+bool SimulationBus::isSupported(const fep3::arya::IStreamType& stream_type) const
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultParameter
         (_access._handle
         , _access.isSupported
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(&stream_type)
         );
 }
 
 std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> SimulationBus::getReader
     (const std::string& name
-    , const IStreamType& stream_type
+    , const fep3::arya::IStreamType& stream_type
     )
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataReader
         , fep3_arya_ISimulationBus_SIDataReader
         >
         (_access._handle
         , _access.getReaderByNameAndStreamType
         , name.c_str()
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(&stream_type)
         );
 }
 
 std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> SimulationBus::getReader
     (const std::string& name
-    , const IStreamType& stream_type
+    , const fep3::arya::IStreamType& stream_type
     , size_t queue_capacity
     )
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataReader
         , fep3_arya_ISimulationBus_SIDataReader
         >
         (_access._handle
         , _access.getReaderByNameAndStreamTypeAndQueueCapacity
         , name.c_str()
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(&stream_type)
         , queue_capacity
         );
 }
@@ -1022,7 +1034,7 @@ std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> SimulationBus::getReade
 std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> SimulationBus::getReader
     (const std::string& name)
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataReader
         , fep3_arya_ISimulationBus_SIDataReader
         >
@@ -1034,47 +1046,47 @@ std::unique_ptr<fep3::arya::ISimulationBus::IDataReader> SimulationBus::getReade
     , size_t queue_capacity
     )
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataReader
         , fep3_arya_ISimulationBus_SIDataReader
         >
         (_access._handle, _access.getReaderByNameAndQueueCapacity, name.c_str(), queue_capacity);
 }
 
-std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWriter(const std::string& name, const IStreamType& stream_type)
+std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWriter(const std::string& name, const fep3::arya::IStreamType& stream_type)
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataWriter
         , fep3_arya_ISimulationBus_SIDataWriter
         >
         (_access._handle
         , _access.getWriterByNameAndStreamType
         , name.c_str()
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(&stream_type)
         );
 }
 
 std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWriter
     (const std::string& name
-    , const IStreamType& stream_type
+    , const fep3::arya::IStreamType& stream_type
     , size_t queue_capacity
     )
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataWriter
         , fep3_arya_ISimulationBus_SIDataWriter
         >
         (_access._handle
         , _access.getWriterByNameAndStreamTypeAndQueueCapacity
         , name.c_str()
-        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(const_cast<IStreamType*>(&stream_type))
+        , ::fep3::plugin::c::wrapper::arya::StreamType::AccessCreator()(&stream_type)
         , queue_capacity
         );
 }
 
 std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWriter(const std::string& name)
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataWriter
         , fep3_arya_ISimulationBus_SIDataWriter
         >
@@ -1086,11 +1098,30 @@ std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWrite
     , size_t queue_capacity
     )
 {
-    return Helper::getUniquePtr
+    return arya::Helper::getUniquePtr
         <DataWriter
         , fep3_arya_ISimulationBus_SIDataWriter
         >
         (_access._handle, _access.getWriterByNameAndQueueCapacity, name.c_str(), queue_capacity);
+}
+
+inline void SimulationBus::startBlockingReception(const std::function<void()>& reception_preparation_done_callback)
+{
+    arya::Helper::call
+        (_access._handle
+        , _access.startBlockingReception
+        , reception_preparation_done_callback ? static_cast<void(*)(const void*)>([](const void* context)
+            {
+                const auto& reception_preparation_done_callback = reinterpret_cast<const std::function<void()>*>(context);
+                reception_preparation_done_callback->operator()();
+            }) : nullptr
+        , &reception_preparation_done_callback
+        );
+}
+
+inline void SimulationBus::stopBlockingReception()
+{
+    arya::Helper::call(_access._handle, _access.stopBlockingReception);
 }
 /// @endcond no_documentation
 
@@ -1102,9 +1133,9 @@ std::unique_ptr<fep3::arya::ISimulationBus::IDataWriter> SimulationBus::getWrite
 
 /**
  * Gets access to a simulation bus object as identified by @p handle_to_component
- * @param access_result Pointer to the access structure to the simulation bus object
- * @param iid The interface ID of the simulation bus interface to get
- * @param handle_to_component Handle to the interface of the object to get
+ * @param[out] access_result Pointer to the access structure to the simulation bus object
+ * @param[in] iid The interface ID of the simulation bus interface to get
+ * @param[in] handle_to_component Handle to the interface of the object to get
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle_to_component is null

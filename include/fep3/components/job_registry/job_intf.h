@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -28,38 +36,36 @@ namespace arya
 /**
  * @brief Interface of a job
  */
-class FEP3_PARTICIPANT_EXPORT IJob
+class IJob
 {
-public:
-    /**
-     * @brief DTOR
-     */
-    virtual ~IJob() = default;
+protected:
+    /// DTOR
+    ~IJob() = default;
 
 public:
     /**
      * @brief Read input samples.
      *
-     * @param time_of_execution Current simulation time
+     * @param[in] time_of_execution Current simulation time
      * @return fep3::Result
      */
-    virtual fep3::Result executeDataIn(Timestamp time_of_execution) = 0;
+    virtual fep3::Result executeDataIn(arya::Timestamp time_of_execution) = 0;
 
     /**
      * @brief Process job.
      *
-     * @param time_of_execution Current simulation time
+     * @param[in] time_of_execution Current simulation time
      * @return fep3::Result
      */
-    virtual fep3::Result execute(Timestamp time_of_execution) = 0;
+    virtual fep3::Result execute(arya::Timestamp time_of_execution) = 0;
 
     /**
      * @brief Write output samples.
      *
-     * @param time_of_execution Current simulation time
+     * @param[in] time_of_execution Current simulation time
      * @return fep3::Result
      */
-    virtual fep3::Result executeDataOut(Timestamp time_of_execution) = 0;
+    virtual fep3::Result executeDataOut(arya::Timestamp time_of_execution) = 0;
 };
 
 /// Entry of Jobs containing the @ref IJob and the @ref JobInfo
@@ -68,10 +74,10 @@ struct JobEntry
     /// The job itself
     std::shared_ptr<IJob> job;
     /// Info object about the job
-    JobInfo job_info;
+    arya::JobInfo job_info;
 };
 /// map of job entries
-using Jobs = std::map<std::string, JobEntry>;
+using Jobs = std::map<std::string, arya::JobEntry>;
 
 } // namespace arya
 using arya::Jobs;

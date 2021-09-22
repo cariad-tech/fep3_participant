@@ -1,15 +1,22 @@
 /**
- * Declaration of the native scheduler registry implementation.
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -23,25 +30,22 @@
 
 namespace fep3
 {
-
-class IIncidentHandler;
-
 namespace native
 {
 
 class LocalSchedulerRegistry : public ISchedulerRegistry
 {
 public:
-    LocalSchedulerRegistry(std::unique_ptr<fep3::IScheduler> default_scheduler);    
+    LocalSchedulerRegistry(std::unique_ptr<fep3::IScheduler> default_scheduler);
     LocalSchedulerRegistry() = delete;
 
-public: 
+public:
     // ISchedulerRegistry
     fep3::Result registerScheduler(std::unique_ptr<fep3::IScheduler> scheduler) override;
     fep3::Result unregisterScheduler(const std::string& scheduler_name) override;
-    std::list<std::string> getSchedulerNames() const override;    
+    std::list<std::string> getSchedulerNames() const override;
 
-    fep3::Result setActiveScheduler(const std::string& scheduler_name);        
+    fep3::Result setActiveScheduler(const std::string& scheduler_name);
     std::string getActiveSchedulerName() const;
     std::string getDefaultSchedulerName() const;
 
@@ -50,7 +54,7 @@ public:
     fep3::Result deinitializeActiveScheduler() const;
     fep3::Result startActiveScheduler() const;
     fep3::Result stopActiveScheduler() const;
-    
+
 private:
     fep3::IScheduler* getActiveScheduler() const;
     fep3::IScheduler* findScheduler(const std::string& scheduler_name) const;
@@ -58,8 +62,8 @@ private:
 
 private:
     std::string _default_scheduler_name;
-    std::string _active_scheduler;    
-    std::list<std::unique_ptr<fep3::IScheduler>> _schedulers;    
+    std::string _active_scheduler;
+    std::list<std::unique_ptr<fep3::IScheduler>> _schedulers;
 };
 
 } // namespace native

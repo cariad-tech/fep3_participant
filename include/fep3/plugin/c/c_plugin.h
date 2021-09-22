@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -27,8 +35,8 @@ extern "C"
 
 /**
  * Returns the version of the fep participant library, the plugin is compiled with, via callback
- * @param callback The callback to be called with the version of the fep participant library
- * @param destination The pointer to the destination the callback
+ * @param[in] callback The callback to be called with the version of the fep participant library
+ * @param[in] destination The pointer to the destination the callback
  *                    target shall copy the participant library version string to
  */
 FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getParticipantLibraryVersion
@@ -42,16 +50,6 @@ FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getParticipantLibraryVersio
         , FEP3_PARTICIPANT_LIBRARY_VERSION_BUILD + 0 // + 0 because macro value is not set in developer versions
         });
 }
-
-/**
- * Returns the version information of the plugin via callback
- * @note This function has to be implemented in the plugin
- * @param callback The callback to be called with the plugin version string
- * @param destination The pointer to the destination the callback
- *                    target shall copy the plugin version string to
- */
-FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getPluginVersion
-    (void(*callback)(void*, const char*), void* destination);
 
 #ifdef __cplusplus
 }

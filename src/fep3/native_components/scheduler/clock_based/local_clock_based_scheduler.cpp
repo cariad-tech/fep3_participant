@@ -1,15 +1,22 @@
 /**
-* Scheduler based on local clock
-*
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 
 #include <cassert>
@@ -45,7 +52,7 @@ fep3::Result ServiceThread::start()
     {
         std::lock_guard<std::mutex> oLocker(_mutex_thread);
         _system_thread = std::thread(std::ref(*this));
-        
+
     }
 
     return{};
@@ -61,7 +68,7 @@ void ServiceThread::operator()()
             _exited_promise->set_value();
             return;
         }
-    }  
+    }
     auto nResult = execute(_clock.getTime());
     {
         std::lock_guard<std::mutex> lock(_mutex_thread);
@@ -123,9 +130,9 @@ fep3::Result ServiceThread::detach()
         _system_thread.join();
     }
     else
-    {     
+    {
         // TODO implement or remove
-		// make sure we live long enough
+        // make sure we live long enough
         //    m_pThis = object_ptr_from_this();
         _system_thread.detach();
     }
@@ -180,38 +187,38 @@ fep3::Result TimerThread::execute(Timestamp /*first_wakeup_time*/)
     fep3::Result result = fep3::ERR_NOERROR;
 
       while (!_cancelled)
-    {              
+    {
         std::unique_lock<std::mutex> lock(_mutex_manual_event);
 
         // we (typically a job) wait here are until we are woken up by TimerScheduler::processSchedulerQueueAsynchron
         _cv_manual_event.wait(lock, [this] { return _manual_event_occured; });
-        _manual_event_occured = false;        
-        
+        _manual_event_occured = false;
+
         const auto wakeup_time = getWakeUpTime();
 
-        if (_cancelled)        
-        {            
+        if (_cancelled)
+        {
             break;
-        }    
+        }
 
         if(wakeup_time == reset_time)
-        {        
+        {
             // reset was received after waking us up, so we won't run the job
             continue;
-        }          
-     
+        }
+
         if (_last_call_time == reset_time.count()
             || wakeup_time.count() > _last_call_time)
-        { 
+        {
             result |= _job_runner.runJob(wakeup_time, _runnable);
             _last_call_time = _wakeup_time;
-        }                 
+        }
 
         if (_finished_promise)
         {
             _finished_promise->set_value();
             _finished_promise = nullptr;
-        }    
+        }
     }
 
     return result;
@@ -278,10 +285,8 @@ fep3::Result TimerThread::reset()
 
 
 LocalClockBasedScheduler::LocalClockBasedScheduler(
-    const std::shared_ptr<const fep3::ILoggingService::ILogger>& logger,
-    const std::function<fep3::Result()>& set_participant_to_error_state) :
-         _logger(logger),
-         _set_participant_to_error_state(set_participant_to_error_state)
+    const std::shared_ptr<const fep3::ILogger>& logger) :
+         _logger(logger)
 {
     if (!_logger)
     {
@@ -296,8 +301,8 @@ std::string LocalClockBasedScheduler::getName() const
 
 fep3::Result LocalClockBasedScheduler::initialize(fep3::IClockService& clock,
                                                  const Jobs& jobs)
-{   
-    _timer_scheduler= std::make_shared<TimerScheduler>(clock);   
+{
+    _timer_scheduler= std::make_shared<TimerScheduler>(clock);
     FEP3_RETURN_IF_FAILED(clock.registerEventSink(_timer_scheduler));
 
     _clock = &clock;
@@ -305,7 +310,7 @@ fep3::Result LocalClockBasedScheduler::initialize(fep3::IClockService& clock,
     _service_thread = std::make_unique<ServiceThread>("__scheduler", *_timer_scheduler, clock, 0);
 
     for (auto& job : jobs)
-    {   
+    {
         auto timer_thread = createTimerThread(job.second, clock);
 
         FEP3_RETURN_IF_FAILED(addTimerThreadToScheduler(job.second, timer_thread));
@@ -322,7 +327,7 @@ fep3::Result LocalClockBasedScheduler::addTimerThreadToScheduler(
     FEP3_RETURN_IF_FAILED(_timer_scheduler->addTimer(*timer_thread.get(),
         job_entry.job_info.getConfig()._cycle_sim_time,
         job_entry.job_info.getConfig()._delay_sim_time));
-    
+
     return {};
 }
 
@@ -336,14 +341,13 @@ std::shared_ptr<fep3::native::TimerThread> LocalClockBasedScheduler::createTimer
     fep3::native::JobRunner job_runner(job_info.getName(),
         job_info.getConfig()._runtime_violation_strategy,
         job_info.getConfig()._max_runtime_real_time,
-        _logger,
-        _set_participant_to_error_state);
+        _logger);
 
     auto timer_thread = std::make_shared<TimerThread>(job_info.getName(),
         *job_entry.job,
         clock,
         job_info.getConfig()._cycle_sim_time,
-        job_info.getConfig()._delay_sim_time,      
+        job_info.getConfig()._delay_sim_time,
         *_timer_scheduler,
         job_runner);
 
@@ -387,7 +391,7 @@ fep3::Result LocalClockBasedScheduler::deinitialize()
     {
         _clock->unregisterEventSink(_timer_scheduler);
         _clock = nullptr;
-    }   
+    }
     for (auto& timer : _timers)
     {
         timer->remove();

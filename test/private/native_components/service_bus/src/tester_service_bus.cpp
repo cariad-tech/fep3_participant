@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 #include <fep3/components/service_bus/rpc/fep_rpc.h>
 #include <fep3/rpc_services/base/fep_rpc_client.h>
@@ -15,14 +24,14 @@
 #include <list>
 
 #include <fep3/native_components/service_bus/service_bus.h>
-
+#include <fep3/native_components/service_bus/rpc/http/http_server.h>
 
 /**
  * @detail Test the registration, unregistration and memorymanagment of the ServiceBus
  * @req_id FEPSDK-ServiceBus
- * 
+ *
  */
-TEST(ServciceBusServer, testCreationAndDestroyingOfSystemAccess)
+TEST(ServiceBusServer, testCreationAndDestroyingOfSystemAccess)
 {
     fep3::native::ServiceBus bus;
     ASSERT_TRUE(fep3::isOk(bus.createSystemAccess("sysname",
@@ -71,7 +80,7 @@ TEST(ServciceBusServer, testCreationAndDestroyingOfSystemAccess)
  * @req_id FEPSDK-ServiceBus
  *
  */
-TEST(ServciceBusServer, testCreationAndDestroyingOfServer)
+TEST(ServiceBusServer, testCreationAndDestroyingOfServer)
 {
     fep3::native::ServiceBus bus;
 
@@ -132,7 +141,7 @@ TEST(ServciceBusServer, testCreationAndDestroyingOfServer)
  * @req_id FEPSDK-ServiceBus
  *
  */
-TEST(ServciceBusServer, testDefaultLoadingOfServiceBus)
+TEST(ServiceBusServer, testDefaultLoadingOfServiceBus)
 {
     fep3::native::ServiceBus bus;
     ASSERT_TRUE(fep3::isOk(bus.createSystemAccess("default_system",
@@ -152,7 +161,7 @@ bool contains(const std::multimap<std::string, std::string>& servers,
         auto found = (servers.find(current_string_to_check) != servers.cend());
         if (!found)
         {
-            //did not find it 
+            //did not find it
             return false;
         }
     }
@@ -164,7 +173,7 @@ bool contains(const std::multimap<std::string, std::string>& servers,
  * @req_id FEPSDK-ServiceBus
  *
  */
-TEST(ServciceBusServer, testHTTPSystemAccessDiscovery)
+TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
 {
 #ifdef WIN32
     constexpr const char* const ADDR_USE_FOR_TEST = "http://230.231.0.0:9993";
@@ -183,7 +192,7 @@ TEST(ServciceBusServer, testHTTPSystemAccessDiscovery)
         + a_util::strings::toString(a_util::process::getCurrentProcessId())
         + std::string("_")
         + ss.str();
-    
+
     //create a system access to the named system "system_name_for_test_1" on the default URL
     fep3::native::ServiceBus bus1;
     ASSERT_TRUE(fep3::isOk(bus1.createSystemAccess(system_name_for_test_1,
@@ -234,7 +243,7 @@ TEST(ServciceBusServer, testHTTPSystemAccessDiscovery)
  * @req_id FEPSDK-ServiceBus
  *
  */
-TEST(ServciceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
+TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
 {
 #ifdef WIN32
     constexpr const char* const ADDR_USE_FOR_TEST = "http://230.231.0.0:9993";
@@ -282,7 +291,7 @@ TEST(ServciceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
         ADDR_USE_FOR_TEST)));
 
     //create one server within this system_name_for_test_1 (so it is discoverable)
-    //so we have server3@system_name_for_test_1 
+    //so we have server3@system_name_for_test_1
     //       AND server2@system_name_for_test_2
     //       AND server1@system_name_for_test_1
     auto sys_access3 = bus2.getSystemAccess(system_name_for_test_1);
@@ -302,7 +311,7 @@ TEST(ServciceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
     //so we maybe discover also the others, but we make sure, that our test servers are available
     ASSERT_GE(list_of_discovered_at_discover_all_systems.size(), 3);
 
-    ASSERT_TRUE(contains(list_of_discovered_at_discover_all_systems, 
+    ASSERT_TRUE(contains(list_of_discovered_at_discover_all_systems,
                 { std::string(std::string("server_1@") + system_name_for_test_1),
                   std::string(std::string("server_2@") + system_name_for_test_2),
                   std::string(std::string("server_3@") + system_name_for_test_1)
@@ -315,7 +324,7 @@ TEST(ServciceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
  * @req_id FEPSDK-ServiceBus
  *
  */
-TEST(ServciceBusServer, testServiceBusLocking)
+TEST(ServiceBusServer, testServiceBusLocking)
 {
 #ifdef WIN32
     constexpr const char* const ADDR_USE_FOR_TEST = "http://230.231.0.0:9993";
@@ -323,7 +332,7 @@ TEST(ServciceBusServer, testServiceBusLocking)
     constexpr const char* const ADDR_USE_FOR_TEST = fep3::IServiceBus::ISystemAccess::_use_default_url;
 #endif
 
-    //use a service bus 
+    //use a service bus
     fep3::native::ServiceBus* bus1 = new fep3::native::ServiceBus();
     ASSERT_TRUE(fep3::isOk(bus1->create()));
     //this is not possible
@@ -335,7 +344,7 @@ TEST(ServciceBusServer, testServiceBusLocking)
         ADDR_USE_FOR_TEST)));
 
     ASSERT_TRUE(fep3::isOk(bus1->create()));
-    
+
     //this is still possible
     auto sys_access = bus1->getSystemAccess("test_sys");
     //and i can get the sys access
@@ -344,7 +353,19 @@ TEST(ServciceBusServer, testServiceBusLocking)
     //but the creation of createServer within this is locked!
     ASSERT_FALSE(fep3::isOk(sys_access->createServer("test_server",
                                                     fep3::IServiceBus::ISystemAccess::_use_default_url)));
-    
+
     //call the destuctor is still possible also if everythis is locked
     ASSERT_NO_THROW(bus1->~ServiceBus());
+}
+
+/**
+ * @brief Test the port usage of http server
+ *
+ */
+TEST(ServiceBusServer, testHttpPorts)
+{
+    fep3::native::HttpServer server_1("s1", "http://0.0.0.0:0", "sys", "");
+    fep3::native::HttpServer server_2("s2", "http://0.0.0.0:0", "sys", "");
+    EXPECT_NE(server_1.getUrl(), server_2.getUrl());
+    EXPECT_ANY_THROW(fep3::native::HttpServer server_3("s3", server_1.getUrl(), "sys", ""));
 }

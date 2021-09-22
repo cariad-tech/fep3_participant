@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -27,6 +36,7 @@
 #include <fep3/components/logging/logging_service_intf.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
 #include "interpolation_time.h"
+#include "fep3/components/logging/easy_logger.h"
 
 namespace fep3
 {
@@ -40,6 +50,7 @@ class IRPCRequester;
 class FarClockUpdater
     : public RPCService<fep3::rpc_stubs::RPCClockSyncSlaveServiceStub, IRPCClockSyncSlaveDef>
     , public std::enable_shared_from_this<FarClockUpdater>
+    , public base::EasyLogging
 {
 protected:
     explicit FarClockUpdater(
@@ -47,13 +58,15 @@ protected:
         const std::shared_ptr<IServiceBus::IParticipantServer>& participant_server,
         const std::shared_ptr<IServiceBus::IParticipantRequester>& participant_requester,
         bool before_and_after_event,
-        const std::shared_ptr<const ILoggingService::ILogger>& logger,
+        const IComponents& components,
         const std::string& local_participant_name);
 
     ~FarClockUpdater();
 public:
     void startRPC();
+    void startWork();
     void stopRPC();
+    bool stopWorkingIfStarted();
 
 protected:
     virtual void updateTime(Timestamp new_time, Duration round_trip_time) = 0;
@@ -63,12 +76,11 @@ protected:
         Timestamp old_time) = 0;
 
     void startWorking();
-    bool stopWorkingIfStarted();
 
     bool isClientRegistered() const;
     void registerToRPC();
     void unregisterFromRPC() const;
-   
+
     void registerToMaster();
     void unregisterFromMaster();
 
@@ -91,29 +103,30 @@ private:
     std::thread _worker;
     std::atomic_bool _stop;
     std::atomic_bool _started;
-    int _master_type;   
+    int _master_type;
 
     Duration _on_demand_step_size;
     std::chrono::time_point<std::chrono::steady_clock> _next_request_gettime;
-    std::shared_ptr<IServiceBus::IParticipantServer> _participant_server;    
+    std::shared_ptr<IServiceBus::IParticipantServer> _participant_server;
 
-    const std::shared_ptr<const ILoggingService::ILogger> _logger;
     std::string _local_participant_name;
 };
 
-class MasterOnDemandClockInterpolating : public FarClockUpdater, public base::ContinuousClock
+class MasterOnDemandClockInterpolating
+    : public FarClockUpdater
+    , public base::ContinuousClock
 {
 public:
     explicit MasterOnDemandClockInterpolating(
         Duration on_demand_step_size,
         const std::shared_ptr<IServiceBus::IParticipantServer>& participant_server,
         const std::shared_ptr<IServiceBus::IParticipantRequester>& participant_requester,
-        const std::shared_ptr<const ILoggingService::ILogger>& logger,
+        const IComponents& components,
         std::unique_ptr<fep3::IInterpolationTime> interpolation_time,
         const std::string& local_participant_name);
 
     Timestamp getNewTime() const override;
-    Timestamp resetTime() override;
+    Timestamp resetTime(Timestamp new_time) override;
 
     void start(const std::weak_ptr<IEventSink>& event_sink) override;
     void stop() override;
@@ -129,7 +142,9 @@ private:
     mutable std::unique_ptr<fep3::IInterpolationTime> _current_interpolation_time;
 };
 
-class MasterOnDemandClockDiscrete : public FarClockUpdater, public base::DiscreteClock
+class MasterOnDemandClockDiscrete
+    : public FarClockUpdater,
+    public base::DiscreteClock
 {
 public:
     explicit MasterOnDemandClockDiscrete(
@@ -137,11 +152,11 @@ public:
         const std::shared_ptr<IServiceBus::IParticipantServer>& participant_server,
         const std::shared_ptr<IServiceBus::IParticipantRequester>& participant_requester,
         bool beforeAndAfterEvent,
-        const std::shared_ptr<const ILoggingService::ILogger>& logger,
+        const IComponents& components,
         const std::string& local_participant_name);
 
     void start(const std::weak_ptr<IEventSink>& event_sink) override;
-    void stop() override;  
+    void stop() override;
     void updateTime(Timestamp new_time, Duration roundtrip_time) override;
     Timestamp masterTimeEvent(
         IRPCClockSyncMasterDef::EventID event_id,
@@ -149,7 +164,7 @@ public:
         Timestamp old_time) override;
 
 private:
-    void resetOnEvent();
+    void resetOnEvent(Timestamp new_time);
 };
 
 } // namespace arya

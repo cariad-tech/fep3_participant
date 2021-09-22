@@ -1,0 +1,27 @@
+[
+    // gets the participant health state
+    // ok = 0
+    // error = 1
+    // unknown = 2
+    {
+        "name": "getHealth",
+        "returns": 0 // health state
+    },
+
+    // resets the participant health state to 'ok'
+    // indicating all errors have been fixed and
+    // logging a message why the health state has been reset
+    {
+        "name": "resetHealth",
+        "params": {
+            "message": "message"
+        },
+        "returns": {
+            "ErrorCode": 0, // error code
+            "Description": "error_description", // error description
+            "Line": "line", // line
+            "File": "file", // file
+            "Function": "function" // function
+        }
+    }
+]

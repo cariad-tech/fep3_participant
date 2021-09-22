@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #include "logging_service.h"
 
@@ -37,67 +47,72 @@ void LoggingService::Logger::releaseLogService()
 
 fep3::Result LoggingService::Logger::logInfo(const std::string& message) const
 {
-    return log(message, logging::Severity::info);
+    return log(message, LoggerSeverity::info);
 }
 
 fep3::Result LoggingService::Logger::logWarning(const std::string& message) const
 {
-    return log(message, logging::Severity::warning);
+    return log(message, LoggerSeverity::warning);
 }
 
 fep3::Result LoggingService::Logger::logError(const std::string& message) const
 {
-    return log(message, logging::Severity::error);
+    return log(message, LoggerSeverity::error);
 }
 
 fep3::Result LoggingService::Logger::logFatal(const std::string& message) const
 {
-    return log(message, logging::Severity::fatal);
+    return log(message, LoggerSeverity::fatal);
 }
 
 fep3::Result LoggingService::Logger::logDebug(const std::string& message) const
 {
-    return log(message, logging::Severity::debug);
+    return log(message, LoggerSeverity::debug);
 }
 
 bool LoggingService::Logger::isInfoEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
-    return (_logging_service 
-        && (logging::Severity::info <= _logging_service->_configuration.getLoggerConfig(_logger_name)._severity));
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
+    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    return (_logging_service
+        && (LoggerSeverity::info <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isWarningEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
-    return (_logging_service 
-        && (logging::Severity::warning <= _logging_service->_configuration.getLoggerConfig(_logger_name)._severity));
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
+    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    return (_logging_service
+        && (LoggerSeverity::warning <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isErrorEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
-    return (_logging_service 
-        && (logging::Severity::error <= _logging_service->_configuration.getLoggerConfig(_logger_name)._severity));
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
+    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    return (_logging_service
+        && (LoggerSeverity::error <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isFatalEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
+    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
     return (_logging_service
-        && (logging::Severity::fatal <= _logging_service->_configuration.getLoggerConfig(_logger_name)._severity));
+        && (LoggerSeverity::fatal <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isDebugEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
+    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
     return (_logging_service
-        && (logging::Severity::debug <= _logging_service->_configuration.getLoggerConfig(_logger_name)._severity));
+        && (LoggerSeverity::debug <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
-fep3::Result LoggingService::Logger::log(const std::string& message, logging::Severity severity) const
+fep3::Result LoggingService::Logger::log(const std::string& message, LoggerSeverity severity) const
 {
-    std::lock_guard<std::recursive_mutex> lock(_sync_service_access);
+    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
     fep3::Result result = ERR_NOERROR;
 
     // Get Metadata and create Log Message
@@ -110,25 +125,25 @@ fep3::Result LoggingService::Logger::log(const std::string& message, logging::Se
             timestamp = a_util::strings::toString(_logging_service->_clock_service->getTime().count());
         }
 
-        logging::LogMessage log_message = {
+        LogMessage log_message = {
             timestamp,
             severity,
             _logging_service->_participant_name,
             _logger_name,
             message };
 
-        // Get Configuration and log to all configured sinks
-        const LoggerFilterConfig& config = _logging_service->_configuration.getLoggerConfig(_logger_name);
-        if (severity <= config._severity)
+        // Get Filter and log to all enabled sinks
+        std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+        const LoggerFilterInternal& filter = _logging_service->getInternalFilter(_logger_name);
+        if (severity <= filter._severity)
         {
-            for (const auto& logging_sink : config._logging_sinks)
+            for (const auto& logging_sink : filter._logging_sinks)
             {
                 std::unique_lock<std::mutex> guard(_logging_service->_lock_queue);
                 auto fcn = [log_message, logging_sink]()
                 {
-                    //potentiell an data race here
-                    //use an reference to an member that might be destroyed before
-                    //function is called
+                    // No data race here since we are using capture by value and
+                    // the reference count of the logging_sink shared_ptr ensures that the sink object still exists
                     logging_sink.second->log(log_message);
                 };
                 result |= _logging_service->_queue->add(fcn);
@@ -139,11 +154,9 @@ fep3::Result LoggingService::Logger::log(const std::string& message, logging::Se
     return result;
 }
 
-LoggingService::LoggingService() : Configuration(FEP3_LOGGING_SERVICE_CONFIG)
+LoggingService::LoggingService() : base::Configuration(FEP3_LOGGING_SERVICE_CONFIG)
 {
     _queue = std::make_unique<LoggingQueue>();
-    _default_sinks = std::string("console");
-    _default_severity = static_cast<int32_t>(logging::Severity::info);
 
     registerPropertyVariable(_default_sinks, FEP3_LOGGING_DEFAULT_SINKS_PROPERTY);
     registerPropertyVariable(_default_severity, FEP3_LOGGING_DEFAULT_SEVERITY_PROPERTY);
@@ -152,17 +165,18 @@ LoggingService::LoggingService() : Configuration(FEP3_LOGGING_SERVICE_CONFIG)
     //init the default sinks
     registerSink("console", std::make_shared<LoggingSinkConsole>());
     registerSink("file", std::make_shared<LoggingSinkFile>());
- 
-    _configuration.setLoggerConfig("",
-        { logging::Severity::info, { {"console", getSink("console") } } });
+
+    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    setInternalFilter("",
+        {LoggerSeverity::info, { {"console", getSink("console") } } });
 }
 
 LoggingService::~LoggingService()
 {
     std::lock_guard<std::recursive_mutex> lock(_sync_loggers);
-    //this is to make sure there is no logger in the world anymore which logs 
+    //this is to make sure there is no logger in the world anymore which logs
     //on the reference of this loggingservice
-    //this would make boom! 
+    //this would make boom!
     for (auto& logger : _loggers)
     {
         logger->releaseLogService();
@@ -194,9 +208,10 @@ fep3::Result LoggingService::create()
                 //now we cann add the logging sink for the rpc
                 registerSink("rpc", _rpc_sink);
                 //we change the default properties to log every thing on console AND RPC
-                _default_sinks = std::string("rpc,console");
-                _configuration.setLoggerConfig("",
-                    { logging::Severity::info, { {"rpc", getSink("rpc") },
+                getNode()->getChild(FEP3_LOGGING_DEFAULT_SINKS_PROPERTY)->setValue("console,rpc", base::PropertyType<std::string>::getTypeName());
+                std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+                setInternalFilter("",
+                    {LoggerSeverity::info, { {"rpc", getSink("rpc") },
                                                      {"console", getSink("console") } } });
             }
             else
@@ -223,6 +238,32 @@ fep3::Result LoggingService::create()
     return {};
 }
 
+fep3::Result LoggingService::initialize()
+{
+    // Set default filter from the logging service properties
+    if (!_default_sinks_changed)
+    {
+        updatePropertyVariables();
+        std::vector<std::string> enabled_logging_sinks = a_util::strings::split(static_cast<std::string>(_default_sinks), ",");
+        LoggerFilter filter{ static_cast<LoggerSeverity>(static_cast<int32_t>(_default_severity)), enabled_logging_sinks };
+
+        setFilter("", filter, false);
+    }
+
+    // Set default file sink file
+    if (!_default_file_sink_file.toString().empty())
+    {
+        std::shared_ptr<ILoggingService::ILoggingSink> file_sink = getSink("file");
+        if (!file_sink)
+        {
+            RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, "Unable to set default file sink file: The sink \"file\" is not registered.");
+        }
+        file_sink->setProperty("file_path", _default_file_sink_file.toString(), _default_file_sink_file.getTypeName());
+    }
+
+    return{};
+}
+
 fep3::Result LoggingService::destroy()
 {
     unregisterSink("rpc");
@@ -231,7 +272,7 @@ fep3::Result LoggingService::destroy()
     return {};
 }
 
-std::shared_ptr<ILoggingService::ILogger> LoggingService::createLogger(const std::string& logger_name)
+std::shared_ptr<ILogger> LoggingService::createLogger(const std::string& logger_name)
 {
     std::lock_guard<std::recursive_mutex> lock(_sync_loggers);
     auto new_logger = std::make_shared<Logger>(*this, logger_name);
@@ -273,16 +314,17 @@ fep3::Result LoggingService::unregisterSink(const std::string& name)
 }
 
 fep3::Result LoggingService::setFilter(const std::string& logger_name,
-                                       const logging::LoggerFilter& config)
+                                       const LoggerFilter& filter,
+                                       bool overwrite)
 {
-    LoggerFilterConfig new_config{ config._severity, {} };
+    LoggerFilterInternal new_filter{ filter._severity, {} };
 
-    for (const auto& sink_name : config._enabled_logging_sinks)
+    for (const auto& sink_name : filter._enabled_logging_sinks)
     {
         auto sink_found = getSink(sink_name);
         if (sink_found)
         {
-            new_config._logging_sinks[sink_name] = sink_found;
+            new_filter._logging_sinks[sink_name] = sink_found;
         }
         else
         {
@@ -290,19 +332,38 @@ fep3::Result LoggingService::setFilter(const std::string& logger_name,
         }
     }
 
-    _configuration.setLoggerConfig(logger_name, new_config);
+    if (logger_name.empty())
+    {
+        _default_sinks_changed = true;
+    }
+
+    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    setInternalFilter(logger_name, new_filter, overwrite);
     return {};
 }
 
-logging::LoggerFilter LoggingService::getFilter(const std::string& logger_name) const
+LoggerFilter LoggingService::getFilter(const std::string& logger_name) const
 {
-    auto config = _configuration.getLoggerConfig(logger_name);
-    logging::LoggerFilter filter = { config._severity, {} };
-    for (const auto& current_sink : config._logging_sinks)
+    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    auto internal_filter = getInternalFilter(logger_name);
+    LoggerFilter filter = { internal_filter._severity, {} };
+    for (const auto& current_sink : internal_filter._logging_sinks)
     {
         filter._enabled_logging_sinks.push_back(current_sink.first);
     }
     return filter;
+}
+
+void LoggingService::setInternalFilter(const std::string& logger_name,
+                       const native::LoggerFilterInternal& filter,
+                       bool overwrite)
+{
+    _configuration.setLoggerFilter(logger_name, filter, overwrite);
+}
+
+const native::LoggerFilterInternal& LoggingService::getInternalFilter(const std::string& logger_name) const
+{
+    return _configuration.getLoggerFilter(logger_name);
 }
 
 std::vector<std::string> LoggingService::getLoggers() const

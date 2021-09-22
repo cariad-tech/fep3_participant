@@ -1,43 +1,72 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 #include "./../service_bus.h"
+#include "a_util/result/result_util.h"
 
-namespace fep3
-{
-namespace native
-{
-namespace testing
-{
+namespace fep3 {
+namespace native {
+namespace testing {
 
-static constexpr const char* test_participant_name = "test_participant_name";
-static constexpr const char* test_participant_url = "http://localhost:9090";
-inline bool prepareServiceBusForTestingDefault(ServiceBus& service_bus,
-    const std::string& test_participant_name_default = test_participant_name,
-    const std::string& test_participant_url_default = test_participant_url)
+static constexpr const char* participant_name_default = "test_participant_name";
+
+inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
+    ServiceBus& service_bus,
+    const std::string& test_participant_name = participant_name_default,
+    const uint32_t test_participant_port = 9090,
+    const uint32_t port_numbers_to_try = 10)
 {
-    auto res = service_bus.createSystemAccess("test_with_service_bus_default", "", true);
-    if (fep3::isOk(res))
-    {
-        auto sysaccess = service_bus.getSystemAccess("test_with_service_bus_default");
-        res = sysaccess->createServer(test_participant_name_default, test_participant_url_default);
-        if (fep3::isOk(res))
-        {
-            return true;
+    const std::string participant_host = "http://localhost:";
+    const std::string system_name = "test_with_service_bus_default";
+
+    auto res = service_bus.createSystemAccess(system_name, "", true);
+    if (fep3::isFailed(res)) {
+        return ::testing::AssertionFailure()
+               << __FILE__ << ":" << __LINE__
+               << " createSystemAccess: " + a_util::result::toString(res);
+    }
+
+    auto sysaccess = service_bus.getSystemAccess(system_name);
+    if (!sysaccess) {
+        return ::testing::AssertionFailure()
+               << __FILE__ << ":" << __LINE__ << " getSystemAccess() failed";
+    }
+
+    for (uint32_t participant_port = test_participant_port;
+         participant_port < test_participant_port + port_numbers_to_try;
+         participant_port++) {
+
+        auto participant_url = participant_host + a_util::strings::toString(participant_port);
+        res = sysaccess->createServer(test_participant_name, participant_url);
+        if (fep3::isOk(res)) {
+            break;
         }
     }
-    return false;
+
+    if (fep3::isFailed(res)) {
+        return ::testing::AssertionFailure()
+               << __FILE__ << ":" << __LINE__ << " createServer: " + a_util::result::toString(res);
+    }
+    return ::testing::AssertionSuccess();
 }
 
-}
-}
-}
+} // namespace testing
+} // namespace native
+} // namespace fep3

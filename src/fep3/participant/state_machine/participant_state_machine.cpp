@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 // if defined, the boost participant state machine implementation is used
 // if not defined, a non-functional (but compilable) dummy state machine implementation is used, that has no depenedency on boost
@@ -23,43 +32,21 @@
 #endif // USE_BOOST_PARTICIPANT_STATE_MACHINE_IMPLEMENTATION
 
 #include <fep3/participant/element_manager/element_manager.h>
+#include <fep3/components/logging/easy_logger.h>
 #include "participant_state_machine.h"
 #include <a_util/result/result_util.h>
 #include <iostream>
 
 
-#define LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger_used, log_message, res_code) \
+#define LOG_INFO_OR_ERROR_TO_LOGGER(logger_used, success_message, failure_message, res_code) \
 { \
 if (fep3::isFailed(res_code)) \
 { \
-    if (logger_used) \
-    { \
-        if (logger_used->isErrorEnabled()) \
-        { \
-            logger_used->logError(std::string("Error while ") + std::string(log_message) + a_util::result::toString(res_code)); \
-        } \
-    } \
-    else \
-    { \
-        std::cerr << std::string("Error while ") << log_message; \
-        std::cerr << a_util::result::toString(res_code); \
-        std::cerr << std::endl; \
-    } \
+    FEP3_LOGGER_LOG_ERROR(logger_used, std::string(failure_message) + " " + a_util::result::toString(res_code)); \
 } \
 else \
 { \
-    if (logger_used) \
-    { \
-        if (logger_used->isInfoEnabled()) \
-        { \
-            logger_used->logInfo(std::string("Successfully ") + std::string(log_message)); \
-        } \
-    } \
-    else \
-    { \
-        std::cout << std::string("Successfully ") + log_message; \
-        std::cerr << std::endl; \
-    } \
+    FEP3_LOGGER_LOG_INFO(logger_used, std::string(success_message)); \
 } \
 }
 
@@ -85,7 +72,7 @@ class CurrentStateNameGetter;
 BOOST_MSM_EUML_DECLARE_ATTRIBUTE(CurrentStateNameGetter, _current_state_name_getter)
 BOOST_MSM_EUML_DECLARE_ATTRIBUTE(fep3::arya::ElementManager, _element_manager)
 BOOST_MSM_EUML_DECLARE_ATTRIBUTE(std::shared_ptr<ComponentRegistry>, _component_registry)
-BOOST_MSM_EUML_DECLARE_ATTRIBUTE(std::shared_ptr<ILoggingService::ILogger>, _participant_logger)
+BOOST_MSM_EUML_DECLARE_ATTRIBUTE(std::shared_ptr<ILogger>, _participant_logger)
 
 // generic actions
 /**
@@ -177,7 +164,7 @@ private:
     BOOST_MSM_EUML_STATE((), Paused)
     BOOST_MSM_EUML_TERMINATE_STATE((), Final)
 
-    // actions
+    // actions and guards
     BOOST_MSM_EUML_ACTION(load_element)
     {
         template<typename Event, typename Fsm, typename SourceState, typename TargetState>
@@ -190,7 +177,11 @@ private:
                 // Note: The element must not store the components as a whole, but it may
                 //       pick certain components (via IComponents::getComponent) and store a pointer to those.
                 auto res = fsm.get_attribute(_element_manager).loadElement(*component_registry.get());
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "loading element ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully loaded element"
+                    , "Failed to load element"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -203,7 +194,7 @@ private:
         {
             const auto& logger = fsm.get_attribute(_participant_logger);
             fsm.get_attribute(_element_manager).unloadElement();
-            LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "unloading element ", fep3::Result());
+            FEP3_LOGGER_LOG_INFO(logger, "Successfully unloaded element")
         }
     };
     BOOST_MSM_EUML_ACTION(initialize_element)
@@ -213,7 +204,11 @@ private:
         {
             const auto& logger = fsm.get_attribute(_participant_logger);
             auto res = fsm.get_attribute(_element_manager).initializeElement();
-            LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "initializing element ", res);
+            LOG_INFO_OR_ERROR_TO_LOGGER
+                (logger
+                , "Successfully initialized element"
+                , "Failed to initialize element"
+                , res)
             return isOk(res);
         }
     };
@@ -226,7 +221,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->initialize();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "initializing components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully initialized components"
+                    , "Failed to initialize components"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -241,7 +240,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->tense();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "tensing components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully tensed components"
+                    , "Failed to tense components"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -256,7 +259,11 @@ private:
             if (const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->relax();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "relaxing components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully relaxed components"
+                    , "Failed to relax components"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -269,7 +276,7 @@ private:
         {
             const auto& logger = fsm.get_attribute(_participant_logger);
             fsm.get_attribute(_element_manager).deinitializeElement();
-            LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "deinitializing element ", fep3::Result());
+            FEP3_LOGGER_LOG_INFO(logger, "Successfully deinitialized element")
         }
     };
     BOOST_MSM_EUML_ACTION(deinitialize_components)
@@ -281,7 +288,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->deinitialize();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "deinitializing components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully deinitialized components"
+                    , "Failed to deinitialize components"
+                    , res)
             }
         }
     };
@@ -292,7 +303,11 @@ private:
         {
             const auto& logger = fsm.get_attribute(_participant_logger);
             auto res = fsm.get_attribute(_element_manager).runElement();
-            LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "running element ", res);
+            LOG_INFO_OR_ERROR_TO_LOGGER
+                (logger
+                , "Successfully ran element"
+                , "Failed to run element"
+                , res)
             return isOk(res);
         }
     };
@@ -305,7 +320,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->start();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "starting components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully started components"
+                    , "Failed to start components"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -320,7 +339,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->pause();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "pausing components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully paused components"
+                    , "Failed to pause components"
+                    , res)
                 return isOk(res);
             }
             return false;
@@ -333,7 +356,7 @@ private:
         {
             const auto& logger = fsm.get_attribute(_participant_logger);
             fsm.get_attribute(_element_manager).stopElement();
-            LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "stopping element ", fep3::Result());
+            FEP3_LOGGER_LOG_INFO(logger, "Successfully stopped element");
         }
     };
     BOOST_MSM_EUML_ACTION(stop_components)
@@ -345,7 +368,11 @@ private:
             if(const auto& component_registry = fsm.get_attribute(_component_registry))
             {
                 auto res = component_registry->stop();
-                LOG_INFO_OR_ERROR_TO_LOGGER_OR_COUT(logger, "stopping components ", res);
+                LOG_INFO_OR_ERROR_TO_LOGGER
+                    (logger
+                    , "Successfully stopped components"
+                    , "Failed to stop components"
+                    , res)
             }
         }
     };
@@ -456,7 +483,7 @@ public:
 ParticipantStateMachine::ParticipantStateMachine
     (ElementManager element_manager
     , const std::shared_ptr<ComponentRegistry>& component_registry
-    , const std::shared_ptr<ILoggingService::ILogger>& participant_logger
+    , const std::shared_ptr<ILogger>& participant_logger
     )
     : _impl(std::make_unique<Impl>())
 {

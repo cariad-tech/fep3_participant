@@ -1,27 +1,35 @@
 /**
-*
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
 
 #pragma once
 
 #include <gmock/gmock.h>
 
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/data_registry/data_registry_intf.h>
+#include <helper/gmock_destruction_helper.h>
 
 namespace fep3
 {
-namespace mock 
+namespace mock
 {
-struct DataRegistryComponent : public ComponentBase<IDataRegistry>
+struct DataRegistryComponent : public base::Component<IDataRegistry>
 {
     MOCK_METHOD3(registerDataIn, Result(const std::string&, const arya::IStreamType&, bool));
     MOCK_METHOD3(registerDataOut, Result(const std::string&, const arya::IStreamType&, bool));
@@ -54,30 +62,24 @@ struct DataRegistryComponent : public ComponentBase<IDataRegistry>
     }
     MOCK_METHOD2(getWriterProxy, IDataRegistry::IDataWriter*(const std::string&, size_t));
 
-    struct DataReader : public IDataRegistry::IDataReader
+    struct DataReader
+        : public IDataRegistry::IDataReader
+        , public test::helper::Dieable
     {
         MOCK_CONST_METHOD0(size, size_t());
         MOCK_CONST_METHOD0(capacity, size_t());
         MOCK_METHOD1(pop, a_util::result::Result(IDataRegistry::IDataReceiver&));
         MOCK_CONST_METHOD0(getFrontTime, fep3::arya::Optional<fep3::arya::Duration>());
-        MOCK_METHOD0(die, void());
-        virtual ~DataReader() override
-        {
-            die();
-        }
     };
 
-    struct DataWriter : public IDataRegistry::IDataWriter
+    struct DataWriter
+        : public IDataRegistry::IDataWriter
+        , public test::helper::Dieable
     {
         MOCK_METHOD1(write, a_util::result::Result(const fep3::arya::IStreamType&));
         MOCK_METHOD1(write, a_util::result::Result(const fep3::arya::IDataSample&));
         MOCK_METHOD0(flush, a_util::result::Result());
-        MOCK_METHOD0(die, void());
-        virtual ~DataWriter() override
-        {
-            die();
-        }
     };
 };
 }
-} 
+}

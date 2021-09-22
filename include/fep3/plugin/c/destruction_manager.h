@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -75,17 +84,17 @@ public:
     virtual ~DestructionManager() = default;
     /**
      * Adds a destructor object to the destruction manager
-     * @param destructor Unique pointer to the destruction object
+     * @param[in] destructor Unique pointer to the destruction object
      */
-    virtual void addDestructor(std::unique_ptr<IDestructor> destructor) final
+    virtual void addDestructor(std::unique_ptr<arya::IDestructor> destructor) final
     {
         _destructors.push_back(std::move(destructor));
     }
     /**
      * Adds destructor objects to the destruction manager; this is an overload
-     * @param destructors Queue of unique pointers to the destructor objects
+     * @param[in] destructors Queue of unique pointers to the destructor objects
      */
-    virtual void addDestructors(std::deque<std::unique_ptr<IDestructor>> destructors) final
+    virtual void addDestructors(std::deque<std::unique_ptr<arya::IDestructor>> destructors) final
     {
         _destructors.insert
             (_destructors.end()
@@ -94,7 +103,7 @@ public:
             );
     }
 private:
-    std::deque<std::unique_ptr<IDestructor>> _destructors;
+    std::deque<std::unique_ptr<arya::IDestructor>> _destructors;
 };
 
 /**
@@ -102,13 +111,13 @@ private:
  * @tparam other_type The type of the other object
  */
 template<typename other_type>
-class OtherDestructor : public IDestructor
+class OtherDestructor : public arya::IDestructor
 {
 public:
     /**
      * CTOR Constructs an object that will delete the object
      * behind \p pointer_to_other upon destruction of this
-     * @param pointer_to_other The pointer to the other object to
+     * @param[in] pointer_to_other The pointer to the other object to
      *                         be deleted
      */
     OtherDestructor(other_type* pointer_to_other)

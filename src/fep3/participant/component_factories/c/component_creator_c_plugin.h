@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -52,8 +61,8 @@ struct TypedComponentCreatorCPlugin<component_access_object_type, remaining_comp
 {
     /**
      * Creates a component with @p iid in the plugin at @p plugin_file_path
-     * @param plugin_file_path Path to the plugin file
-     * @param iid The interface identifier of the component to be created from within the plugin at \p plugin_file_path
+     * @param[in] plugin_file_path Path to the plugin file
+     * @param[in] iid The interface identifier of the component to be created from within the plugin at \p plugin_file_path
      * @return Unique pointer to the component if the plugin is capable to create a component with \p iid
      *          , empty unique pointer otherwise
      */

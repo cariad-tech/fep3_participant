@@ -1,22 +1,25 @@
 /**
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
 
-   @copyright
-   @verbatim
-   Copyright @ 2019 Audi AG. All rights reserved.
-   
-       This Source Code Form is subject to the terms of the Mozilla
-       Public License, v. 2.0. If a copy of the MPL was not distributed
-       with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   If it is not possible or desirable to put the notice in a particular file, then
-   You may include the notice in a location (such as a LICENSE file in a
-   relevant directory) where a recipient would be likely to look for such a notice.
-   
-   You may add additional accurate notices of copyright ownership.
-   @endverbatim
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include <fep3/core/data/data_writer.h>
+#include <fep3/base/data_registry/data_registry.h>
 
 namespace fep3
 {
@@ -26,19 +29,19 @@ namespace arya
 {
 
 DataWriter::DataWriter() :
-    _stream_type(fep3::arya::meta_type_raw),
+    _stream_type(fep3::base::arya::meta_type_raw),
     _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
 {
 }
 
-DataWriter::DataWriter(std::string name, const StreamType & stream_type) :
+DataWriter::DataWriter(std::string name, const base::StreamType & stream_type) :
     _name(std::move(name)),
     _stream_type(stream_type),
     _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
 {
 }
 
-DataWriter::DataWriter(std::string name, const StreamType & stream_type, size_t queue_size) :
+DataWriter::DataWriter(std::string name, const base::StreamType & stream_type, size_t queue_size) :
     _name(std::move(name)),
     _stream_type(stream_type),
     _queue_size(queue_size)
@@ -66,11 +69,11 @@ fep3::Result DataWriter::addToDataRegistry(IDataRegistry& data_registry)
 {
     if (DATA_WRITER_QUEUE_SIZE_DYNAMIC == _queue_size)
     {
-        _connected_writer = addDataOut(data_registry, _name.c_str(), _stream_type);
+        _connected_writer = base::addDataOut(data_registry, _name.c_str(), _stream_type);
     }
     else
     {
-        _connected_writer = addDataOut(data_registry, _name.c_str(), _stream_type, _queue_size);
+        _connected_writer = base::addDataOut(data_registry, _name.c_str(), _stream_type, _queue_size);
     }
 
     if (_connected_writer)
@@ -93,6 +96,12 @@ fep3::Result DataWriter::removeFromDataRegistry()
 {
     _connected_writer.reset();
     return {};
+}
+
+fep3::Result DataWriter::removeFromDataRegistry(IDataRegistry& data_registry)
+{
+    _connected_writer.reset();
+    return base::removeDataOut(data_registry, _name);
 }
 
 fep3::Result DataWriter::removeClock()
@@ -152,7 +161,7 @@ struct SampleWithAddedTimeAndCounter
     {
         //invalid call
     }
-    
+
     size_t write(const IRawMemory&) override
     {
         //invalid call
@@ -188,7 +197,7 @@ fep3::Result DataWriter::write(const IStreamType & stream_type)
 
 fep3::Result DataWriter::write(Timestamp time, const void * data, size_t data_size)
 {
-    DataSampleRawMemoryRef ref_sample(time, data, data_size);
+    base::DataSampleRawMemoryRef ref_sample(time, data, data_size);
     return write(ref_sample);
 }
 
@@ -232,9 +241,17 @@ fep3::Result addToComponents(DataWriter& writer, const IComponents& components)
     }
 }
 
-fep3::Result removeFromComponents(DataWriter& writer, const IComponents& )
+fep3::Result removeFromComponents(DataWriter& writer, const IComponents& components)
 {
-    return writer.removeFromDataRegistry();
+    auto data_registry = components.getComponent<IDataRegistry>();
+    if (data_registry)
+    {
+        return writer.removeFromDataRegistry(*data_registry);
+    }
+    else
+    {
+        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, "%s is not part of the given component registry", getComponentIID<IDataRegistry>().c_str());
+    }
 }
 
 }

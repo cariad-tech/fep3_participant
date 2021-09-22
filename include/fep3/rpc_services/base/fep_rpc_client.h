@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
  //used because of FEP System Library API Exception
 #ifndef _FEP3_RPC_CLIENT_HEADER_
 #define _FEP3_RPC_CLIENT_HEADER_
@@ -27,15 +35,17 @@ namespace arya
 
 class IRPCClientPtr
 {
+protected:
+    ~IRPCClientPtr() = default;
 public:
-    virtual bool reset(const std::shared_ptr<IRPCServiceClient>& other) = 0;
+    virtual bool reset(const std::shared_ptr<arya::IRPCServiceClient>& other) = 0;
 };
 
 template<typename rpc_interface>
 class RPCClient : public IRPCClientPtr
 {
 private:
-    std::shared_ptr<IRPCServiceClient> _service_client;
+    std::shared_ptr<arya::IRPCServiceClient> _service_client;
     rpc_interface*                     _interface = nullptr;
 
 public:
@@ -61,11 +71,11 @@ public:
         return *this;
     }
 
-    RPCClient(const std::shared_ptr<IRPCServiceClient>& service_client)
+    RPCClient(const std::shared_ptr<arya::IRPCServiceClient>& service_client)
     {
         reset(service_client);
     }
-    RPCClient& operator=(const std::shared_ptr<IRPCServiceClient>& service_client)
+    RPCClient& operator=(const std::shared_ptr<arya::IRPCServiceClient>& service_client)
     {
         reset(service_client);
         return *this;
@@ -90,13 +100,13 @@ public:
     {
         return _interface;
     }
-    
-    std::shared_ptr<IRPCServiceClient> getServiceClient() const
+
+    std::shared_ptr<arya::IRPCServiceClient> getServiceClient() const
     {
         return _service_client;
     }
 
-    bool reset(const std::shared_ptr<IRPCServiceClient>& service_client) override
+    bool reset(const std::shared_ptr<arya::IRPCServiceClient>& service_client) override
     {
         if (service_client)
         {

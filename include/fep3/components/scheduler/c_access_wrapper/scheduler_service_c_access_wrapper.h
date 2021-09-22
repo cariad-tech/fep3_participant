@@ -1,14 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @note All methods are defined inline to provide the functionality as header only.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @note All methods are defined inline to provide the functionality as header only.
 
 #pragma once
 
@@ -50,16 +58,16 @@ public:
     }
     /// Type of access object
     using Access = fep3_arya_SISchedulerService;
-    
+
     /**
      * CTOR
      *
-     * @param access Access to the remote object
-     * @param shared_binary Shared pointer to the binary this resides in
+     * @param[in] access Access to the remote object
+     * @param[in] shared_binary Shared pointer to the binary this resides in
      */
     inline SchedulerService
         (const Access& access
-        , const std::shared_ptr<ISharedBinary>& shared_binary
+        , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
         );
     /**
      * DTOR destroying the corresponding remote object
@@ -90,10 +98,10 @@ namespace arya
 /**
  * Wrapper class for interface @ref fep3::arya::ISchedulerService
  */
-class SchedulerService : private Helper<fep3::arya::ISchedulerService>
+class SchedulerService : private arya::Helper<fep3::arya::ISchedulerService>
 {
 private:
-    using Helper = Helper<fep3::arya::ISchedulerService>;
+    using Helper = arya::Helper<fep3::arya::ISchedulerService>;
     using Handle = fep3_arya_HISchedulerService;
 
 public:
@@ -115,22 +123,21 @@ public:
                 }
             );
     }
-    
+
     static inline fep3_plugin_c_InterfaceError registerScheduler
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , fep3_plugin_c_arya_SDestructionManager destruction_manager_access
         , fep3_arya_SIScheduler scheduler_access
         ) noexcept
     {
-        return Helper::transferUniquePtrWithResultParameter<::fep3::plugin::c::access::arya::Scheduler>
+        return transferUniquePtrWithResultCallback<access::arya::Scheduler>
             (handle
             , &fep3::arya::ISchedulerRegistry::registerScheduler
-            , [](const Result& fep_result)
-                {
-                    return fep_result.getErrorCode();
-                }
-            , result
+            , result_callback
+            , result_destination
+            , getResult
             , destruction_manager_access
             , scheduler_access
             );
@@ -138,18 +145,17 @@ public:
 
     static inline fep3_plugin_c_InterfaceError unregisterScheduler
         (Handle handle
-        , int32_t* result
+        , fep3_result_callback_type result_callback
+        , void* result_destination
         , const char* scheduler_name
         ) noexcept
     {
-        return Helper::callWithResultParameter
+        return callWithResultCallback
             (handle
             , &fep3::arya::ISchedulerRegistry::unregisterScheduler
-            , [](const Result& fep_result)
-                {
-                    return fep_result.getErrorCode();
-                }
-            , result
+            , result_callback
+            , result_destination
+            , getResult
             , scheduler_name
             );
     }
@@ -160,7 +166,7 @@ public:
         , void* destination
         ) noexcept
     {
-        return Helper::callWithRecurringResultCallback
+        return callWithRecurringResultCallback
             (handle
             , &fep3::arya::ISchedulerRegistry::getSchedulerNames
             , callback
@@ -224,14 +230,14 @@ inline fep3_plugin_c_InterfaceError createSchedulerService
     using scheduler_service_type = typename std::remove_pointer<decltype(std::declval<factory_type>()())>::type;
     if(0 == strcmp(scheduler_service_type::getComponentIID(), iid))
     {
-        return create
+        return wrapper::arya::create
             (factory
             , result
             , shared_binary_access
             , [](scheduler_service_type* pointer_to_object)
                 {
                     return fep3_arya_SISchedulerService
-                        {reinterpret_cast<fep3_arya_HISchedulerService>(static_cast<ISchedulerService*>(pointer_to_object))
+                        {reinterpret_cast<fep3_arya_HISchedulerService>(static_cast<fep3::arya::ISchedulerService*>(pointer_to_object))
                         , wrapper::arya::Component::AccessCreator()(pointer_to_object)
                         , wrapper::arya::SchedulerService::getActiveSchedulerName
                         , wrapper::arya::SchedulerService::registerScheduler
@@ -254,9 +260,9 @@ inline fep3_plugin_c_InterfaceError createSchedulerService
 /**
  * Creates a scheduler service object of type \p scheduler_service_type
  * @tparam scheduler_service_type The type of the scheduler service object to be created
- * @param access_result Pointer to the access structure to the created scheduler service object
- * @param shared_binary_access Access strcuture to the shared binary the scheduler service object resides in
- * @param iid The interface ID of the scheduler service interface of the created object
+ * @param[in,out] access_result Pointer to the access structure to the created scheduler service object
+ * @param[in] shared_binary_access Access strcuture to the shared binary the scheduler service object resides in
+ * @param[in] iid The interface ID of the scheduler service interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_result_pointer The @p result is null
@@ -290,7 +296,7 @@ namespace arya
 
 SchedulerService::SchedulerService
     (const Access& access
-    , const std::shared_ptr<ISharedBinary>& shared_binary
+    , const std::shared_ptr<c::arya::ISharedBinary>& shared_binary
     )
     : ::fep3::plugin::c::access::arya::ComponentBase<fep3::arya::ISchedulerService>
         (access._component
@@ -302,18 +308,23 @@ SchedulerService::SchedulerService
 /// @cond no_documentation
 std::string SchedulerService::getActiveSchedulerName() const
 {
-    return Helper::callWithResultCallback<std::string>
+    return arya::Helper::callWithResultCallback<std::string>
         (_access._handle
         , _access.getActiveSchedulerName
+        , [](auto result)
+            {
+                return result;
+            }
         );
 }
 
 fep3::Result SchedulerService::registerScheduler(std::unique_ptr<fep3::arya::IScheduler> scheduler)
 {
-    return Helper::transferUniquePtrWithResultParameter<fep3::Result>
+    return arya::Helper::transferUniquePtrWithResultCallback<fep3::Result>
         (std::move(scheduler)
         , _access._handle
         , _access.registerScheduler
+        , &getResult
         , [](const auto& pointer_to_scheduler)
             {
                 return fep3_arya_SIScheduler
@@ -330,16 +341,17 @@ fep3::Result SchedulerService::registerScheduler(std::unique_ptr<fep3::arya::ISc
 
 fep3::Result SchedulerService::unregisterScheduler(const std::string& scheduler_name)
 {
-    return Helper::callWithResultParameter
+    return arya::Helper::callWithResultCallback<fep3::Result>
         (_access._handle
         , _access.unregisterScheduler
+        , &getResult
         , scheduler_name.c_str()
         );
 }
 
 std::list<std::string> SchedulerService::getSchedulerNames() const
 {
-    return Helper::callWithRecurringResultCallback<std::list<std::string>, const char*>
+    return arya::Helper::callWithRecurringResultCallback<std::list<std::string>, const char*>
         (_access._handle
         , _access.getSchedulerNames
         , [](const char* scheduler_name)
@@ -359,9 +371,9 @@ std::list<std::string> SchedulerService::getSchedulerNames() const
 
 /**
  * Gets access to a scheduler service object as identified by @p handle_to_component
- * @param access_result Pointer to the access structure to the scheduler service object
- * @param iid The interface ID of the scheduler service interface to get
- * @param handle_to_component Handle to the interface of the object to get
+ * @param[in,out] access_result Pointer to the access structure to the scheduler service object
+ * @param[in] iid The interface ID of the scheduler service interface to get
+ * @param[in] handle_to_component Handle to the interface of the object to get
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle_to_component is null

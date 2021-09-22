@@ -1,20 +1,28 @@
 /**
-*
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
 #include <gmock/gmock.h>
 
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/job_registry/job_registry_intf.h>
 
 namespace fep3
@@ -31,7 +39,6 @@ bool operator==(const JobConfiguration& lhs, const JobConfiguration& rhs)
         && lhs._delay_sim_time == rhs._delay_sim_time
         && lhs._max_runtime_real_time == rhs._max_runtime_real_time
         && lhs._runtime_violation_strategy == rhs._runtime_violation_strategy
-        && lhs._jobs_this_depends_on == rhs._jobs_this_depends_on
         );
 }
 bool operator==(const JobInfo& lhs, const JobInfo& rhs)
@@ -43,12 +50,12 @@ bool operator==(const JobInfo& lhs, const JobInfo& rhs)
 }
 } // namespace arya
 
-namespace mock 
+namespace mock
 {
 
 struct Job : public IJob
 {
-    ~Job() override = default;
+    ~Job() = default;
     MOCK_METHOD1(executeDataIn, fep3::Result(Timestamp));
     MOCK_METHOD1(execute, fep3::Result(Timestamp));
     MOCK_METHOD1(executeDataOut, fep3::Result(Timestamp));
@@ -84,5 +91,5 @@ MATCHER_P(JobsMatcher, other, "Equality matcher for fep3::Jobs")
     }
 }
 
-} 
+}
 }

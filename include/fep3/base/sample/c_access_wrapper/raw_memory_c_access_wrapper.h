@@ -1,14 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * @note All methods are defined inline to provide the functionality as header only.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+// @note All methods are defined inline to provide the functionality as header only.
 
 #pragma once
 
@@ -33,9 +41,9 @@ namespace arya
  * Use this class to access a remote object of a type derived from @ref fep3::arya::IRawMemory that resides in another binary (e. g. a shared library).
  */
 class RawMemory
-    : public IRawMemory
-    , private DestructionManager
-    , private Helper
+    : public fep3::arya::IRawMemory
+    , private c::arya::DestructionManager
+    , private arya::Helper
 {
 public:
     /// Type of access structure
@@ -43,12 +51,12 @@ public:
 
     /**
      * @brief CTOR
-     * @param access Access to the remote object
-     * @param destructors List of destructors to be called upon destruction of this
+     * @param[in] access Access to the remote object
+     * @param[in] destructors List of destructors to be called upon destruction of this
      */
     inline RawMemory
         (const Access& access
-        , std::deque<std::unique_ptr<IDestructor>> destructors
+        , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
         );
     inline ~RawMemory() override = default;
 
@@ -70,14 +78,14 @@ public:
     inline size_t size() const override;
     /**
      * Calls @ref fep3::arya::IRawMemory::set(...) on the remote object
-     * @param data Pointer to the data to be set
-     * @param data_size The size of the data to be set
+     * @param[in] data Pointer to the data to be set
+     * @param[in] data_size The size of the data to be set
      * @return The size as returned by call of @ref fep3::arya::IRawMemory::set on the remote object
      */
     inline size_t set(const void* data, size_t data_size) override;
     /**
      * Calls @ref fep3::arya::IRawMemory::resize(...) on the remote object
-     * @param data_size The size of the data to be set
+     * @param[in] data_size The size of the data to be set
      * @return The size as returned by call of @ref fep3::arya::IRawMemory::resize on the remote object
      */
     inline size_t resize(size_t data_size) override;
@@ -97,18 +105,18 @@ namespace arya
 /**
  * Wrapper class for interface \ref fep3::arya::IRawMemory
  */
-class RawMemory : private Helper<fep3::arya::IRawMemory>
+class RawMemory : private arya::Helper<fep3::arya::IRawMemory>
 {
 public:
     /// Alias for the helper
-    using Helper = Helper<fep3::arya::IRawMemory>;
+    using Helper = arya::Helper<fep3::arya::IRawMemory>;
     /// Alias for the type of the handle to a wrapped object of type \ref fep3::arya::IRawMemory
     using Handle = fep3_arya_HIRawMemory;
 
     /**
      * Calls @ref fep3::arya::IRawMemory::capacity(...) on the object identified by \p handle
-     * @param handle The handle to the object to call @ref fep3::arya::IRawMemory::capacity on
-     * @param result Pointer to the result of the call of @ref fep3::arya::IRawMemory::capacity
+     * @param[in] handle The handle to the object to call @ref fep3::arya::IRawMemory::capacity on
+     * @param[out] result Pointer to the result of the call of @ref fep3::arya::IRawMemory::capacity
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -129,8 +137,8 @@ public:
     }
     /**
      * Calls @ref fep3::arya::IRawMemory::cdata(...) on the object identified by \p handle
-     * @param handle The handle to the object to call @ref fep3::arya::IRawMemory::cdata on
-     * @param result Pointer to the result of the call of @ref fep3::arya::IRawMemory::cdata
+     * @param[in] handle The handle to the object to call @ref fep3::arya::IRawMemory::cdata on
+     * @param[out] result Pointer to the result of the call of @ref fep3::arya::IRawMemory::cdata
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -151,8 +159,8 @@ public:
     }
     /**
      * Calls @ref fep3::arya::IRawMemory::size(...) on the object identified by \p handle
-     * @param handle The handle to the object to call @ref fep3::arya::IRawMemory::size on
-     * @param result Pointer to the result of the call of @ref fep3::arya::IRawMemory::size
+     * @param[in] handle The handle to the object to call @ref fep3::arya::IRawMemory::size on
+     * @param[out] result Pointer to the result of the call of @ref fep3::arya::IRawMemory::size
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -173,10 +181,10 @@ public:
     }
     /**
      * Calls \ref fep3::arya::IRawMemory::set(...) on the object identified by \p handle
-     * @param handle The handle to the object to call \ref fep3::arya::IRawMemory::set on
-     * @param result Pointer to the result of the call of \ref fep3::arya::IRawMemory::set
-     * @param data Pointer to the raw data to be set
-     * @param data_size Size of the data to be set
+     * @param[in] handle The handle to the object to call \ref fep3::arya::IRawMemory::set on
+     * @param[out] result Pointer to the result of the call of \ref fep3::arya::IRawMemory::set
+     * @param[in] data Pointer to the raw data to be set
+     * @param[in] data_size Size of the data to be set
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -204,9 +212,9 @@ public:
     }
     /**
      * Calls \ref fep3::arya::IRawMemory::resize(...) on the object identified by \p handle
-     * @param handle The handle to the object to call \ref fep3::arya::IRawMemory::resize on
-     * @param result Pointer to the result of the call of \ref fep3::arya::IRawMemory::resize
-     * @param data_size The new size to be passed
+     * @param[in] handle The handle to the object to call \ref fep3::arya::IRawMemory::resize on
+     * @param[out] result Pointer to the result of the call of \ref fep3::arya::IRawMemory::resize
+     * @param[in] data_size The new size to be passed
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -238,7 +246,7 @@ namespace arya
 
 RawMemory::RawMemory
     (const Access& access
-    , std::deque<std::unique_ptr<IDestructor>> destructors
+    , std::deque<std::unique_ptr<c::arya::IDestructor>> destructors
     )
     : _access(access)
 {

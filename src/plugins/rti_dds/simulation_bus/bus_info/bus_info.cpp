@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma warning( push )
 #pragma warning( disable : 4245 )
@@ -31,7 +40,7 @@ using namespace dds::sub::status;
 
 class ParticipantBuiltinTopicDataListener: public NoOpDataReaderListener<ParticipantBuiltinTopicData>
 {
-public: 
+public:
     ParticipantBuiltinTopicDataListener(BusInfo* businfo)
         : _businfo(businfo)
     {
@@ -54,7 +63,7 @@ public: // NoOpDataReaderListener
             {
                 continue;
             }
-            
+
             const ByteSeq& user_seq = sample_iterator->data().user_data().value();
             std::string user_data(user_seq.begin(), user_seq.end());
 
@@ -151,7 +160,7 @@ void BusInfo::registerUserData(DomainParticipantQos & qos)
 {
     const DomainParticipantResourceLimits resource_limits_qos =
         qos.policy<DomainParticipantResourceLimits>();
-        
+
     const unsigned int max_participant_user_data =
         resource_limits_qos.participant_user_data_max_length();
 
@@ -160,7 +169,7 @@ void BusInfo::registerUserData(DomainParticipantQos & qos)
     {
         throw std::length_error("Internal error: max_participant_user_data are reached");
     }
-    else 
+    else
     {
         qos << UserData(ByteSeq(json.begin(), json.end()));
     }
@@ -223,7 +232,7 @@ std::string BusInfo::asJson() const
     std::string json = "[";
 
     bool first = true;
-    
+
     for (const auto entry : _participant_infos)
     {
 

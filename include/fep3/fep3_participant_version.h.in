@@ -1,13 +1,20 @@
 /**
- * @file 
- * @copyright AUDI AG
- *            All right reserved.
- * 
- * This Source Code Form is subject to the terms of the 
- * Mozilla Public License, v. 2.0. 
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- * 
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
 #ifndef _FEP3_PARTICIPANT_LIBRARY_VERSION_HEADER_
@@ -31,7 +38,7 @@
 #define FEP3_PARTICIPANT_LIBRARY_VERSION_LABEL    "FEP3 Participant Library\n" \
                                     "Version " FEP3_PARTICIPANT_LIBRARY_VERSION_STR "\n" \
                                     "Build @FEP3_PARTICIPANT_LIBRARY_BUILD_NR@\n" \
-                                    "Copyright (c) AUDI AG. " \
+                                    "Copyright (c) VW Group " \
                                     "All rights reserved."
 
 ///platform label for the fep3 participant library

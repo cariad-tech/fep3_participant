@@ -1,16 +1,25 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include <gtest/gtest.h>
-#include <fep3/base/streamtype/default_streamtype.h>
+#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/fep3_participant_version.h>
 
 #include <json/json.h>
@@ -45,14 +54,16 @@ void check_version_info(Json::Value json, const std::string& participant_name, i
 }
 
 /**
- * @detail We access the internal topic _buildin_topic_businfo to test the discovered information of the simbus
- * @req_id 
+ * @detail We access the internal topic _built_in_topic_businfo to test the discovered information of the simbus
+ * @req_id
  */
 TEST_F(ReaderWriterTestClass, TestAvailableInformations)
-{  
+{
+    // We need a small sync delay because we dosn't call startReception(getSimulationBus());
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    // Use the hidden 
-    auto simbus_1_businfo_reader =  getSimulationBus()->getReader("_buildin_topic_businfo", StreamTypePlain<uint32_t>());
+    // Use the hidden
+    auto simbus_1_businfo_reader =  getSimulationBus()->getReader("_built_in_topic_businfo", base::StreamTypePlain<uint32_t>());
     ASSERT_TRUE(simbus_1_businfo_reader);
 
     TestReceiver simbus_1_businfo_reciever;
@@ -61,17 +72,17 @@ TEST_F(ReaderWriterTestClass, TestAvailableInformations)
     ASSERT_EQ(simbus_1_businfo_reciever._samples.size(), 1);
     auto json = read_json(simbus_1_businfo_reciever._samples[0]);
     ASSERT_EQ(json.isArray(), true);
-    check_version_info(json[0], "simbus_participant_2", 
-        FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR, 
-        FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR, 
+    check_version_info(json[0], "simbus_participant_2",
+        FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
+        FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
 
     // Add a late joiner
-    auto simbus3 = createSimulationBus(GetDomainId(), "simbus_participant_3");
+    auto simbus3 = createSimulationBus(getDomainId(), "simbus_participant_3");
     ASSERT_TRUE(simbus3);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    
+
     // Read an check information from simbus_1
     simbus_1_businfo_reciever.clear();
     simbus_1_businfo_reader->pop(simbus_1_businfo_reciever);
@@ -90,7 +101,7 @@ TEST_F(ReaderWriterTestClass, TestAvailableInformations)
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
 
     // Read an check information from simbus_3 (late joiner)
-    auto simbus_3_businfo_reader = dynamic_cast<ISimulationBus*>(simbus3.get())->getReader("_buildin_topic_businfo", StreamTypePlain<uint32_t>());
+    auto simbus_3_businfo_reader = dynamic_cast<ISimulationBus*>(simbus3.get())->getReader("_built_in_topic_businfo", base::StreamTypePlain<uint32_t>());
     TestReceiver simbus_3_businfo_reciever;
     // We have two updates so we take the last
     simbus_3_businfo_reader->pop(simbus_3_businfo_reciever);

@@ -1,18 +1,25 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+@endverbatim
  */
 #include "http_server.h"
 #include "find_free_port.h"
 #include <../3rdparty/lssdp-cpp/src/url/cxx_url.h>
 #include "../../service_bus_logger.hpp"
+#include <a_util/strings/strings_convert.h>
 
 using namespace fep3::arya;
 
@@ -27,7 +34,7 @@ constexpr const char* const HttpServer::_discovery_search_target;
 /*******************************************************************************************
  *
  *******************************************************************************************/
-struct RPCResponseToFEPResponse : public rpc::arya::IRPCRequester::IRPCResponse
+struct RPCResponseToFEPResponse : public arya::IRPCRequester::IRPCResponse
 {
     ::rpc::IResponse& _bounded_response;
     RPCResponseToFEPResponse(::rpc::IResponse& response_to_bind) : _bounded_response(response_to_bind)
@@ -61,7 +68,7 @@ a_util::result::Result HttpServer::RPCObjectToRPCServerWrapper::HandleCall(
         response_convert);
 }
 
-std::shared_ptr<rpc::arya::IRPCServer::IRPCService> HttpServer::RPCObjectToRPCServerWrapper::getService() const
+std::shared_ptr<arya::IRPCServer::IRPCService> HttpServer::RPCObjectToRPCServerWrapper::getService() const
 {
     return _service;
 }
@@ -101,30 +108,44 @@ HttpServer::HttpServer(const std::string& name,
                        const std::string& system_url)
     : _url(url), _system_url(system_url), base::arya::ServiceRegistryBase(name, system_name)
 {
-    checkUrlAndSetDefaultIfNecessary();
-
-    if (!system_url.empty())
-    {
-        //TODO: the interval must be parsed from the system url in future
-        startDiscovery(std::chrono::seconds(5));
-    }
-    _http_server.StartListening(_url.c_str());
-    _is_started = true;
-}
-
-void HttpServer::checkUrlAndSetDefaultIfNecessary()
-{
     if (_url == _use_default_url)
     {
         _url = _default_url;
     }
     fep3::helper::Url url_to_parse = _url;
     int port_number = a_util::strings::toInt32(url_to_parse.port());
-    if (port_number == 0)
+    a_util::result::Result res;
+    int begin_port = 9090, count = 1000;
+    if (port_number != 0)
     {
-        port_number = fep3::helper::findFreeSocketPort(9090);
+        begin_port = port_number;
+        count = 1;
     }
-    _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" + a_util::strings::toString(port_number);
+
+    for (port_number = begin_port; port_number < begin_port + count; ++port_number)
+    {
+        _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" + a_util::strings::toString(port_number);
+        res = _http_server.StartListening(_url.c_str(), 0);
+        if (fep3::isOk(res))
+        {
+            break;
+        }
+    }
+
+    if (fep3::isFailed(res))
+    {
+        std::string throw_msg = std::string("start listening on ") + _url + " failed, errno = "
+            + res.getDescription();
+        throw std::runtime_error(throw_msg);
+    }
+
+    if (!system_url.empty())
+    {
+        //TODO: the interval must be parsed from the system url in future
+        startDiscovery(std::chrono::seconds(5));
+    }
+
+    _is_started = true;
 }
 
 void HttpServer::startDiscovery(std::chrono::seconds interval)
@@ -137,15 +158,14 @@ void HttpServer::startDiscovery(std::chrono::seconds interval)
         HttpServer::_discovery_search_target,
         FEP3_PARTICIPANT_LIBRARY_VERSION_ID,
         FEP3_PARTICIPANT_LIBRARY_VERSION_STR);
-    
+
     _stop_loop = false;
 
     _loop = std::move(std::thread(
-        [&]
+        [this, send_alive_interval = interval]
         {
             try
             {
-                std::chrono::seconds send_alive_interval = interval;
                 auto last_time = std::chrono::system_clock::now();
 
                 // send notify first
@@ -195,7 +215,7 @@ HttpServer::~HttpServer()
 {
     _is_started = false;
     _http_server.StopListening();
-    
+
     while (!_service_wrappers.empty())
     {
         const auto& it = _service_wrappers.begin();
@@ -209,7 +229,7 @@ fep3::Result HttpServer::registerService(const std::string& service_name,
     const std::shared_ptr<IRPCService>& service)
 {
     std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
-    
+
     HttpRestarter restarter(_http_server, _url, _is_started);
 
     const auto& service_found = _service_wrappers.find(service_name);
@@ -272,7 +292,7 @@ std::vector<std::string> HttpServer::getRegisteredServiceNames() const
     return names;
 }
 
-std::shared_ptr<rpc::arya::IRPCServer::IRPCService> HttpServer::getServiceByName(const std::string& service_name) const
+std::shared_ptr<arya::IRPCServer::IRPCService> HttpServer::getServiceByName(const std::string& service_name) const
 {
     std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
 

@@ -1,15 +1,22 @@
 /**
- * Declaration of class ElementBase
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -19,7 +26,7 @@
 #include <map>
 
 #include "element_base.h"
-#include <fep3/components/configuration/propertynode.h>
+#include <fep3/base/properties/propertynode.h>
 
 
 namespace fep3
@@ -29,15 +36,13 @@ namespace core
 namespace arya
 {
 
-using fep3::arya::PropertyVariable;
+using fep3::base::arya::PropertyVariable;
 
 /**
- * This is the base class for every FEP3 Element which is able to register for properties 
+ * This is the base class for every FEP3 Element which is able to register for properties
  * To implement your own FEP3 Element, derive from this class.
  */
-class ElementConfigurable : public ElementBase,
-                            public Configuration
-{
+class ElementConfigurable : public arya::ElementBase, public fep3::base::arya::Configuration {
 public:
     /**
      * Deleted default CTOR
@@ -48,12 +53,12 @@ protected:
      * CTOR
      * this ctor will also create one property node called "element"
      *
-     * @param type_name Name of the type the element presents
-     * @param version_info Version information of the element
+     * @param[in] type_name Name of the type the element presents
+     * @param[in] version_info Version information of the element
      */
     ElementConfigurable(std::string type_name, std::string version_info)
-        : ElementBase(type_name, version_info),
-          Configuration("element")
+        : arya::ElementBase(type_name, version_info),
+          fep3::base::arya::Configuration("element")
     {
     }
 public:
@@ -73,11 +78,11 @@ private:
      *
      * @return Result error code
      * @retval ERR_NO_ERROR if succeded
-     * @retval ERR_NOT_FOUND Configuration service required and not found
+     * @retval ERR_NOT_FOUND arya::Configuration service required and not found
      */
-    Result loadElement(const IComponents& components) override
+    Result loadElement(const fep3::arya::IComponents& components) override
     {
-        auto load_res = ElementBase::loadElement(components);
+        auto load_res = arya::ElementBase::loadElement(components);
         if (isFailed(load_res))
         {
             return load_res;
@@ -105,7 +110,7 @@ private:
     void unloadElement() override
     {
        deinitConfiguration();
-       ElementBase::unloadElement();       
+       arya::ElementBase::unloadElement();
     }
 
 };

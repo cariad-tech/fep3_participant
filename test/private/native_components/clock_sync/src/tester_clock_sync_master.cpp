@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <string>
 #include <gtest/gtest.h>
@@ -103,7 +112,7 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
         _rpc_timeout,
         _set_participant_to_error_state,
         _get_rpc_requester_by_name);
-    
+
     const auto reply = R"({"id" : 1,"jsonrpc" : "2.0","result" : "100"})";
 
     {

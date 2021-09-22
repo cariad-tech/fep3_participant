@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -23,8 +32,8 @@ namespace base
 namespace arya
 {
 /**
-* @brief Base implementation of a Clock 
-* 
+* @brief Base implementation of a Clock
+*
 */
 class ClockBase : public fep3::arya::IClock
 {
@@ -33,7 +42,7 @@ public:
     * @brief CTOR.
     * A @ref ClockBase is initialized with a current time of 0.
     *
-    * @param clock_name Name of the clock
+    * @param[in] clock_name Name of the clock
     */
     explicit ClockBase(const std::string& clock_name)
         : _clock_name(clock_name)
@@ -45,38 +54,38 @@ public:
 
     /**
     * @brief Delete copy CTOR
-    * 
-    * @param other ClockBase to copy from
+    *
+    * @param[in] other ClockBase to copy from
     */
     ClockBase(const ClockBase& other) = delete;
 
     /**
     * @brief Delete move CTOR
-    * 
-    * @param other ClockBase to move from
+    *
+    * @param[in] other ClockBase to move from
     */
     ClockBase(ClockBase&& other) = delete;
 
     /**
     * @brief Delete copy assignment operator
-    * 
-    * @param other ClockBase to copy from
-    * @return ClockBase 
+    *
+    * @param[in] other ClockBase to copy from
+    * @return ClockBase
     */
     ClockBase& operator=(const ClockBase& other) = delete;
 
     /**
     * @brief Delete move assignment operator
-    * 
-    * @param other ClockBase to move from
-    * @return ClockBase 
+    *
+    * @param[in] other ClockBase to move from
+    * @return ClockBase
     */
     ClockBase& operator=(ClockBase&& other) = delete;
 
     /**
     * @brief DTOR
     */
-    ~ClockBase() override = default;
+    virtual ~ClockBase() = default;
 
 public:
    /**
@@ -92,13 +101,13 @@ public:
     */
     void start(const std::weak_ptr<fep3::arya::IClock::IEventSink>& event_sink) override
     {
-        _updated = false;        
+        _updated = false;
         {
             std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
             _event_sink = event_sink;
         }
         _started = true;
-        reset();
+        reset(fep3::arya::Timestamp(0));
     }
 
     /**
@@ -123,7 +132,7 @@ protected:
     std::string _clock_name;
     ///the current time of this clock
     mutable fep3::arya::Timestamp _current_time;
-    ///determine if the clock was set by any setNewTime call 
+    ///determine if the clock was set by any setNewTime call
     mutable std::atomic_bool _updated;
     ///determine wether the clock is started or not
     mutable std::atomic_bool _started;
@@ -132,23 +141,23 @@ protected:
 };
 
 /**
-* @brief Base implementation for a continuous clock which will automatically 
-* 	call the @ref arya::IClock::IEventSink for you.
-* You have to implement following functionality: 
+* @brief Base implementation for a continuous clock which will automatically
+*     call the @ref arya::IClock::IEventSink for you.
+* You have to implement following functionality:
 * @li CTOR
 * @li @ref ContinuousClock::getNewTime
 * @li @ref ContinuousClock::resetTime
 */
-class ContinuousClock : public ClockBase
-{ 
+class ContinuousClock : public arya::ClockBase
+{
 public:
     /**
     * @brief CTOR
-    * 
-    * @param name Name of the clock
+    *
+    * @param[in] name Name of the clock
     */
     ContinuousClock(const std::string& name)
-        : ClockBase(name)
+        : arya::ClockBase(name)
     {
     }
 
@@ -159,7 +168,7 @@ protected:
     * @remark @p Override this function to implement a custom continuous clock
     *
     * @return The new time
-    */    
+    */
     virtual fep3::arya::Timestamp getNewTime() const = 0;
 
     /**
@@ -167,9 +176,10 @@ protected:
     *
     * @remark @p Override this function to implement a custom continuous clock
     *
+    * @param[in] new_time The new time of the clock
     * @return The timestamp to which the clock has been reset to
     */
-    virtual fep3::arya::Timestamp resetTime() = 0;
+    virtual fep3::arya::Timestamp resetTime(fep3::arya::Timestamp new_time) = 0;
 
 protected:
     /**
@@ -180,7 +190,7 @@ protected:
     fep3::arya::Timestamp getTime() const override
     {
         setNewTime(getNewTime());
-        
+
         std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
         return _current_time;
     }
@@ -197,10 +207,12 @@ protected:
 
     /**
     * @brief Reset the clock time
+    *
+    * @param[in] new_time The new time of the clock
     */
-    void reset() override
+    void reset(fep3::arya::Timestamp new_time) override
     {
-         setResetTime(resetTime());
+         setResetTime(resetTime(new_time));
     }
 
 private:
@@ -209,7 +221,7 @@ private:
     * Reset the clock if 'setNewTime' has been called for the first time
     * or if @p new_time is smaller than the old time
     *
-    * @param new_time The new time of the clock
+    * @param[in] new_time The new time of the clock
     */
     void setNewTime(fep3::arya::Timestamp new_time) const
     {
@@ -229,20 +241,20 @@ private:
 
         _updated = true;
 
-        lock_guard.lock();        
+        lock_guard.lock();
         _current_time = new_time;
         lock_guard.unlock();
     }
-        
+
     /**
     * @brief Set a new time for the clock and emit time reset events via the event sink
     *
-    * @param new_time The new time of the clock
+    * @param[in] new_time The new time of the clock
     */
     void setResetTime(const fep3::arya::Timestamp new_time) const
     {
         std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-        
+
         const auto old_time = _current_time;
         auto event_sink_pointer = _event_sink.lock();
         lock_guard.unlock();
@@ -256,7 +268,7 @@ private:
 
         lock_guard.lock();
         _current_time = new_time;
-        lock_guard.unlock();   
+        lock_guard.unlock();
 
         if (event_sink_pointer)
         {
@@ -265,22 +277,22 @@ private:
     }
 };
 /**
-* @brief Base implementation for a discrete clock which will automatically 
+* @brief Base implementation for a discrete clock which will automatically
 *        call the IClock::IEventSink for you.
 * You have to implement following functionality:
 * @li CTOR
-* 
+*
 * While using you only call DiscreteClock::setNewTime and DiscreteClock::setResetTime
 */
-class DiscreteClock : public ClockBase
+class DiscreteClock : public arya::ClockBase
 {
 public:
     /**
     * @brief CTOR
-    * 
-    * @param name Name of the clock
+    *
+    * @param[in] name Name of the clock
     */
-    DiscreteClock(const std::string& name) : ClockBase(name)
+    DiscreteClock(const std::string& name) : arya::ClockBase(name)
     {
     }
 
@@ -298,12 +310,14 @@ protected:
 
     /**
     * @brief Reset the clock time
+    *
+    * @param[in] new_time The new time of the clock
     */
-    void reset() override
-    {              
+    void reset(fep3::arya::Timestamp new_time) override
+    {
         _updated = true;
 
-        setResetTime(fep3::arya::Timestamp(0));
+        setResetTime(new_time);
     }
 
     /**
@@ -318,30 +332,30 @@ protected:
 
 public:
     /**
-    * @brief Set a new time for the clock. 
+    * @brief Set a new time for the clock.
     * Emit time update events via the event sink.
     * Reset the clock if @ref setNewTime has been called for the first time
     * or if @p new_time is smaller than the current time
     *
-    * @param new_time The new time of the clock
-    * @param send_update_before_after Flag indicates whether @ref IClock::IEventSink::timeUpdateBegin 
+    * @param[in] new_time The new time of the clock
+    * @param[in] send_update_before_after Flag indicates whether @ref IClock::IEventSink::timeUpdateBegin
     *                                 and @ref IClock::IEventSink::timeUpdateEnd events should be emitted.
     *                                 The event @ref IClock::IEventSink::timeUpdating is always emitted.
     */
     void setNewTime(const fep3::arya::Timestamp new_time, const bool send_update_before_after) const
-    {       
-        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time); 
+    {
+        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
 
         const auto old_time = _current_time;
         lock_guard.unlock();
 
         if (!_updated)
-        {            
+        {
             _updated = true;
             setResetTime(new_time);
         }
         else if (new_time < old_time)
-        {           
+        {
             setResetTime(new_time);
         }
         else
@@ -354,11 +368,11 @@ public:
             {
                 event_sink_pointer->timeUpdateBegin(old_time, new_time);
             }
-            
+
             lock_guard.lock();
             _current_time = new_time;
             lock_guard.unlock();
-            
+
             if (event_sink_pointer)
             {
                 event_sink_pointer->timeUpdating(new_time);
@@ -373,10 +387,10 @@ public:
     /**
     * @brief Set a new time for the clock and emit time reset events via the event sink.
     *
-    * @param new_time The new time of the clock
+    * @param[in] new_time The new time of the clock
     */
     void setResetTime(const fep3::arya::Timestamp new_time) const
-    {      
+    {
         std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
 
         const auto old_time = _current_time;
@@ -390,10 +404,10 @@ public:
 
         _updated = true;
 
-        lock_guard.lock();        
+        lock_guard.lock();
         _current_time = new_time;
         lock_guard.unlock();
-        
+
         if (_event_sink_pointer)
         {
             _event_sink_pointer->timeResetEnd(new_time);

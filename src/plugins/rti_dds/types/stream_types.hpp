@@ -1,3 +1,21 @@
+/**
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
 
 
 /*
@@ -9,8 +27,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef stream_types_783819995_hpp
-#define stream_types_783819995_hpp
+#ifndef stream_types_783819646_hpp
+#define stream_types_783819646_hpp
 
 #include <iosfwd>
 
@@ -79,10 +97,10 @@ namespace fep3 {
             Property& operator=(const Property&) = default;
             Property(const Property&) = default;
             #else
-            Property(Property&& other_) OMG_NOEXCEPT;  
+            Property(Property&& other_) OMG_NOEXCEPT;
             Property& operator=(Property&&  other_) OMG_NOEXCEPT;
             #endif
-            #endif 
+            #endif
 
             std::string& name() OMG_NOEXCEPT {
                 return m_name_;
@@ -133,7 +151,7 @@ namespace fep3 {
 
         };
 
-        inline void swap(Property& a, Property& b)  OMG_NOEXCEPT 
+        inline void swap(Property& a, Property& b)  OMG_NOEXCEPT
         {
             a.swap(b);
         }
@@ -161,10 +179,10 @@ namespace fep3 {
             StreamType& operator=(const StreamType&) = default;
             StreamType(const StreamType&) = default;
             #else
-            StreamType(StreamType&& other_) OMG_NOEXCEPT;  
+            StreamType(StreamType&& other_) OMG_NOEXCEPT;
             StreamType& operator=(StreamType&&  other_) OMG_NOEXCEPT;
             #endif
-            #endif 
+            #endif
 
             std::string& metatype() OMG_NOEXCEPT {
                 return m_metatype_;
@@ -202,180 +220,15 @@ namespace fep3 {
 
         };
 
-        inline void swap(StreamType& a, StreamType& b)  OMG_NOEXCEPT 
+        inline void swap(StreamType& a, StreamType& b)  OMG_NOEXCEPT
         {
             a.swap(b);
         }
 
         NDDSUSERDllExport std::ostream& operator<<(std::ostream& o, const StreamType& sample);
 
-        #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
-        // On Windows, dll-export template instantiations of standard types used by
-        // other dll-exported types
-        template class NDDSUSERDllExport std::allocator< uint8_t >;
-        template class NDDSUSERDllExport std::vector< uint8_t >;
-        #endif
-        class NDDSUSERDllExport Sample {
-          public:
-            Sample();
-
-            explicit Sample(
-                const std::vector< uint8_t >& data);
-
-            #ifdef RTI_CXX11_RVALUE_REFERENCES
-            #ifndef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-            Sample (Sample&&) = default;
-            Sample& operator=(Sample&&) = default;
-            Sample& operator=(const Sample&) = default;
-            Sample(const Sample&) = default;
-            #else
-            Sample(Sample&& other_) OMG_NOEXCEPT;  
-            Sample& operator=(Sample&&  other_) OMG_NOEXCEPT;
-            #endif
-            #endif 
-
-            std::vector< uint8_t >& data() OMG_NOEXCEPT {
-                return m_data_;
-            }
-
-            const std::vector< uint8_t >& data() const OMG_NOEXCEPT {
-                return m_data_;
-            }
-
-            void data(const std::vector< uint8_t >& value) {
-                m_data_ = value;
-            }
-
-            bool operator == (const Sample& other_) const;
-            bool operator != (const Sample& other_) const;
-
-            void swap(Sample& other_) OMG_NOEXCEPT ;
-
-          private:
-
-            std::vector< uint8_t > m_data_;
-
-        };
-
-        inline void swap(Sample& a, Sample& b)  OMG_NOEXCEPT 
-        {
-            a.swap(b);
-        }
-
-        NDDSUSERDllExport std::ostream& operator<<(std::ostream& o, const Sample& sample);
-
-        struct StreamItemType_def {
-            enum type {
-                SAMPLE,      
-                STREAMTYPE     
-            };
-            static type get_default(){ return SAMPLE;}
-        };
-
-        typedef ::dds::core::safe_enum< StreamItemType_def > StreamItemType;
-        NDDSUSERDllExport std::ostream& operator << (std::ostream& o,const StreamItemType& sample);
-
-        class NDDSUSERDllExport StreamItem {
-          public:
-            StreamItem();
-
-            #ifdef RTI_CXX11_RVALUE_REFERENCES
-            #ifndef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-            StreamItem (StreamItem&&) = default;
-            StreamItem& operator=(StreamItem&&) = default;
-            StreamItem& operator=(const StreamItem&) = default;
-            StreamItem(const StreamItem&) = default;
-            #else
-            StreamItem(StreamItem&& other_) OMG_NOEXCEPT;  
-            StreamItem& operator=(StreamItem&&  other_) OMG_NOEXCEPT;
-            #endif
-            #endif 
-
-            fep3::ddstypes::StreamItemType& _d()  {
-                return m_d_;
-            }
-
-            const fep3::ddstypes::StreamItemType& _d() const  {
-                return m_d_;
-            }
-
-            void _d(const fep3::ddstypes::StreamItemType& value) {
-                m_d_ = value;
-            }
-
-            fep3::ddstypes::StreamType& streamtype()  {
-                if ( _d() != (fep3::ddstypes::StreamItemType::STREAMTYPE)) {
-                    throw ::dds::core::PreconditionNotMetError(
-                        "fep3::ddstypes::StreamItem::streamtype not selected by the discriminator" );
-                }
-                return m_u_.m_streamtype_;
-            }
-
-            const fep3::ddstypes::StreamType& streamtype() const  {
-                if ( _d() != (fep3::ddstypes::StreamItemType::STREAMTYPE)) {
-                    throw ::dds::core::PreconditionNotMetError(
-                        "fep3::ddstypes::StreamItem::streamtype not selected by the discriminator" );
-                }
-                return m_u_.m_streamtype_;
-            }
-
-            void streamtype(const fep3::ddstypes::StreamType& value) {
-                m_u_.m_streamtype_ = value;
-                m_d_= (fep3::ddstypes::StreamItemType::STREAMTYPE);
-            }
-
-            fep3::ddstypes::Sample& sample()  {
-                if ( _d() != (fep3::ddstypes::StreamItemType::SAMPLE)) {
-                    throw ::dds::core::PreconditionNotMetError(
-                        "fep3::ddstypes::StreamItem::sample not selected by the discriminator" );
-                }
-                return m_u_.m_sample_;
-            }
-
-            const fep3::ddstypes::Sample& sample() const  {
-                if ( _d() != (fep3::ddstypes::StreamItemType::SAMPLE)) {
-                    throw ::dds::core::PreconditionNotMetError(
-                        "fep3::ddstypes::StreamItem::sample not selected by the discriminator" );
-                }
-                return m_u_.m_sample_;
-            }
-
-            void sample(const fep3::ddstypes::Sample& value) {
-                m_u_.m_sample_ = value;
-                m_d_= (fep3::ddstypes::StreamItemType::SAMPLE);
-            }
-
-            bool operator == (const StreamItem& other_) const;
-            bool operator != (const StreamItem& other_) const;
-
-            static fep3::ddstypes::StreamItemType default_discriminator();  
-
-            void swap(StreamItem& other_) OMG_NOEXCEPT ;
-
-          private:
-
-            fep3::ddstypes::StreamItemType m_d_;
-            struct NDDSUSERDllExport Union_ {
-                fep3::ddstypes::StreamType m_streamtype_;
-                fep3::ddstypes::Sample m_sample_;
-                Union_();
-                Union_(
-                    const fep3::ddstypes::StreamType& streamtype,
-                    const fep3::ddstypes::Sample& sample);
-            };
-            Union_ m_u_;
-
-        };
-
-        inline void swap(StreamItem& a, StreamItem& b)  OMG_NOEXCEPT 
-        {
-            a.swap(b);
-        }
-
-        NDDSUSERDllExport std::ostream& operator<<(std::ostream& o, const StreamItem& sample);
-
-    } // namespace ddstypes  
-} // namespace fep3  
+    } // namespace ddstypes
+} // namespace fep3
 
 namespace rti {
     namespace flat {
@@ -398,27 +251,27 @@ namespace dds {
 
         template<>
         struct topic_type_support< fep3::ddstypes::Property > {
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void register_type(
                 ::dds::domain::DomainParticipant& participant,
                 const std::string & type_name);
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static std::vector<char>& to_cdr_buffer(
-                std::vector<char>& buffer, 
+                std::vector<char>& buffer,
                 const fep3::ddstypes::Property& sample,
-                ::dds::core::policy::DataRepresentationId representation 
+                ::dds::core::policy::DataRepresentationId representation
                 = ::dds::core::policy::DataRepresentation::auto_id());
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void from_cdr_buffer(fep3::ddstypes::Property& sample, const std::vector<char>& buffer);
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void reset_sample(fep3::ddstypes::Property& sample);
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void allocate_sample(fep3::ddstypes::Property& sample, int, int);
 
-            static const ::rti::topic::TypePluginKind::type type_plugin_kind = 
+            static const ::rti::topic::TypePluginKind::type type_plugin_kind =
             ::rti::topic::TypePluginKind::STL;
         };
 
@@ -434,106 +287,34 @@ namespace dds {
 
         template<>
         struct topic_type_support< fep3::ddstypes::StreamType > {
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void register_type(
                 ::dds::domain::DomainParticipant& participant,
                 const std::string & type_name);
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static std::vector<char>& to_cdr_buffer(
-                std::vector<char>& buffer, 
+                std::vector<char>& buffer,
                 const fep3::ddstypes::StreamType& sample,
-                ::dds::core::policy::DataRepresentationId representation 
+                ::dds::core::policy::DataRepresentationId representation
                 = ::dds::core::policy::DataRepresentation::auto_id());
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void from_cdr_buffer(fep3::ddstypes::StreamType& sample, const std::vector<char>& buffer);
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void reset_sample(fep3::ddstypes::StreamType& sample);
 
-            NDDSUSERDllExport 
+            NDDSUSERDllExport
             static void allocate_sample(fep3::ddstypes::StreamType& sample, int, int);
 
-            static const ::rti::topic::TypePluginKind::type type_plugin_kind = 
-            ::rti::topic::TypePluginKind::STL;
-        };
-
-        template<>
-        struct topic_type_name< fep3::ddstypes::Sample > {
-            NDDSUSERDllExport static std::string value() {
-                return "fep3::ddstypes::Sample";
-            }
-        };
-
-        template<>
-        struct is_topic_type< fep3::ddstypes::Sample > : public ::dds::core::true_type {};
-
-        template<>
-        struct topic_type_support< fep3::ddstypes::Sample > {
-            NDDSUSERDllExport 
-            static void register_type(
-                ::dds::domain::DomainParticipant& participant,
-                const std::string & type_name);
-
-            NDDSUSERDllExport 
-            static std::vector<char>& to_cdr_buffer(
-                std::vector<char>& buffer, 
-                const fep3::ddstypes::Sample& sample,
-                ::dds::core::policy::DataRepresentationId representation 
-                = ::dds::core::policy::DataRepresentation::auto_id());
-
-            NDDSUSERDllExport 
-            static void from_cdr_buffer(fep3::ddstypes::Sample& sample, const std::vector<char>& buffer);
-            NDDSUSERDllExport 
-            static void reset_sample(fep3::ddstypes::Sample& sample);
-
-            NDDSUSERDllExport 
-            static void allocate_sample(fep3::ddstypes::Sample& sample, int, int);
-
-            static const ::rti::topic::TypePluginKind::type type_plugin_kind = 
-            ::rti::topic::TypePluginKind::STL;
-        };
-
-        template<>
-        struct topic_type_name< fep3::ddstypes::StreamItem > {
-            NDDSUSERDllExport static std::string value() {
-                return "fep3::ddstypes::StreamItem";
-            }
-        };
-
-        template<>
-        struct is_topic_type< fep3::ddstypes::StreamItem > : public ::dds::core::true_type {};
-
-        template<>
-        struct topic_type_support< fep3::ddstypes::StreamItem > {
-            NDDSUSERDllExport 
-            static void register_type(
-                ::dds::domain::DomainParticipant& participant,
-                const std::string & type_name);
-
-            NDDSUSERDllExport 
-            static std::vector<char>& to_cdr_buffer(
-                std::vector<char>& buffer, 
-                const fep3::ddstypes::StreamItem& sample,
-                ::dds::core::policy::DataRepresentationId representation 
-                = ::dds::core::policy::DataRepresentation::auto_id());
-
-            NDDSUSERDllExport 
-            static void from_cdr_buffer(fep3::ddstypes::StreamItem& sample, const std::vector<char>& buffer);
-            NDDSUSERDllExport 
-            static void reset_sample(fep3::ddstypes::StreamItem& sample);
-
-            NDDSUSERDllExport 
-            static void allocate_sample(fep3::ddstypes::StreamItem& sample, int, int);
-
-            static const ::rti::topic::TypePluginKind::type type_plugin_kind = 
+            static const ::rti::topic::TypePluginKind::type type_plugin_kind =
             ::rti::topic::TypePluginKind::STL;
         };
 
     }
 }
 
-namespace rti { 
+namespace rti {
     namespace topic {
 
         #ifndef NDDS_STANDALONE_TYPE
@@ -547,7 +328,7 @@ namespace rti {
         template <>
         struct extensibility< fep3::ddstypes::Property > {
             static const ::dds::core::xtypes::ExtensibilityKind::type kind =
-            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
+            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;
         };
 
         #ifndef NDDS_STANDALONE_TYPE
@@ -561,49 +342,7 @@ namespace rti {
         template <>
         struct extensibility< fep3::ddstypes::StreamType > {
             static const ::dds::core::xtypes::ExtensibilityKind::type kind =
-            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
-        };
-
-        #ifndef NDDS_STANDALONE_TYPE
-        template<>
-        struct dynamic_type< fep3::ddstypes::Sample > {
-            typedef ::dds::core::xtypes::StructType type;
-            NDDSUSERDllExport static const ::dds::core::xtypes::StructType& get();
-        };
-        #endif
-
-        template <>
-        struct extensibility< fep3::ddstypes::Sample > {
-            static const ::dds::core::xtypes::ExtensibilityKind::type kind =
-            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
-        };
-
-        #ifndef NDDS_STANDALONE_TYPE
-        template<>
-        struct dynamic_type< fep3::ddstypes::StreamItemType > {
-            typedef ::dds::core::xtypes::EnumType type;
-            NDDSUSERDllExport static const ::dds::core::xtypes::EnumType& get();
-        };
-        #endif
-
-        template <>
-        struct extensibility< fep3::ddstypes::StreamItemType > {
-            static const ::dds::core::xtypes::ExtensibilityKind::type kind =
-            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
-        };
-
-        #ifndef NDDS_STANDALONE_TYPE
-        template<>
-        struct dynamic_type< fep3::ddstypes::StreamItem > {
-            typedef ::dds::core::xtypes::UnionType type;
-            NDDSUSERDllExport static const ::dds::core::xtypes::UnionType& get();
-        };
-        #endif
-
-        template <>
-        struct extensibility< fep3::ddstypes::StreamItem > {
-            static const ::dds::core::xtypes::ExtensibilityKind::type kind =
-            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
+            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;
         };
 
     }
@@ -616,5 +355,5 @@ namespace rti {
 #define NDDSUSERDllExport
 #endif
 
-#endif // stream_types_783819995_hpp
+#endif // stream_types_783819646_hpp
 

@@ -1,15 +1,24 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
-#include <fep3/base/streamtype/default_streamtype.h>
+
+#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/sample/data_sample.h>
 #include <fep3/base/sample/raw_memory.h>
 
@@ -21,20 +30,18 @@ using namespace fep3;
  */
 template <typename T>
 class TimeDataSampleType
-    : public IDataSample,
-    public RawMemoryStandardType<T>
-{
+    : public IDataSample, public base::RawMemoryStandardType<T> {
 public:
     /// value type of DataSampleType
     typedef T                        ValueType;
     /// super type of DataSampleType
-    typedef RawMemoryStandardType<T> BaseType;
+    typedef base::RawMemoryStandardType<T> BaseType;
 public:
     /**
      * CTOR
      * @param value reference to the value type
      */
-    TimeDataSampleType(ValueType& value) 
+    TimeDataSampleType(ValueType& value)
         : BaseType(value)
     {
     }
@@ -78,7 +85,7 @@ public:
     {
         return writeable_memory.set(BaseType::cdata(), BaseType::size());
     }
-    
+
     void setTime(const Timestamp & time) override
     {
         _timestamp = time;
@@ -97,7 +104,7 @@ private:
     uint32_t _counter = 0;
 };
 
-class RandomSample : public DataSample
+class RandomSample : public base::DataSample
 {
 private:
     size_t _size;
@@ -112,11 +119,11 @@ public:
     void fillRandom()
     {
         std::vector<uint8_t> data(_size);
-        std::fill(data.begin(), data.end(), rand());
+        std::fill(data.begin(), data.end(), static_cast<uint8_t>(rand()));
         set(data.data(), data.size());
     }
 
-    bool compare(const DataSample & sample) const
+    bool compare(const base::DataSample & sample) const
     {
         if (getSize() != sample.getSize())
         {
@@ -142,12 +149,12 @@ class RawDataSample
 {
 
 public:
-    
+
     RawDataSample()
     {
     }
-    
-    
+
+
 public:
     size_t capacity() const
     {

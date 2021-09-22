@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -44,11 +53,11 @@ namespace arya
  * @tparam result_type The type of result to write the C access structure to
  * @tparam access_creator_type The type of the access creator to be used to create the C access structure
  * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
- * @param factory Callable factory capable to create an object
- * @param result Pointer to the result to write the C access structure to
- * @param shared_binary_access C access structure for the shared binary the caller resides in
- * @param access_creator The callable that creates the C access structure for the created object
- * @param arguments The arguments to be passed to the constructor of \p object_type
+ * @param[out] factory Callable factory capable to create an object
+ * @param[out] result Pointer to the result to write the C access structure to
+ * @param[in] shared_binary_access C access structure for the shared binary the caller resides in
+ * @param[out] access_creator The callable that creates the C access structure for the created object
+ * @param[in] arguments The arguments to be passed to the constructor of \p object_type
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -67,7 +76,7 @@ fep3_plugin_c_InterfaceError create
     {
         auto pointer_to_object = factory(std::forward<argument_types>(arguments)...);
         // set the shared binary to the object to prevent unloading of binary while object exists
-        pointer_to_object->setSharedBinary(std::make_shared<access::SharedBinary>(shared_binary_access));
+        pointer_to_object->setSharedBinary(std::make_shared<access::arya::SharedBinary>(shared_binary_access));
 
         if(nullptr != result)
         {
@@ -93,9 +102,9 @@ fep3_plugin_c_InterfaceError create
  * @tparam object_type The type of the object to get
  * @tparam result_type The type of result to write the C access structure to
  * @tparam access_creator_type The type of the access creator to be used to create the C access structure
- * @param access_result Pointer to the result to write the C access structure to
- * @param interface_handle Handle to the interface of the object to get
- * @param access_creator The callable that creates the C access structure for the object to get
+ * @param[out] access_result Pointer to the result to write the C access structure to
+ * @param[in] interface_handle Handle to the interface of the object to get
+ * @param[in] access_creator The callable that creates the C access structure for the object to get
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred
  * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -146,16 +155,15 @@ public:
      * @tparam invoker_type The type of the invoker
      * @tparam access_type The type of the C access structure of the remote object
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p invoker
-     * @param handle The handle of the object to be passed to the \p invoker
-     * @param invoker Callable that invokes method on the created (local) object to transfer the shared pointer to
-     * @param reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
-     * @param access C access structure reference
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to be passed to the \p invoker
+     * @param[in] invoker Callable that invokes method on the created (local) object to transfer the shared pointer to
+     * @param[in] reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
+     * @param[in] access C access structure reference
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws if the \p invoker throws
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
-     * @retval fep3_plugin_c_interface_error_invalid_result_pointer The \p result is null
      */
     template<typename access_object_type, typename handle_type, typename invoker_type, typename access_type, typename... argument_types>
     static fep3_plugin_c_InterfaceError transferSharedPtr
@@ -172,22 +180,16 @@ public:
             // create the local object only if the (handle to the) remote object is valid
             if(nullptr != access._handle)
             {
-                std::deque<std::unique_ptr<IDestructor>> destructors;
+                std::deque<std::unique_ptr<c::arya::IDestructor>> destructors;
                 // shared ownership: release reference to remote object when local object is destroyed
-                destructors.push_back(std::make_unique<access::Destructor<fep3_plugin_c_arya_SDestructionManager>>(reference_manager_access));
+                destructors.push_back(std::make_unique<access::arya::Destructor<fep3_plugin_c_arya_SDestructionManager>>(reference_manager_access));
                 shared_ptr_to_object = std::make_shared<access_object_type>
                     (access
                     , std::move(destructors)
                     );
             }
-            if(invoker(wrapped_this, std::move(shared_ptr_to_object), std::forward<argument_types>(arguments)...))
-            {
-                return fep3_plugin_c_interface_error_none;
-            }
-            else
-            {
-                return fep3_plugin_c_interface_error_invalid_result_pointer;
-            }
+            invoker(wrapped_this, std::move(shared_ptr_to_object), std::forward<argument_types>(arguments)...);
+            return fep3_plugin_c_interface_error_none;
         }
         else
         {
@@ -205,11 +207,11 @@ public:
      * @tparam invoker_type The type of the invoker
      * @tparam access_type The type of the C access structure of the remote object
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p invoker
-     * @param handle The handle of the object to be passed to the \p invoker
-     * @param invoker Callable that invokes method on the created (local) object to transfer the shared pointer to
-     * @param destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
-     * @param access C access structure reference
-     * @param arguments The arguments to be passed to the \p function
+     * @param[in] handle The handle of the object to be passed to the \p invoker
+     * @param[in] invoker Callable that invokes method on the created (local) object to transfer the shared pointer to
+     * @param[in] destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
+     * @param[in] access C access structure reference
+     * @param[in] arguments The arguments to be passed to the \p function
      * @throw Throws if the \p invoker throws
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
@@ -240,23 +242,17 @@ public:
                     shared_ptr_to_object = *pointer_to_shared_ptr_to_object;
 
                     // reference to the local object must be released when the remote object is destroyed, so we add a (new) shared reference to the reference manager
-                    auto destruction_manager = new DestructionManager;
+                    auto destruction_manager = new c::arya::DestructionManager;
                     destruction_manager->addDestructor
-                        (std::make_unique<OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_shared_ptr_to_object)>::type>::type>>
+                        (std::make_unique<c::arya::OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_shared_ptr_to_object)>::type>::type>>
                         (pointer_to_shared_ptr_to_object));
                     *destruction_manager_access_result = fep3_plugin_c_arya_SDestructionManager
-                        {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(destruction_manager))
-                        , wrapper::Destructor::destroy
+                        {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(destruction_manager))
+                        , wrapper::arya::Destructor::destroy
                         };
                 }
-                if(invoker(wrapped_this, std::move(shared_ptr_to_object), std::forward<argument_types>(arguments)...))
-                {
-                    return fep3_plugin_c_interface_error_none;
-                }
-                else
-                {
-                    return fep3_plugin_c_interface_error_invalid_result_pointer;
-                }
+                invoker(wrapped_this, std::move(shared_ptr_to_object), std::forward<argument_types>(arguments)...);
+                return fep3_plugin_c_interface_error_none;
             }
             else
             {
@@ -318,9 +314,9 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam method_type The type of the method to be called
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -363,11 +359,11 @@ protected:
      * @tparam converter_type The type of the result converter
      * @tparam result_type The type of the converted result of the method call
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param converter The result converter
-     * @param result Pointer to the result
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] converter The result converter
+     * @param[in] result Pointer to the result
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -418,26 +414,31 @@ protected:
      * @tparam method_type The type of the method to be called
      * @tparam callback_type The type of the callback to be called to return the result
      * @tparam converter_type The type of the result converter
-     * @tparam result_type The type of the converted result of the method call
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param callback The callback to be called to return the result
-     * @param destination Void pointer to the destination to be passed to the callback
-     * @param converter The result converter
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] result_callback The callback to be called to return the result
+     * @param[in] result_destination Void pointer to the destination to be passed to the @p result_callback
+     * @param[in] converter The result converter
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
      * @retval fep3_plugin_c_interface_error_invalid_result_pointer The \p result is null
      * @retval fep3_plugin_c_interface_error_exception_caught An exception has been thrown from within \p method
      */
-    template<typename handle_type, typename method_type, typename callback_type, typename converter_type, typename... argument_types>
+    template
+        <typename handle_type
+        , typename method_type
+        , typename callback_type
+        , typename converter_type
+        , typename... argument_types
+        >
     static fep3_plugin_c_InterfaceError callWithResultCallback
         (handle_type&& handle
         , method_type&& method
-        , callback_type&& callback
-        , void* destination
+        , callback_type&& result_callback
+        , void* result_destination
         , converter_type&& converter
         , argument_types&&... arguments
         ) noexcept
@@ -447,7 +448,7 @@ protected:
             if(const auto& pointer_to_object = reinterpret_cast<interface_type*>(handle))
             {
                 const auto& result = (pointer_to_object->*method)(std::forward<argument_types>(arguments)...);
-                callback(destination, converter(result));
+                result_callback(result_destination, converter(result));
                 return fep3_plugin_c_interface_error_none;
             }
             else
@@ -474,12 +475,12 @@ protected:
      * @tparam converter_type The type of the result converter
      * @tparam result_type The type of the converted result of the method call
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param callback The callback to be called to return the result
-     * @param destination Void pointer to the destination to be passed to the callback
-     * @param converter The result converter
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] callback The callback to be called to return the result
+     * @param[in] destination Void pointer to the destination to be passed to the callback
+     * @param[in] converter The result converter
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -530,14 +531,14 @@ protected:
      * @tparam access_type The type of the C access structure to be filled
      * @tparam access_creator_type The type of the access creator to be used to create the C access structure
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
-     * @param access_result The result C access structure providing access to the object
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
+     * @param[in] access_result The result C access structure providing access to the object
      *         , as pointed to by the return value of the \p method
-     * @param access_creator The callable that creates the C access structure for the object
+     * @param[in] access_creator The callable that creates the C access structure for the object
      *                        , as pointed to by the return value of the \p method
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -571,13 +572,13 @@ protected:
                     && (nullptr != access_result)
                     )
                 {
-                    auto destruction_manager = new DestructionManager;
+                    auto destruction_manager = new c::arya::DestructionManager;
                     // local object must be destroyed when the remote object is destroyed, so we transfer the ownership to the destruction manager
-                    destruction_manager->addDestructor(std::make_unique<OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_object)>::type>::type>>
+                    destruction_manager->addDestructor(std::make_unique<c::arya::OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(pointer_to_object)>::type>::type>>
                         (pointer_to_object));
                     *destruction_manager_access_result = fep3_plugin_c_arya_SDestructionManager
-                            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(destruction_manager))
-                            , Destructor::destroy
+                            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(destruction_manager))
+                            , arya::Destructor::destroy
                             };
                     *access_result = access_creator(pointer_to_object);
                     return fep3_plugin_c_interface_error_none;
@@ -610,14 +611,14 @@ protected:
      * @tparam access_type The type of the C access structure to be filled
      * @tparam access_creator_type The type of the access creator to be used to create the C access structure
      * @tparam argument_types Parameter pack holding all parameters to be passed to the \p method
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
-     * @param access_result The result C access structure providing access to the object
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
+     * @param[in] access_result The result C access structure providing access to the object
      *         , as pointed to by the return value of the \p method
-     * @param access_creator The callable that creates the C access structure for the object
+     * @param[in] access_creator The callable that creates the C access structure for the object
      *                        , as pointed to by the return value of the \p method
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -653,13 +654,13 @@ protected:
                     // transfer shared ownership (std::shared_ptr), so create a new (strong) reference to the local object that will be released when remote object is destroyed
                     auto local_shared_ptr_to_object
                         = new std::shared_ptr<typename std::remove_reference<decltype(shared_ptr_to_object)>::type::element_type>(shared_ptr_to_object);
-                    auto destruction_manager = new DestructionManager;
+                    auto destruction_manager = new c::arya::DestructionManager;
                     // local object must be destroyed when the remote object is destroyed, so we transfer the ownership to the destruction manager
-                    destruction_manager->addDestructor(std::make_unique<OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(local_shared_ptr_to_object)>::type>::type>>
+                    destruction_manager->addDestructor(std::make_unique<c::arya::OtherDestructor<typename std::remove_pointer<typename std::remove_reference<decltype(local_shared_ptr_to_object)>::type>::type>>
                         (local_shared_ptr_to_object));
                     *destruction_manager_access_result = fep3_plugin_c_arya_SDestructionManager
-                            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<DestructionManager*>(destruction_manager))
-                            , Destructor::destroy
+                            {reinterpret_cast<fep3_plugin_c_arya_HDestructionManager>(static_cast<c::arya::DestructionManager*>(destruction_manager))
+                            , arya::Destructor::destroy
                             };
                     *access_result = access_creator(shared_ptr_to_object.get());
                     return fep3_plugin_c_interface_error_none;
@@ -691,36 +692,37 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam converter_type The type of the converter
      * @tparam method_type The type of the method to be called
-     * @tparam result_type The type of the result of the \p method
+     * @tparam callback_type The type of the callback to be called to return the result
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param method Pointer to member method to be called
-     * @param converter The result converter
-     * @param result Pointer to set the result value
-     * @param destruction_manager_access Access structure to the manager destroying the remote object when the local object is destroyed
-     * @param access The C access structure for the remote object
-     * @param arguments The arguments to be passed to the \p method
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] method Pointer to member method to be called
+     * @param[in] converter The result converter
+     * @param[in] result_callback The callback to be called to return the result
+     * @param[in] result_destination Void pointer to the destination to be passed to the @p result_callback
+     * @param[in] destruction_manager_access Access structure to the manager destroying the remote object when the local object is destroyed
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments The arguments to be passed to the \p method
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
-     * @retval fep3_plugin_c_interface_error_invalid_result_pointer The \p result is null
      * @retval fep3_plugin_c_interface_error_exception_caught An exception has been thrown from within \p method
      */
     template
         <typename access_object_type
         , typename handle_type
         , typename method_type
+        , typename callback_type
         , typename converter_type
-        , typename result_type
         , typename access_type
         , typename... argument_types
         >
-    static fep3_plugin_c_InterfaceError transferUniquePtrWithResultParameter
+    static fep3_plugin_c_InterfaceError transferUniquePtrWithResultCallback
         (handle_type&& handle
         , method_type&& method
+        , callback_type&& result_callback
+        , void* result_destination
         , converter_type&& converter
-        , result_type* result
         , const fep3_plugin_c_arya_SDestructionManager& destruction_manager_access
         , const access_type& access
         , argument_types&&... arguments
@@ -734,23 +736,20 @@ protected:
                 // create the local object only if the (handle to the) remote object is valid
                 if(nullptr != access._handle)
                 {
-                    std::deque<std::unique_ptr<IDestructor>> destructors;
+                    std::deque<std::unique_ptr<c::arya::IDestructor>> destructors;
                     // unique pointer: ownership transfer -> destroy remote object upon destruction of local object
-                    destructors.push_back(std::make_unique<access::Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
+                    destructors.push_back(std::make_unique<access::arya::Destructor<fep3_plugin_c_arya_SDestructionManager>>(destruction_manager_access));
                     unique_ptr_to_object = std::make_unique<access_object_type>
                         (access
                         , std::move(destructors)
                         );
                 }
-                if(nullptr != result)
-                {
-                    *result = converter((wrapped_this->*method)(std::move(unique_ptr_to_object), std::forward<argument_types>(arguments)...));
-                    return fep3_plugin_c_interface_error_none;
-                }
-                else
-                {
-                    return fep3_plugin_c_interface_error_invalid_result_pointer;
-                }
+
+                result_callback
+                    (result_destination
+                    , converter((wrapped_this->*method)(std::move(unique_ptr_to_object), std::forward<argument_types>(arguments)...))
+                    );
+                return fep3_plugin_c_interface_error_none;
             }
             else
             {
@@ -775,15 +774,14 @@ protected:
      * @tparam bound_method_type The type of the bound method to be called
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method The bound method to be called
-     * @param reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
-     * @param access The C access structure for the remote object
-     * @param arguments Arguments of the methods to forward
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method The bound method to be called
+     * @param[in] reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments Arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
-     * @retval fep3_plugin_c_interface_error_invalid_result_pointer The \p result is null
      * @retval fep3_plugin_c_interface_error_exception_caught An exception has been thrown from within \p method
      */
     template
@@ -814,7 +812,6 @@ protected:
                         , std::move(shared_ptr_to_object)
                         , std::forward<argument_types>(arguments)...
                         );
-                    return true;
                 };
             return detail::Helper<interface_type>::template transferSharedPtr<access_object_type>
                 (handle
@@ -841,36 +838,37 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam converter_type The type of the converter
      * @tparam bound method_type The type of the bound method to be called
-     * @tparam result_type The type of the result of the \p method
+     * @tparam callback_type The type of the callback to be called to return the result
      * @tparam access_type The type of the C access structure to be filled
-     * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method The bound method to be called
-     * @param converter The result converter
-     * @param result Pointer to set the result value
-     * @param reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
-     * @param access The C access structure for the remote object
-     * @param arguments Arguments of the methods to forward
+     * @tparam argument_types Parameter pack holding all parameters to be passed to @p function
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method The bound method to be called
+     * @param[in] result_callback The callback to be called to return the result
+     * @param[in] result_destination Void pointer to the destination to be passed to the @p result_callback
+     * @param[in] converter The result converter
+     * @param[in] reference_manager_access Access structure to the manager releasing a reference to the remote object when the local object is destroyed
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments Arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
-     * @retval fep3_plugin_c_interface_error_invalid_result_pointer The \p result is null
      * @retval fep3_plugin_c_interface_error_exception_caught An exception has been thrown from within \p method
      */
     template
         <typename access_object_type
         , typename handle_type
         , typename bound_method_type
+        , typename callback_type
         , typename converter_type
-        , typename result_type
         , typename access_type
         , typename... argument_types
         >
-    static fep3_plugin_c_InterfaceError transferSharedPtrWithResultParameter
+    static fep3_plugin_c_InterfaceError transferSharedPtrWithResultCallback
         (handle_type&& handle
         , bound_method_type&& bound_method
+        , callback_type&& result_callback
+        , void* result_destination
         , converter_type&& converter
-        , result_type* result
         , const fep3_plugin_c_arya_SDestructionManager& reference_manager_access
         , const access_type& access
         , argument_types&&... arguments
@@ -878,25 +876,17 @@ protected:
     {
         try
         {
-            const auto& invoker = [result, bound_method, converter]
+            const auto& invoker = [result_callback, result_destination, bound_method, converter]
                 (interface_type* wrapped_this
                 , const std::shared_ptr<access_object_type>& shared_ptr_to_object
                 , argument_types&&... arguments
                 )
                 {
-                    if(nullptr != result)
-                    {
-                        *result = converter(bound_method
-                            (wrapped_this
-                            , std::move(shared_ptr_to_object)
-                            , std::forward<argument_types>(arguments)...
-                            ));
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    result_callback(result_destination, converter(bound_method
+                        (wrapped_this
+                        , std::move(shared_ptr_to_object)
+                        , std::forward<argument_types>(arguments)...
+                        )));
                 };
             return detail::Helper<interface_type>::template transferSharedPtr<access_object_type>
                 (handle
@@ -924,11 +914,11 @@ protected:
      * @tparam bound_method_type The type of the bound method to be called
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method The bound method to be called
-     * @param destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
-     * @param access The C access structure for the remote object
-     * @param arguments Arguments of the methods to forward
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method The bound method to be called
+     * @param[in] destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments Arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -963,7 +953,6 @@ protected:
                         , std::move(shared_ptr_to_object)
                         , std::forward<argument_types>(arguments)...
                         );
-                    return true;
                 };
             return detail::Helper<interface_type>::template transferWeakPtr<access_object_type>
                 (handle
@@ -990,16 +979,17 @@ protected:
      * @tparam handle_type The type of the handle to be passed to the \p function
      * @tparam converter_type The type of the converter
      * @tparam bound method_type The type of the bound method to be called
-     * @tparam result_type The type of the result of the \p method
+     * @tparam callback_type The type of the callback to be called to return the result
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method The bound method to be called
-     * @param converter The result converter
-     * @param result Pointer to set the result value
-     * @param destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
-     * @param access The C access structure for the remote object
-     * @param arguments Arguments of the methods to forward
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method The bound method to be called
+     * @param[in] result_callback The callback to be called to return the result
+     * @param[in] result_destination Void pointer to the destination to be passed to the @p result_callback
+     * @param[in] converter The result converter
+     * @param[in] destruction_manager_access_result Pointer to the result of a destruction manager access for the remote object
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments Arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -1010,16 +1000,17 @@ protected:
         <typename access_object_type
         , typename handle_type
         , typename bound_method_type
+        , typename callback_type
         , typename converter_type
-        , typename result_type
         , typename access_type
         , typename... argument_types
         >
-    static fep3_plugin_c_InterfaceError transferWeakPtrWithResultParameter
+    static fep3_plugin_c_InterfaceError transferWeakPtrWithResultCallback
         (handle_type&& handle
         , bound_method_type&& bound_method
+        , callback_type&& result_callback
+        , void* result_destination
         , converter_type&& converter
-        , result_type* result
         , fep3_plugin_c_arya_SDestructionManager* destruction_manager_access_result
         , const access_type& access
         , argument_types&&... arguments
@@ -1027,25 +1018,17 @@ protected:
     {
         try
         {
-            const auto& invoker = [result, bound_method, converter]
+            const auto& invoker = [result_callback, result_destination, bound_method, converter]
                 (interface_type* wrapped_this
                 , const std::shared_ptr<access_object_type>& shared_ptr_to_object
                 , argument_types&&... arguments
                 )
                 {
-                    if(nullptr != result)
-                    {
-                        *result = converter(bound_method
-                            (wrapped_this
-                            , std::move(shared_ptr_to_object)
-                            , std::forward<argument_types>(arguments)...
-                            ));
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    result_callback(result_destination, converter(bound_method
+                        (wrapped_this
+                        , std::move(shared_ptr_to_object)
+                        , std::forward<argument_types>(arguments)...
+                        )));
                 };
             return detail::Helper<interface_type>::template transferWeakPtr<access_object_type>
                 (handle
@@ -1076,10 +1059,10 @@ protected:
      * @tparam method_type The type of the method to be called
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method Pointer to the bound member method to be called
-     * @param access The C access structure for the remote object
-     * @param arguments Arguments of the methods to forward
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method Pointer to the bound member method to be called
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments Arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -1139,12 +1122,12 @@ protected:
      * @tparam result_type The type of the result of the \p method
      * @tparam access_type The type of the C access structure to be filled
      * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
-     * @param handle The handle of the object to call the method on
-     * @param bound_method Pointer to the bound member method to be called
-     * @param converter The result converter
-     * @param result Pointer to set the result value
-     * @param access The C access structure for the remote object
-     * @param arguments arguments of the methods to forward
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method Pointer to the bound member method to be called
+     * @param[in] converter The result converter
+     * @param[in] result Pointer to set the result value
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments arguments of the methods to forward
      * @return Interface error code
      * @retval fep3_plugin_c_interface_error_none No error occurred
      * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
@@ -1187,6 +1170,79 @@ protected:
                 {
                     return fep3_plugin_c_interface_error_invalid_result_pointer;
                 }
+            }
+            else
+            {
+                return fep3_plugin_c_interface_error_invalid_handle;
+            }
+        }
+        catch(...)
+        {
+            return fep3_plugin_c_interface_error_exception_caught;
+        }
+    }
+
+    /**
+     * Creates an object of type \p access_object_type by using the passed C \p access structure
+     * to the remote object and then calls the \p method on the object as referenced by \p handle and passes
+     * the created access object to it.
+     * This method can be used to transfer a function call on a C interface to the corresponding method
+     * of the wrapper object which takes a reference to an object as parameter and returns non-void.
+     * @note The access object is only valid for the time of the method call, thus the callee must not
+     *       store a reference to it.
+     *
+     * @tparam access_object_type The type of the access object to be created
+     * @tparam handle_type The type of the handle to be passed to the \p function
+     * @tparam converter_type The type of the converter
+     * @tparam method_type The type of the method to be called
+     * @tparam callback_type The type of the callback to be called to return the result
+     * @tparam access_type The type of the C access structure to be filled
+     * @tparam argument_types Parameter pack holding all parameters to be passed to \p function
+     * @param[in] handle The handle of the object to call the method on
+     * @param[in] bound_method Pointer to the bound member method to be called
+     * @param[in] result_callback The callback to be called to return the result
+     * @param[in] result_destination Void pointer to the destination to be passed to the @p result_callback
+     * @param[in] converter The result converter
+     * @param[in] access The C access structure for the remote object
+     * @param[in] arguments arguments of the methods to forward
+     * @return Interface error code
+     * @retval fep3_plugin_c_interface_error_none No error occurred
+     * @retval fep3_plugin_c_interface_error_invalid_handle The \p handle is null
+     * @retval fep3_plugin_c_interface_error_exception_caught An exception has been thrown from within \p method
+     */
+    template
+        <typename access_object_type
+        , typename handle_type
+        , typename bound_method_type
+        , typename callback_type
+        , typename converter_type
+        , typename access_type
+        , typename... argument_types
+        >
+    static fep3_plugin_c_InterfaceError passReferenceWithResultCallback
+        (handle_type&& handle
+        , bound_method_type&& bound_method
+        , callback_type&& result_callback
+        , void* result_destination
+        , converter_type&& converter
+        , const access_type& access
+        , argument_types&&... arguments
+        ) noexcept
+    {
+        try
+        {
+            if(const auto& wrapped_this = reinterpret_cast<interface_type*>(handle))
+            {
+                // note: no ownership transfer -> access object lives only for the time of the method call
+                access_object_type access_object
+                    (access
+                    , {}
+                    );
+                result_callback
+                    (result_destination
+                    , converter(bound_method(wrapped_this, access_object, std::forward<argument_types>(arguments)...))
+                    );
+                return fep3_plugin_c_interface_error_none;
             }
             else
             {

@@ -1,12 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -24,7 +34,7 @@ class DataSample
     : public IDataSample
 {
 public:
-    ~DataSample() override = default;
+    ~DataSample() = default;
 
     MOCK_CONST_METHOD0(getTime, Timestamp());
     MOCK_CONST_METHOD0(getSize, size_t());
@@ -102,6 +112,45 @@ MATCHER_P(DataSampleSmartPtrMatcher, other, "Equality matcher for smart pointer 
     const auto& arg_data_sample = *arg.get();
     const auto& other_data_sample = *other.get();
     return areEqual(arg_data_sample, other_data_sample);
+}
+
+bool haveEqualValue(const ::fep3::IDataSample& lhs, const ::fep3::IDataSample& rhs)
+{
+    FixedSizeRawMemory data_sample_raw_memory(lhs.getSize());
+    auto lhs_read_bytes = lhs.read(data_sample_raw_memory);
+    FixedSizeRawMemory other_data_sample_raw_memory(rhs.getSize());
+    auto rhs_read_bytes = rhs.read(other_data_sample_raw_memory);
+    return
+        lhs.getSize() == rhs.getSize()
+        && lhs_read_bytes == rhs_read_bytes
+        && data_sample_raw_memory.value() == other_data_sample_raw_memory.value()
+        ;
+}
+MATCHER_P(DataSampleSmartPtrValueMatcher, other, "Value equality matcher for smart pointer to IDataSample")
+{
+    const auto& arg_data_sample = *arg.get();
+    const auto& other_data_sample = *other.get();
+    return haveEqualValue(arg_data_sample, other_data_sample);
+}
+
+bool haveEqualTimestampAndValue(const ::fep3::IDataSample& lhs, const ::fep3::IDataSample& rhs)
+{
+    FixedSizeRawMemory data_sample_raw_memory(lhs.getSize());
+    auto lhs_read_bytes = lhs.read(data_sample_raw_memory);
+    FixedSizeRawMemory other_data_sample_raw_memory(rhs.getSize());
+    auto rhs_read_bytes = rhs.read(other_data_sample_raw_memory);
+    return
+        lhs.getTime() == rhs.getTime()
+        && lhs.getSize() == rhs.getSize()
+        && lhs_read_bytes == rhs_read_bytes
+        && data_sample_raw_memory.value() == other_data_sample_raw_memory.value()
+        ;
+}
+MATCHER_P(DataSampleSmartPtrTimestampAndValueMatcher, other, "Timestamp and value equality matcher for smart pointer to IDataSample")
+{
+    const auto& arg_data_sample = *arg.get();
+    const auto& other_data_sample = *other.get();
+    return haveEqualTimestampAndValue(arg_data_sample, other_data_sample);
 }
 
 

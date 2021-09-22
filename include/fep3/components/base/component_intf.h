@@ -1,14 +1,23 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
-#pragma once 
+
+#pragma once
 
 #include <memory>
 #include <string>
@@ -37,79 +46,79 @@ namespace arya
     class IComponents;
 
     /**
-        * @brief base interface of a component as part of a @ref IComponent registry
-        *
-        */
+     * @brief Base interface of a component as part of a @ref IComponent registry
+     *
+     */
     class FEP3_PARTICIPANT_EXPORT IComponent
     {
     public:
         /// DTOR
         virtual ~IComponent() = default;
         /**
-         * @brief Create a Component object
+         * @brief Creates internals of the component
          *
-         * @param components Weak pointer to the components
+         * @param[in] components Weak pointer to the components
          * @return fep3::Result
          */
-        virtual fep3::Result createComponent(const std::weak_ptr<const IComponents>& components) = 0;
+        virtual fep3::Result createComponent(const std::weak_ptr<const arya::IComponents>& components) = 0;
         /**
-            * @brief will be called to destroy the component (this will NOT result in a destruction, it is the step before)
-            *
-            * @return fep3::Result
-            */
+         * @brief Destroys internals of the component.
+         * @note This does not destroy the component.
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result destroyComponent() = 0;
         /**
-            * @brief Initializing a component
-            *
-            * @return fep3::Result
-            */
+         * @brief Initializes a component
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result initialize() = 0;
         /**
-         * @brief Get Ready for running state
-         * make everything ready for the running state, start will be called afterwards
-         *
+         * @brief Gets the component ready for running state
+         * 
          * @return fep3::Result
          */
         virtual fep3::Result tense() = 0;
         /**
-         * @brief fall back into simpla intialized state
-         * relax is the antonym of tense
+         * @brief Makes the component falling back to a simple intialized state
+         * Relax is the antonym of @ref tense.
          *
          * @return fep3::Result
          */
         virtual fep3::Result relax() = 0;
         /**
-            * @brief start the component
-            *
-            * @return fep3::Result
-            */
+         * @brief Starts the component
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result start() = 0;
         /**
-            * @brief stops the component
-            *
-            * @return fep3::Result
-            */
+         * @brief Stops the component
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result stop() = 0;
         /**
-            * @brief stops the component
-            *
-            * @return fep3::Result
-            */
+         * @brief Pauses the component
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result pause() = 0;
         /**
-            * @brief deinitialize the component
-            *
-            * @return fep3::Result
-            */
+         * @brief Deinitializes the component
+         *
+         * @return fep3::Result
+         */
         virtual fep3::Result deinitialize() = 0;
 
         /**
-            * @brief Get the interface requested by the \p iid and return a void pointer to it
-            *
-            * @param iid
-            * @return Pointer to the interface of the this component if this component has the passed @p idd
-            *         , nullptr otherwise
-            */
+         * @brief Get the interface requested by the \p iid and return a void pointer to it
+         *
+         * @param[in] iid
+         * @return Pointer to the interface of the this component if this component has the passed @p idd
+         *         , nullptr otherwise
+         */
         virtual void* getInterface(const std::string& iid) = 0;
     };
 

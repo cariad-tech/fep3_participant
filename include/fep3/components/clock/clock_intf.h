@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -26,7 +35,7 @@ namespace arya
 * @brief Interface of a clock
 *
 */
-class FEP3_PARTICIPANT_EXPORT IClock
+class IClock
 {
 public:
     /**
@@ -35,58 +44,55 @@ public:
      */
     class IEventSink
     {
+    protected:
+        /// DTOR
+        ~IEventSink() = default;
+
     public:
         /**
-        * @brief DTOR
-        *
-        */
-        virtual ~IEventSink() = default;
+         * @brief This event is emitted before the time is updated.
+         * The @ref IClock::getTime value is still @p old_time.
+         * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
+         *
+         * @param[in] old_time The time before updating
+         * @param[in] new_time The future time after updating
+         */
+        virtual void timeUpdateBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;
 
-        public:
-            /**
-             * @brief This event is emitted before the time is updated.
-             * The @ref IClock::getTime value is still @p old_time.
-             * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
-             *
-             * @param old_time The time before updating
-             * @param new_time The future time after updating
-             */
-            virtual void timeUpdateBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;
+        /**
+         * @brief This event is emitted while the time is beeing updated.
+         * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
+         *
+         * @param[in] new_time The future time after updating
+         */
+        virtual void timeUpdating(arya::Timestamp new_time) = 0;
 
-            /**
-             * @brief This event is emitted while the time is beeing updated.
-             * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
-             *
-             * @param new_time The future time after updating
-             */
-            virtual void timeUpdating(arya::Timestamp new_time) = 0;
+        /**
+         * @brief This event is emitted after the time was updated.
+         * The @ref IClock::getTime value was set to the @p new_time.
+         * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
+         *
+         * @param[in] new_time The current time after the update
+         */
+        virtual void timeUpdateEnd(arya::Timestamp new_time) = 0;
 
-            /**
-             * @brief This event is emitted after the time was updated.
-             * The @ref IClock::getTime value was set to the @p new_time.
-             * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
-             *
-             * @param new_time The current time after the update
-             */
-            virtual void timeUpdateEnd(arya::Timestamp new_time) = 0;
+        /**
+         * @brief This event is emitted before the time will be reset.
+         * It is used to inform about time jumps to the future or the past!
+         * The IClock::getTime value is still @p old_time.
+         *
+         * @param[in] old_time The time before reseting
+         * @param[in] new_time The future time after resetting
+         */
+        virtual void timeResetBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;
 
-            /**
-             * @brief This event is emitted before the time will be reset.
-             * It is used to inform about time jumps to the future or the past!
-             * The IClock::getTime value is still @p old_time.
-             *
-             * @param old_time The time before reseting
-             * @param new_time The future time after resetting
-             */
-            virtual void timeResetBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;
-
-            /**
-             * @brief This event is emitted after the time was reset.
-             * The @ref IClock::getTime value was already set to @p new_time.
-             *
-             * @param new_time The current time after the reset
-             */
-            virtual void timeResetEnd(arya::Timestamp new_time) = 0;
+        /**
+         * @brief This event is emitted after the time was reset.
+         * The @ref IClock::getTime value was already set to @p new_time.
+         *
+         * @param[in] new_time The current time after the reset
+         */
+        virtual void timeResetEnd(arya::Timestamp new_time) = 0;
     };
 
     /**
@@ -107,11 +113,8 @@ public:
     };
 
 protected:
-    /**
-     * @brief DTOR
-     *
-     */
-    virtual ~IClock() = default;
+    /// DTOR
+    ~IClock() = default;
 
 public:
     /**
@@ -142,8 +145,10 @@ public:
      * @brief Reset the clock.
      * Depending on the implementation the offset will be reset.
      * @remark The @ref IEventSink::timeResetBegin and the @ref IEventSink::timeResetEnd will be emitted
+     *
+     * @param[in] new_time The new time of the clock
      */
-    virtual void reset() = 0;
+    virtual void reset(fep3::arya::Timestamp new_time) = 0;
 
     /**
      * @brief Start the clock.
@@ -151,7 +156,7 @@ public:
      * @remark If @p event_sink is a @ref IClock::ClockType::discrete also the events
      * @ref IEventSink::timeUpdateBegin, @ref IEventSink::timeUpdating, @ref IEventSink::timeUpdateEnd will be emitted to @p event_sink.
      *
-     * @param event_sink The event sink to emit time reset and time updating events to.
+     * @param[in] event_sink The event sink to emit time reset and time updating events to.
      */
     virtual void start(const std::weak_ptr<IEventSink>& event_sink) = 0;
 

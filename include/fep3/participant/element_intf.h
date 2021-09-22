@@ -1,14 +1,20 @@
 /**
- * Declaration of class ElementBase
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
 #pragma once
@@ -34,43 +40,40 @@ class IElement
 {
 
 public:
-    /**
-     * Default DTOR
-     *
-     */
+    /// DTOR
     virtual ~IElement() = default;
 
 public:
     /**
-     * return the typename of the element.
-     * the typename represents the type the element implementing.
+     * Returns the typename of the element.
+     * The typename represents the type the element is implementing.
      * @remark This is not the instance name of the element!
-     *         the instance name is usually the same as the participant this element is loaded in.
+     *         The instance name is usually the same as the name of the participant this element is loaded in.
      *
-     * @return std::string the typename
+     * @return std::string The typename
      */
     virtual std::string getTypename() = 0;
     /**
-     * return the version of the element.
-     * the version of the element implementation
-     * @remark This is the instance version of the element type 
-     *         and will be used only for information at the moment! 
+     * Returns the version of the element.
+     * The version of the element implementation.
+     * @remark This is the instance version of the element type
+     *         and will be used only for information at the moment!
      *         There is no further functionality or checks on that!
      *
-     * @return std::string the version as string (this is vendor dedendent, and only for information!)
+     * @return std::string The version as string (this is vendor dedendent, and only for information!)
      */
     virtual std::string getVersion() = 0;
     /**
-     * internal callback to load the element
+     * Loads internals of the element
      *
-     * @param[in] components reference to the components. this pointer is valid until unload was called.
+     * @param[in] components Reference to the components. This pointer is valid until @ref unloadElement was called.
      *
      * @return Result error code
      * @retval NO_ERROR if succeded
      */
-    virtual Result loadElement(const IComponents& components) = 0;
+    virtual Result loadElement(const arya::IComponents& components) = 0;
     /**
-     * Initializes the element
+     * Unloads internals of the element
      *
      * @return Result error code
      * @retval NO_ERROR if succeded
@@ -88,7 +91,7 @@ public:
      *
      */
     virtual void deinitialize() = 0;
-   
+
     /**
      * Runs the element
      *

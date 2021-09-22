@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include "cpp_plugin.h"
 #include <fep3/fep3_participant_version.h>
 #include <a_util/filesystem.h>
@@ -132,7 +140,7 @@ namespace arya
             std::ostringstream error;
             error << "The shared library '" << filepath << "' does not provide the required version of the fep3_getFactory method."
                                 << "This participant uses version " << FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR
-                                << "." << FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR 
+                                << "." << FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR
                                 << " of the fep_participant library, the plugin was built with version " << plugin_version << ".";
             throw std::runtime_error(error.str());
         }

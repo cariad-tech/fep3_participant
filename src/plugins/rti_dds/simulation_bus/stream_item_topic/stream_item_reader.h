@@ -1,83 +1,56 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
+#include <fep3/components/simulation_bus/simulation_data_access.h>
 #include <fep3/components/logging/logging_service_intf.h>
 #include <plugins/rti_dds/simulation_bus/rti_conext_dds_include.h>
 #include <plugins/rti_dds/simulation_bus/stream_item_topic/stream_item_topic.h>
+#include <plugins/rti_dds/simulation_bus/reader_item_queue.h>
 
-std::shared_ptr<fep3::arya::IStreamType> createStreamType(const fep3::ddstypes::StreamType& dds_streamtype, const dds::sub::SampleInfo& sample_info);
-std::shared_ptr<fep3::arya::IDataSample> createSample(const fep3::ddstypes::Sample& dds_sample, const dds::sub::SampleInfo& sample_info);
-
-class StreamItemDataReader 
+class StreamItemDataReader
     : public fep3::arya::ISimulationBus::IDataReader
-    , public dds::sub::DataReaderListener<fep3::ddstypes::Sample>
 {
-private:
-    std::shared_ptr<StreamItemTopic> _topic;
-    std::unique_ptr<dds::sub::DataReader<fep3::ddstypes::Sample>> _sample_reader;
-    std::unique_ptr<dds::sub::DataReader<fep3::ddstypes::StreamType>> _streamtype_reader;
-    std::unique_ptr<dds::sub::Subscriber> _subscriber;
-    dds::core::cond::WaitSet _waitset;
-    dds::core::cond::GuardCondition _gurad_condition;
-    std::atomic<bool> _running = { true };
-
 public:
     StreamItemDataReader(const std::shared_ptr<StreamItemTopic> & topic
                         , size_t queue_capacity
-                        , const std::shared_ptr<dds::core::QosProvider> & qos_provider);
-    ~StreamItemDataReader();
+                        , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& data_access_collection
+                        , const std::shared_ptr<fep3::ILogger>& logger);
+    ~StreamItemDataReader() override;
 
     size_t size() const override;
     size_t capacity() const override;
     bool pop(fep3::ISimulationBus::IDataReceiver& receiver) override;
 
-    void receive(fep3::arya::ISimulationBus::IDataReceiver& receiver) override;
-    void stop() override;
+    void reset(const std::shared_ptr<fep3::ISimulationBus::IDataReceiver>& receiver = {}) override;
 
     fep3::Optional<fep3::Timestamp> getFrontTime() const override;
 
-
 protected:
-    void logError(const fep3::Result& res) const;
+    const std::shared_ptr<fep3::ILogger> _logger;
+private:
+    std::shared_ptr<StreamItemTopic> _topic;
+    const std::shared_ptr<ReaderItemQueue> _item_queue;
+    // the reader does not take (permanent) ownership of the data access collection -> weak_ptr
+    std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>> _data_access_collection;
+    fep3::Optional<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>::const_iterator> _data_access_iterator;
 
-protected:
-    std::shared_ptr<fep3::ILoggingService::ILogger> _logger;
-
-protected:
-    void on_data_available(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader);
-
-    void on_requested_deadline_missed(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::RequestedDeadlineMissedStatus& status);
-
-    void on_requested_incompatible_qos(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::RequestedIncompatibleQosStatus& status);
-
-    void on_sample_rejected(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::SampleRejectedStatus& status);
-
-    void on_liveliness_changed(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::LivelinessChangedStatus& status);
-
-    void on_subscription_matched(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::SubscriptionMatchedStatus& status);
-
-    void on_sample_lost(
-        dds::sub::DataReader<fep3::ddstypes::Sample>& reader,
-        const dds::core::status::SampleLostStatus& status);
 };

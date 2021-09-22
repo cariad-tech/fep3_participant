@@ -1,19 +1,29 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
 #include <gmock/gmock.h>
 
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 
 namespace fep3
 {
@@ -28,8 +38,12 @@ public:
     MOCK_CONST_METHOD0(size, size_t());
     MOCK_CONST_METHOD0(capacity, size_t());
     MOCK_METHOD1(pop, bool(ISimulationBus::IDataReceiver&));
-    MOCK_METHOD1(receive, void(ISimulationBus::IDataReceiver&));
-    MOCK_METHOD0(stop, void());
+    // mocking a method with default parameter requires a helper
+    void reset(const std::shared_ptr<ISimulationBus::IDataReceiver>& receiver = {}) override
+    {
+        reset_(receiver);
+    }
+    MOCK_METHOD1(reset_, void(const std::shared_ptr<ISimulationBus::IDataReceiver>&));
     MOCK_CONST_METHOD0(getFrontTime, Optional<Timestamp>());
 };
 
@@ -59,14 +73,14 @@ public:
     MOCK_METHOD0(transmit, Result());
 };
 
-template<template<typename...> class component_base_type = fep3::ComponentBase>
+template<template<typename...> class component_base_type = fep3::base::Component>
 class SimulationBus
     : public component_base_type<ISimulationBus>
 {
 public:
     MOCK_CONST_METHOD1(isSupported, bool(const IStreamType&));
     // with current version of gMock in the aev_testing package, move-only types are not supported with MSVC
-    // , so we need workarounds as suggested here: 
+    // , so we need workarounds as suggested here:
     // https://github.com/google/googletest/blob/master/googlemock/docs/cook_book.md#legacy-workarounds-for-move-only-types-legacymoveonly
     MOCK_METHOD2(getReader_, ISimulationBus::IDataReader*(const std::string&, const IStreamType&));
     std::unique_ptr<ISimulationBus::IDataReader> getReader(const std::string& name, const IStreamType& stream_type) override
@@ -108,6 +122,9 @@ public:
     {
         return std::unique_ptr<ISimulationBus::IDataWriter>(getWriter_(name, queue_capacity));
     }
+    
+    MOCK_METHOD1(startBlockingReception, void(const std::function<void()>&));
+    MOCK_METHOD0(stopBlockingReception, void());
 };
 
 } // namespace mock

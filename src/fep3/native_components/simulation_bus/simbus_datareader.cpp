@@ -1,52 +1,47 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
 #include "simbus_datareader.h"
-
-namespace {
-
-template <typename tuple_type>
-void dispatch (tuple_type& data, fep3::arya::ISimulationBus::IDataReceiver& onReceive)
-{
-    auto data_sample = std::get<0>(data);
-    if (data_sample)
-    {
-        onReceive(data_sample);
-    }
-
-    auto stream_type = std::get<1>(data);
-    if (stream_type)
-    {
-        onReceive(stream_type);
-    }
-}
-
-} // namespace
 
 namespace fep3
 {
 namespace native
 {
 
-
 size_t SimulationBus::DataReader::size() const
 {
-    std::unique_lock<std::mutex> queue_is_in_use(_exitSignal.data_triggered_reception_mutex, std::try_to_lock);
-
-    if (!queue_is_in_use.owns_lock()) {
-        // data triggered reception is currently running, so my queue is always empty
-        return 0;
-    }
-
     return _item_queue->size();
+}
+
+SimulationBus::DataReader::DataReader
+    (const std::shared_ptr< DataItemQueue<> >& item_queue
+    , const std::weak_ptr<base::SimulationDataAccessCollection<DataItemQueue<>>>& data_access_collection
+    )
+    : _item_queue{ item_queue }
+    , _data_access_collection{data_access_collection}
+{}
+
+SimulationBus::DataReader::~DataReader()
+{
+    // remove sink from data sink collection (if any)
+    reset();
 }
 
 size_t SimulationBus::DataReader::capacity() const
@@ -56,44 +51,35 @@ size_t SimulationBus::DataReader::capacity() const
 
 bool SimulationBus::DataReader::pop(ISimulationBus::IDataReceiver& onReceive)
 {
-    std::unique_lock<std::mutex> queue_is_in_use(_exitSignal.data_triggered_reception_mutex, std::try_to_lock);
-
-    if (!queue_is_in_use.owns_lock()) {
-        // data triggered reception is currently running, so my queue is always empty
-        return false;
-    }
-
-    if (_item_queue->size() == 0) {
+    if (_item_queue->size() == 0)
+    {
         return false;
     }
 
     auto res = _item_queue->pop();
-    queue_is_in_use.unlock();
 
     dispatch<decltype(res)>(res, onReceive);
 
     return true;
 }
 
-void SimulationBus::DataReader::receive(ISimulationBus::IDataReceiver& onReceive)
+void SimulationBus::DataReader::reset(const std::shared_ptr<arya::ISimulationBus::IDataReceiver>& receiver)
 {
-    std::unique_lock<std::mutex> lock(_exitSignal.data_triggered_reception_mutex);
-
-    std::future<void> futureObj = _exitSignal.trigger.get_future();
-    while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
+    const auto& data_access_collection = _data_access_collection.lock();
+    // remove the previous receiver (if any)
+    if(_data_access_iterator)
     {
-        auto res = _item_queue->pop();
-        dispatch<decltype(res)>(res, onReceive);
+        if(data_access_collection)
+        {
+            data_access_collection->remove(_data_access_iterator.value());
+        }
+        _data_access_iterator.reset();
     }
-}
 
-void SimulationBus::DataReader::stop()
-{
-    _exitSignal.trigger.set_value();
-
+    if(data_access_collection && receiver)
     {
-        std::unique_lock<std::mutex> lock(_exitSignal.data_triggered_reception_mutex);
-        _exitSignal.trigger = std::promise<void> {};
+        // add the new receiver to the data access collection and store the iterator to the new entry
+        _data_access_iterator = data_access_collection->add(receiver, _item_queue);
     }
 }
 
@@ -101,7 +87,6 @@ Optional<Timestamp> SimulationBus::DataReader::getFrontTime() const
 {
     return _item_queue->getFrontTime();
 }
-
 
 } // namespace native
 } // namespace fep3

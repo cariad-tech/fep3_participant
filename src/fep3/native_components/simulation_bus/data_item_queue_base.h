@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -41,7 +50,7 @@ protected:
 
     /**
      * @brief Internal data item
-     * 
+     *
      */
     class DataItem
     {
@@ -62,7 +71,7 @@ protected:
         /**
          * CTOR for a sample data item
          *
-         * @param sample The sample to be stored in the data item
+         * @param[in] sample The sample to be stored in the data item
          */
         DataItem(const data_read_ptr<SAMPLE_TYPE>& sample)
                 : _item_type(Type::sample), _sample(sample)
@@ -72,7 +81,7 @@ protected:
         /**
          * CTOR for a stream type data item
          *
-         * @param stream_type the stream_type to be stored in the data item
+         * @param[in] stream_type the stream_type to be stored in the data item
          */
         DataItem(const data_read_ptr<STREAM_TYPE>& stream_type)
                 : _item_type(Type::type), _stream_type(stream_type)
@@ -84,7 +93,7 @@ protected:
          * @brief Setter for a new data sample
          * Resets the stream type member of the data item and handles the remaining members accordingly
          *
-         * @param sample The sample to be stored in the data item
+         * @param[in] sample The sample to be stored in the data item
          */
         void set(const data_read_ptr<SAMPLE_TYPE>& sample)
         {
@@ -97,7 +106,7 @@ protected:
          * @brief Setter for a new stream_type
          * Resets the sample member of the data item and handles the remaining members accordingly
          *
-         * @param stream_type The stream_type to be stored in the data item
+         * @param[in] stream_type The stream_type to be stored in the data item
          */
         void set(const data_read_ptr<STREAM_TYPE>& stream_type)
         {
@@ -160,14 +169,14 @@ public:
     /**
      * @brief Pushes a sample data read pointer to the queue
      *
-     * @param sample The samples read pointer to push
+     * @param[in] sample The samples read pointer to push
      * @remark This is threadsafe against pop and other push calls
      */
     virtual void push(const data_read_ptr<SAMPLE_TYPE>& sample) = 0;
     /**
      * @brief Pushes a stream type data read pointer to the queue
      *
-     * @param type The types read pointer to push
+     * @param[in] type The types read pointer to push
      * @remark This is threadsafe against pop and other push calls
      */
     virtual void push(const data_read_ptr<STREAM_TYPE>& type) = 0;

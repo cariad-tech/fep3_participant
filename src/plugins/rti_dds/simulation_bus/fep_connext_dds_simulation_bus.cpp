@@ -1,19 +1,30 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include "fep_connext_dds_simulation_bus.h"
-#include <fep3/base/streamtype/default_streamtype.h>
+#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/binary_info/binary_info.h>
 #include <fep3/base/environment_variable/environment_variable.h>
 #include <fep3/base/properties/properties.h>
 #include <fep3/components/configuration/configuration_service_intf.h>
+#include <fep3/components/participant_info/participant_info_intf.h>
+#include <fep3/components/simulation_bus/simulation_data_access.h>
 #include <fep3/fep3_participant_version.h>
 
 #include <a_util/result.h>
@@ -30,6 +41,7 @@
 #include <plugins/rti_dds/simulation_bus/bus_info/bus_info.h>
 
 #include <plugins/rti_dds/simulation_bus/internal_topic/internal_topic.h>
+#include "reader_item_queue.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -76,13 +88,6 @@ a_util::filesystem::Path getFilePath()
 class ConnextDDSSimulationBus::Impl
 {
 public:
-    std::unique_ptr<DomainParticipant> _participant;
-    std::map<std::string, std::shared_ptr<ITopic>> _topics;
-    std::shared_ptr<dds::core::QosProvider> _qos_provider;
-
-    std::unique_ptr<BusInfo> _bus_info;
-    
-public:
     Impl()
     {
 
@@ -101,25 +106,55 @@ public:
         {
             _participant->close();
         }
+        _guard_condition = nullptr;
     }
-
-
-
-    std::shared_ptr<ITopic> getOrCreateTopic(const std::string & topic_name, const IStreamType& stream_type)
+    
+    void createDataAccessCollection()
     {
-        auto entity = _topics.find(topic_name);
-        if (entity != _topics.end())
-        {
-            //@TODO Check IStreamType
-            return entity->second;
-        }
-
-
-        auto topic = std::make_shared<StreamItemTopic>(*_participant, topic_name, stream_type, _qos_provider);
-        _topics[topic_name] = topic;
-        return topic;
+        _data_access_collection = std::make_shared<base::SimulationDataAccessCollection<ReaderItemQueue>>();
+    }
+    
+    void releaseDataAccessCollection()
+    {
+        _data_access_collection.reset();
     }
 
+     std::unique_ptr<ISimulationBus::IDataReader> getReader
+        (const std::string& name
+        , const IStreamType& stream_type
+        , size_t queue_capacity = 0
+        )
+    {
+        auto topic = getOrCreateTopic(name, stream_type);
+        return topic->createDataReader(queue_capacity, _data_access_collection);
+    }
+
+     std::unique_ptr<ISimulationBus::IDataReader> getReader
+        (const std::string& name
+        , size_t queue_capacity = 0
+        )
+    {
+        auto topic = getOrCreateTopic(name, fep3::base::arya::StreamTypeRaw());
+        return topic->createDataReader(queue_capacity, _data_access_collection);
+    }
+
+    std::unique_ptr<ISimulationBus::IDataWriter> getWriter
+        (const std::string& name
+        , const IStreamType& stream_type
+        , size_t queue_capacity = 0
+        )
+    {
+        auto topic = getOrCreateTopic(name, stream_type);
+        return topic->createDataWriter(queue_capacity);
+    }
+    std::unique_ptr<ISimulationBus::IDataWriter> getWriter
+        (const std::string& name
+        , size_t queue_capacity = 0
+        )
+    {
+        auto topic = getOrCreateTopic(name, fep3::base::arya::StreamTypeRaw());
+        return topic->createDataWriter(queue_capacity);
+    }
 
     std::shared_ptr<QosProvider> LoadQosProfile()
     {
@@ -158,17 +193,152 @@ public:
         _bus_info->getOwnParticipantInfo()->setFepVersion(version);
         _bus_info->registerUserData(participant_qos);
 
-        // Create build in topic to make bus informations available via ISimulationBus
-        auto buildin_topic_businfo = std::make_shared<InternalTopic>("_buildin_topic_businfo");
-        _topics["_buildin_topic_businfo"] = buildin_topic_businfo;
-        _bus_info->setUpdateCallback([this, buildin_topic_businfo]()
+        // Create built in topic to make bus informations available via ISimulationBus
+        auto built_in_topic_businfo = std::make_shared<InternalTopic>("_built_in_topic_businfo");
+        _topics["_built_in_topic_businfo"] = built_in_topic_businfo;
+        _bus_info->setUpdateCallback([this, built_in_topic_businfo]()
         {
             if (_bus_info)
             {
-                buildin_topic_businfo->write(_bus_info->asJson());
+                built_in_topic_businfo->write(_bus_info->asJson());
             }
         });
     }
+
+    void startBlockingReception(const std::function<void()>& reception_preparation_done_callback)
+    {
+        // RAII ensuring invocation of callback exactly once (even in case exception is thrown)
+        std::unique_ptr<bool, std::function<void(bool*)>> reception_preparation_done_callback_caller
+            (nullptr, [reception_preparation_done_callback](bool* p)
+            {
+                reception_preparation_done_callback();
+                delete p;
+            });
+        if(reception_preparation_done_callback)
+        {
+            reception_preparation_done_callback_caller.reset(new bool);
+        }
+        
+        if(_data_access_collection)
+        {
+            const auto& data_access_collection = *_data_access_collection.get();
+            {  
+                size_t last_size_of_data_access_collection = 0;
+                
+                dds::core::cond::WaitSet waitset = nullptr;
+
+                // Run until ::stop was called
+                _receiving = true;
+                while (_receiving)
+                {
+                    // Recreate WaitSet if:
+                    // * waitset was never created
+                    // * a new reader was created (_data_access_collection->size() changed)
+                    // * a reader recreated internal dds reader
+                    if (last_size_of_data_access_collection != data_access_collection.size() ||
+                        waitset.is_nil())
+                    {
+                        waitset = dds::core::cond::WaitSet();
+                        for
+                            (auto data_access_iterator = data_access_collection.cbegin()
+                                ; data_access_iterator != data_access_collection.cend()
+                                ; ++data_access_iterator
+                                )
+                        {
+                            waitset += data_access_iterator->_item_queue->createSampleReadCondition(data_access_iterator->_receiver);
+                            waitset += data_access_iterator->_item_queue->createStreamTypeReadCondition(data_access_iterator->_receiver);
+
+                            data_access_iterator->_item_queue->setRecreateWaitSetCondition([&waitset]()
+                            {
+                                waitset = nullptr;
+                            });
+                        }
+                        waitset += _guard_condition;
+
+                        _guard_condition->trigger_value(false);
+
+                        // the Simulation Bus is now prepared for the reception of data and for a call to stopBlockingReception
+                        reception_preparation_done_callback_caller.reset();
+
+                        last_size_of_data_access_collection = _data_access_collection->size();
+                    }
+
+                    try 
+                    {
+                        // Block until one condition was emited:
+                        // * ReadCondition for sample or stream
+                        // * _guard_condition
+                        // * or timeout 100ms
+                        dds::core::cond::WaitSet::ConditionSeq conditions = waitset.wait(Duration(0, 100000000));
+                        for (dds::core::cond::Condition const & condition : conditions)
+                        {
+                            if (condition != _guard_condition)
+                            {
+                                condition.delegate()->dispatch();
+                            }
+                        }
+                    }
+                    catch (const std::exception& exception) 
+                    {
+                        if (_logger)
+                        {
+                            if (_logger->isWarningEnabled())
+                            {
+                                _logger->logWarning(a_util::strings::format(
+                                                        "Caught RTI DDS exception during reception of data: '%s'",
+                                                        exception.what()));
+                            }
+                        }
+                    }
+                }                    
+                return;
+            }
+            
+        }
+    }
+    
+    void stopBlockingReception()
+    {
+        _receiving = false;
+        _guard_condition->trigger_value(true);
+    }
+
+private:
+    std::shared_ptr<ITopic> getOrCreateTopic(const std::string & topic_name, const IStreamType& stream_type)
+    {
+        auto entity = _topics.find(topic_name);
+        if (entity != _topics.end())
+        {
+            //@TODO Check IStreamType
+            return entity->second;
+        }
+
+        if(!_participant)
+        {
+            throw std::runtime_error("RTI DDS Participant pointer empty. Simulation Bus not initialized.");
+        }
+
+        auto topic = std::make_shared<StreamItemTopic>(*_participant, topic_name, stream_type, _qos_provider, _logger);
+        _topics[topic_name] = topic;
+        return topic;
+    }
+
+public:
+    std::unique_ptr<DomainParticipant> _participant;
+    std::map<std::string, std::shared_ptr<ITopic>> _topics;
+    std::shared_ptr<dds::core::QosProvider> _qos_provider;
+    std::shared_ptr<fep3::ILogger> _logger;
+
+    std::unique_ptr<BusInfo> _bus_info;
+    IParticipantInfo* _participant_info;
+    
+private:
+    // We need a sub object for collection data access (data triggered behavior)
+    // because the simulation bus cannot be passed to the reader, as lifetime of simulation bus
+    // cannot be controlled.
+    std::shared_ptr<base::SimulationDataAccessCollection<ReaderItemQueue>> _data_access_collection;
+    dds::core::cond::GuardCondition _guard_condition;
+    std::atomic<bool> _receiving = { false };
 };
 
 ConnextDDSSimulationBus::ConnextDDSSimulationBus() : _impl(std::make_unique<ConnextDDSSimulationBus::Impl>())
@@ -188,13 +358,27 @@ fep3::Result ConnextDDSSimulationBus::create()
         auto logging_service = components->getComponent<ILoggingService>();
         if (logging_service)
         {
-            _logger = logging_service->createLogger("connext_dds_simulation_bus.component");
+            _impl->_logger = logging_service->createLogger("connext_dds_simulation_bus.component");
         }
 
         auto configuration_service = components->getComponent<IConfigurationService>();
         if (configuration_service)
         {
             _simulation_bus_configuration.initConfiguration(*configuration_service);
+        }
+        else
+        {
+            RETURN_ERROR_DESCRIPTION(ERR_INVALID_STATE, "Can not get configuration service interface");
+        }
+
+        auto participant_info = components->getComponent<IParticipantInfo>();
+        if (participant_info)
+        {
+            _impl->_participant_info = participant_info;
+        }
+        else
+        {
+            RETURN_ERROR_DESCRIPTION(ERR_INVALID_STATE, "Can not get participant info interface");
         }
     }
     return {};
@@ -219,8 +403,24 @@ fep3::Result ConnextDDSSimulationBus::initialize()
     uint32_t domain_id = _simulation_bus_configuration._participant_domain;
     
     auto participant_qos = _impl->_qos_provider->participant_qos("fep3::participant");
+    
+    auto participant_name = _impl->_participant_info->getName();
+    if (participant_name.empty())
+    {
+        RETURN_ERROR_DESCRIPTION(fep3::ERR_NOT_SUPPORTED, "Participant name from participant info is empty");
+    }
+    auto system_name = _impl->_participant_info->getSystemName();
+    if (system_name.empty())
+    {
+        RETURN_ERROR_DESCRIPTION(fep3::ERR_NOT_SUPPORTED, "Participant name from participant info is empty");
+    }
+    if (system_name.size() >= 255)
+    {
+        RETURN_ERROR_DESCRIPTION(fep3::ERR_NOT_SUPPORTED, "RTI DDS doesn't support system name longer than 255 byte");
+    }
+    participant_qos.extensions().property.set({ "dds.domain_participant.domain_tag", system_name });
 
-    _impl->initBusInfo(participant_qos, _simulation_bus_configuration._participant_name);
+    _impl->initBusInfo(participant_qos, participant_name);
 
 #ifdef WIN32
     //in windows the rtimonitoring is loaded lazy ... so we need to change working dir here for
@@ -250,12 +450,16 @@ fep3::Result ConnextDDSSimulationBus::initialize()
 #ifdef WIN32
     a_util::filesystem::setWorkingDirectory(orig_wd);
 #endif
-        
+    
+    _impl->createDataAccessCollection();
+    
     return {};
 }
 
 fep3::Result ConnextDDSSimulationBus::deinitialize()
 {
+    _impl->releaseDataAccessCollection();
+    
     _impl->_bus_info->unregisterParticipant(*_impl->_participant);
     _impl->_bus_info = nullptr;
 
@@ -277,6 +481,7 @@ fep3::Result ConnextDDSSimulationBus::deinitialize()
 
 bool ConnextDDSSimulationBus::isSupported(const IStreamType& stream_type) const
 {
+    using namespace fep3::base::arya;
     return
         (meta_type_raw == stream_type
         || (meta_type_audio == stream_type)
@@ -294,8 +499,7 @@ std::unique_ptr<ISimulationBus::IDataReader> ConnextDDSSimulationBus::getReader
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, stream_type);
-        return topic->createDataReader(0);
+        return _impl->getReader(name, stream_type);
     }
     catch (Exception & exception)
     {
@@ -312,8 +516,7 @@ std::unique_ptr<ISimulationBus::IDataReader> ConnextDDSSimulationBus::getReader
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, stream_type);
-        return topic->createDataReader(queue_capacity);
+        return _impl->getReader(name, stream_type, queue_capacity);
     }
     catch (Exception & exception)
     {
@@ -330,8 +533,7 @@ std::unique_ptr<ISimulationBus::IDataReader> ConnextDDSSimulationBus::getReader(
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, fep3::arya::StreamTypeRaw());
-        return topic->createDataReader(0);
+        return _impl->getReader(name);
     }
     catch (Exception & exception)
     {
@@ -343,8 +545,7 @@ std::unique_ptr<ISimulationBus::IDataReader> ConnextDDSSimulationBus::getReader(
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, fep3::arya::StreamTypeRaw());
-        return topic->createDataReader(queue_capacity);
+        return _impl->getReader(name, queue_capacity);
     }
     catch (Exception & exception)
     {
@@ -359,8 +560,7 @@ std::unique_ptr<ISimulationBus::IDataWriter> ConnextDDSSimulationBus::getWriter
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, stream_type);
-        return topic->createDataWriter(0);
+        return _impl->getWriter(name, stream_type, 0);
     }
     catch (Exception & exception)
     {
@@ -376,8 +576,7 @@ std::unique_ptr<ISimulationBus::IDataWriter> ConnextDDSSimulationBus::getWriter
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, stream_type);
-        return topic->createDataWriter(queue_capacity);
+        return _impl->getWriter(name, stream_type, queue_capacity);
     }
     catch (Exception & exception)
     {
@@ -389,8 +588,7 @@ std::unique_ptr<ISimulationBus::IDataWriter> ConnextDDSSimulationBus::getWriter(
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, fep3::arya::StreamTypeRaw());
-        return topic->createDataWriter(0);
+        return _impl->getWriter(name);
     }
     catch (Exception & exception)
     {
@@ -402,14 +600,29 @@ std::unique_ptr<ISimulationBus::IDataWriter> ConnextDDSSimulationBus::getWriter(
 {
     try
     {
-        auto topic = _impl->getOrCreateTopic(name, fep3::arya::StreamTypeRaw());
-        return topic->createDataWriter(queue_capacity);
+        auto topic = _impl->getWriter(name, queue_capacity);
     }
     catch (Exception & exception)
     {
         logError(convertExceptionToResult(exception));
     }
     return nullptr;
+}
+void ConnextDDSSimulationBus::startBlockingReception(const std::function<void()>& reception_preparation_done_callback)
+{
+    try
+    {
+        _impl->startBlockingReception(reception_preparation_done_callback);
+    }
+    catch (Exception & exception)
+    {
+        logError(convertExceptionToResult(exception));
+    }
+}
+
+void ConnextDDSSimulationBus::stopBlockingReception()
+{
+    _impl->stopBlockingReception();
 }
 
 std::shared_ptr<dds::core::QosProvider> ConnextDDSSimulationBus::getQOSProfile() const
@@ -419,11 +632,11 @@ std::shared_ptr<dds::core::QosProvider> ConnextDDSSimulationBus::getQOSProfile()
 
 void ConnextDDSSimulationBus::logError(const fep3::Result& res)
 {
-    if (_logger)
+    if (_impl->_logger)
     {
-        if (_logger->isErrorEnabled())
+        if (_impl->_logger->isErrorEnabled())
         {
-            _logger->logError(a_util::result::toString(res));
+            _impl->_logger->logError(a_util::result::toString(res));
         }
     }
 }
@@ -436,7 +649,6 @@ ConnextDDSSimulationBus::ConnextDDSSimulationBusConfiguration::ConnextDDSSimulat
 fep3::Result ConnextDDSSimulationBus::ConnextDDSSimulationBusConfiguration::registerPropertyVariables()
 {
     FEP3_RETURN_IF_FAILED(registerPropertyVariable(_participant_domain, "participant_domain"));
-    FEP3_RETURN_IF_FAILED(registerPropertyVariable(_participant_name, "participant_name"));
     
     return {};
 }
@@ -444,7 +656,6 @@ fep3::Result ConnextDDSSimulationBus::ConnextDDSSimulationBusConfiguration::regi
 fep3::Result ConnextDDSSimulationBus::ConnextDDSSimulationBusConfiguration::unregisterPropertyVariables()
 {
     FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_participant_domain, "participant_domain"));
-    FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_participant_name, "participant_name"));
-
+    
     return {};
 }

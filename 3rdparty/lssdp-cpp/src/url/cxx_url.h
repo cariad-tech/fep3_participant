@@ -1,11 +1,11 @@
 /**
  * @file
  * Taken from https://github.com/chmike/CxxUrl/blob/master/url.hpp
- * 
+ *
  * Under: The MIT License (MIT)
  *
  * Copyright (c) 2015 Christophe Meessen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights

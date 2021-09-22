@@ -1,14 +1,18 @@
-##################################################################
-# @file
-# @copyright AUDI AG
-#            All right reserved.
 #
-# This Source Code Form is subject to the terms of the
-# Mozilla Public License, v. 2.0.
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright @ 2021 VW Group. All rights reserved.
+# 
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
 #
-##################################################################
+
 
 ################################################################################
 ## \page page_cmake_commands
@@ -30,7 +34,7 @@ macro(fep3_participant_install NAME DESTINATION)
             $<TARGET_FILE:fep3_participant>
         DESTINATION ${DESTINATION}
     )
-    
+
     if(MSVC)
         install(FILES $<TARGET_FILE_DIR:fep3_participant>/fep3_participant$<$<CONFIG:Debug>:d>${fep3_participant_pdb_version_str}.pdb
                 DESTINATION ${DESTINATION} OPTIONAL)
@@ -81,8 +85,8 @@ endmacro(fep3_participant_install NAME DESTINATION)
 #
 # This macro deploys the participant library to the same target folder as the target with \<name\>.
 # Arguments:
-# \li \<name\>: 
-# The name of the target to obtain the folder where to copy the participant library 
+# \li \<name\>:
+# The name of the target to obtain the folder where to copy the participant library
 # binaries to.
 ################################################################################
 macro(fep3_participant_deploy NAME)
@@ -92,7 +96,7 @@ macro(fep3_participant_deploy NAME)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:fep3_participant> $<TARGET_FILE_DIR:${NAME}>
         )
     endif()
-    
+
     if(MSVC)
         add_custom_command(TARGET ${NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different

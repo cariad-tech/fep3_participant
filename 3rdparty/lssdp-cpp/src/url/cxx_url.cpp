@@ -444,7 +444,7 @@ std::string decode_plus(const char *s, const char *e) {
     std::string o;
     o.reserve(e - s);
     while (s != e) {
-    	std::int8_t c = *s++, a, b;
+        std::int8_t c = *s++, a, b;
         if (c == '+')
             c = ' ';
         else if (c == '%') {

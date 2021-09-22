@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
@@ -33,30 +42,30 @@ using Strategy = fep3::JobConfiguration::TimeViolationStrategy;
 
 struct SchedulerTestEnv
 {
-    SchedulerTestEnv()       
+    SchedulerTestEnv()
         : _logger(std::make_shared<fep3::mock::Logger>())
         , _set_participant_to_error_state(
             [&]() -> fep3::Result {return _set_participant_to_error_state_mock.Call(); })
     {
-      
+
     }
 
     template <typename T = fep3::native::JobRunner, typename... Args>
     std::unique_ptr<T> makeChecker(Args&&... args) {
         std::unique_ptr<T> runtime_checker = std::make_unique<fep3::native::JobRunner>(
-            std::forward<Args>(args)..., *_logger, _set_participant_to_error_state);
+            std::forward<Args>(args)..., *_logger);
         return runtime_checker;
     }
 
     std::unique_ptr<fep3::native::JobRunner> makeDefaultChecker()
     {
         auto runtime_checker = std::make_unique<fep3::native::JobRunner>(
-            "my_runtime_checker", Strategy::ignore_runtime_violation, 10ms, _logger, _set_participant_to_error_state);
+            "my_runtime_checker", Strategy::ignore_runtime_violation, 10ms, _logger);
         return runtime_checker;
     }
 
     std::shared_ptr<fep3::mock::Logger> _logger;
-    
+
     /// necessary because MockFunction.AsStdFunction seems not be available with our gtest
     std::function<fep3::Result()> _set_participant_to_error_state{};
     MockFunction<fep3::Result()> _set_participant_to_error_state_mock;
@@ -70,7 +79,7 @@ struct SchedulerTestEnv
 TEST(TimerScheduler, AddRemoveTimer)
 {
     fep3::mock::DiscreteSteppingClockService clock_service;
-   
+
     auto timer_scheduler = std::make_shared<TimerScheduler>(clock_service);
     fep3::mock::Job my_job{};
 
@@ -92,61 +101,61 @@ TEST(TimerScheduler, AddRemoveTimer)
 
 struct TimerSchedulerFixture : public ::testing::Test
 {
-    TimerSchedulerFixture()      
+    TimerSchedulerFixture()
     {
-    }   
+    }
 
     /**
-     * Will create a scheduler and add a TimerThread that will execute @p my_job   
+     * Will create a scheduler and add a TimerThread that will execute @p my_job
      */
     void setupSchedulerByJob(fep3::test::helper::TestJob& my_job)
-    {            
+    {
         SchedulerTestEnv runtime_job_tester;
-     
+
         timer_scheduler = std::make_shared<TimerScheduler>(clock_service);
         auto runtime_checker = runtime_job_tester.makeDefaultChecker();
         timer_thread = std::make_shared<TimerThread>("thread_name"
             , my_job
             , clock_service
-            , duration_cast<Duration>(my_job._cycle_time)
+            , duration_cast<Duration>(my_job._job_config._cycle_sim_time)
             , duration_cast<Duration>(0us)
             , *timer_scheduler, *runtime_checker);
 
         ASSERT_EQ(timer_scheduler->addTimer(*timer_thread
             , my_job.getJobInfo().getConfig()._cycle_sim_time
             , duration_cast<Duration>(0us))
-            , fep3::ERR_NOERROR);       
-    }   
-    
+            , fep3::ERR_NOERROR);
+    }
+
     /**
      * Will push the clock_service in steps of my_job._cycle_time until max_time is reached.
-     * Will wait after every time push that a job is executed     
+     * Will wait after every time push that a job is executed
      */
     std::future<void> createSimulateJobUntilMaxTimeFuture(fep3::test::helper::TestJob& my_job, Timestamp max_time)
-    {       
-        std::future<void> simulate_until_max_time = std::async(std::launch::async, [this,&my_job, max_time]() {     
+    {
+        std::future<void> simulate_until_max_time = std::async(std::launch::async, [this,&my_job, max_time]() {
 
             // simulate t == 0
             my_job._expected_call_time = 0ns;
-            my_job.waitForExpectedCallTime(1s);           
+            my_job.waitForExpectedCallTime(1s);
 
             // simulate until max_time
             auto clock_time = clock_service.getTime();
             while (clock_time < max_time)
-            {                  
-                ASSERT_LT(my_job._cycle_time, 1ms) << "time_increment has to be less than 1 ms. Otherwise TimerScheduler will wait forever in this Ttstcase";                
-                
-                clock_service.incrementTime(my_job._cycle_time);
-                my_job._expected_call_time += my_job._cycle_time;
+            {
+                ASSERT_LT(my_job._job_config._cycle_sim_time, 1ms) << "time_increment has to be less than 1 ms. Otherwise TimerScheduler will wait forever in this Ttstcase";
+
+                clock_service.incrementTime(my_job._job_config._cycle_sim_time);
+                my_job._expected_call_time += my_job._job_config._cycle_sim_time;
 
                 my_job.waitForExpectedCallTime(1s);
                 clock_time = clock_service.getTime();
             }
-           
+
             timer_scheduler->stop();
         });
         return simulate_until_max_time;
-    }       
+    }
 
      NiceMock<fep3::mock::DiscreteSteppingClockService> clock_service;
      std::shared_ptr<TimerScheduler> timer_scheduler;
@@ -161,26 +170,26 @@ struct TimerSchedulerFixture : public ::testing::Test
 * The actual call times have to be in job_cycle_time resolution
 */
 TEST_F(TimerSchedulerFixture, ExecuteOneJobContinuous)
-{  
+{
     EXPECT_CALL(clock_service, getType()).WillRepeatedly(Return(fep3::IClock::ClockType::continuous));
 
     const auto max_time = 10ms;
     const auto job_cycle_time = 500us;
 
     fep3::test::helper::TestJob my_job("my_job"
-        , duration_cast<Duration>(job_cycle_time));      
+        , duration_cast<Duration>(job_cycle_time));
 
     setupSchedulerByJob(my_job);
     fep3::IClock::IEventSink& scheduler_as_event_sink = *timer_scheduler;
 
     // actual test
     {
-        ASSERT_FEP3_NOERROR(timer_thread->start());   
-        ASSERT_FEP3_NOERROR(timer_scheduler->start());        
-       
+        ASSERT_FEP3_NOERROR(timer_thread->start());
+        ASSERT_FEP3_NOERROR(timer_scheduler->start());
+
         /// scheduling will only start if timeReset is emitted
-        scheduler_as_event_sink.timeResetBegin(Timestamp(0),Timestamp(0)); 
-        scheduler_as_event_sink.timeResetEnd(Timestamp(0)); 
+        scheduler_as_event_sink.timeResetBegin(Timestamp(0),Timestamp(0));
+        scheduler_as_event_sink.timeResetEnd(Timestamp(0));
 
         // this will start the scheduler
         std::future<void> call_execute = std::async(std::launch::async, [&]() {
@@ -206,35 +215,35 @@ TEST_F(TimerSchedulerFixture, ExecuteOneJobContinuous)
 * @brief One Job is added to a TimerScheduler and gets executed by the discrete interface (calls to IEventSink)
 */
 TEST_F(TimerSchedulerFixture, ExecuteOneJobDiscrete)
-{ 
+{
     EXPECT_CALL(clock_service, getType()).WillRepeatedly(Return(fep3::IClock::ClockType::discrete));
 
     const auto max_time = 10ms;
     const auto job_cycle_time = 500us;
 
     fep3::test::helper::TestJob my_job("my_job"
-        , duration_cast<Duration>(job_cycle_time));     
+        , duration_cast<Duration>(job_cycle_time));
 
     setupSchedulerByJob(my_job);
     fep3::IClock::IEventSink& scheduler_as_event_sink = *timer_scheduler;
 
     // actual test
-    {       
-        ASSERT_FEP3_NOERROR(timer_scheduler->start());  
-        ASSERT_FEP3_NOERROR(timer_thread->start());        
-       
+    {
+        ASSERT_FEP3_NOERROR(timer_scheduler->start());
+        ASSERT_FEP3_NOERROR(timer_thread->start());
+
         /// scheduling will only start if timeReset is emitted
-        scheduler_as_event_sink.timeResetBegin(Timestamp(0),Timestamp(0)); 
-        scheduler_as_event_sink.timeResetEnd(Timestamp(0)); 
+        scheduler_as_event_sink.timeResetBegin(Timestamp(0),Timestamp(0));
+        scheduler_as_event_sink.timeResetEnd(Timestamp(0));
 
         // drive scheduler discrete by calling timeUpdating
         auto time = Timestamp(0);
         while (time < max_time)
-        {            
+        {
             time += job_cycle_time;
-            scheduler_as_event_sink.timeUpdating(time);                  
+            scheduler_as_event_sink.timeUpdating(time);
         }
-     
+
         my_job.assertCallTimeResolution();
         my_job.assertNumberOfCalls(max_time);
 

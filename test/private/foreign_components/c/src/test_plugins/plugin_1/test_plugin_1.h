@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -27,7 +36,7 @@ extern "C"
 
 /**
  * Sets the mock component a
- * @param mock_component_a Pointer to the mock component a to be set to the plugin
+ * @param[in] mock_component_a Pointer to the mock component a to be set to the plugin
  * @note This destroys binary compatibilty of the plugin, because a C++ interface is introduced.
  *       This is ok, as long as plugin and test are compiled with the same compiler and compiler settings
  *       (which is guaranteed in the unit test context).
@@ -35,7 +44,7 @@ extern "C"
 FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL setMockComponentA(::test_plugin_1::mock::MockComponentA* mock_component_a);
 /**
  * Sets the mock component b
- * @param mock_component_b Pointer to the mock component b to be set to the plugin
+ * @param[in] mock_component_b Pointer to the mock component b to be set to the plugin
  * @note This destroys binary compatibilty of the plugin, because a C++ interface is introduced.
  *       This is ok, as long as plugin and test are compiled with the same compiler and compiler settings
  *       (which is guaranteed in the unit test context).

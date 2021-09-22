@@ -1,18 +1,27 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "simbus_datawriter.h"
 
 #include "fep3/base/sample/data_sample.h"
-#include "fep3/base/streamtype/streamtype.h"
+#include "fep3/base/stream_type/stream_type.h"
 
 namespace fep3
 {
@@ -45,7 +54,7 @@ SimulationBus::DataWriter::DataWriter(const std::string& name, size_t transmit_b
 
 fep3::Result SimulationBus::DataWriter::write(const IDataSample& data_sample)
 {
-    auto current = std::make_shared<DataSample>(data_sample);
+    auto current = std::make_shared<base::DataSample>(data_sample);
 
     _transmit_buffer->push(current);
 
@@ -55,7 +64,7 @@ fep3::Result SimulationBus::DataWriter::write(const IDataSample& data_sample)
 fep3::Result SimulationBus::DataWriter::write(const IStreamType& stream_type)
 {
 
-    auto current = std::make_shared<StreamType>(stream_type);
+    auto current = std::make_shared<base::StreamType>(stream_type);
 
     _transmit_buffer->push(current);
 

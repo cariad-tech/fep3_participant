@@ -1,15 +1,23 @@
 /**
- * @file 
- * @copyright AUDI AG
- *            All right reserved.
- * 
- * This Source Code Form is subject to the terms of the 
- * Mozilla Public License, v. 2.0. 
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- * 
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
- 
+
+
 #pragma once
 
 #include <exception>
@@ -48,7 +56,7 @@ public:
     constexpr Optional() noexcept = default;
     /**
      * CTOR constructing an optional by copying from \p other optional
-     * @param other The other value to take the value from
+     * @param[in] other The other value to take the value from
      */
     constexpr Optional(const Optional& other)
     {
@@ -61,7 +69,7 @@ public:
     /**
      * CTOR constructing an optional by copying from \p other optional
      * @tparam other_type The type of the other optional's value
-     * @param other The other value to take the value from
+     * @param[in] other The other value to take the value from
      */
     template<typename other_type>
     constexpr Optional(const Optional<other_type>& other)
@@ -74,7 +82,7 @@ public:
     }
     /**
      * CTOR constructing an optional by moving from \p other optional
-     * @param other The other value to take the value from
+     * @param[in] other The other value to take the value from
      */
     constexpr Optional(Optional&& other)
     {
@@ -88,7 +96,7 @@ public:
     /**
      * CTOR constructing an optional by moving from \p other optional
      * @tparam other_type The type of the other optional's value
-     * @param other The other value to take the value from
+     * @param[in] other The other value to take the value from
      */
     template<typename other_type>
     constexpr Optional(Optional<other_type>&& other)
@@ -103,7 +111,7 @@ public:
     /**
      * CTOR constructing an optional that has \p other_value as value
      * @tparam other_value_type The type of the other value
-     * @param other_value The other value to be used as value
+     * @param[in] other_value The other value to be used as value
      */
     template
         <typename other_value_type = value_type
@@ -119,7 +127,7 @@ public:
     ~Optional() = default;
     /**
      * Assigns \p other to this
-     * @param other Other optional to assign from
+     * @param[in] other Other optional to assign from
      * @return Reference to this
      */
     Optional& operator=(const Optional& other)
@@ -134,7 +142,7 @@ public:
     /**
      * Assigns \p other to this
      * @tparam other_type The type of \p other
-     * @param other Other optional to assign from
+     * @param[in] other Other optional to assign from
      * @return Reference to this
      */
     template<typename other_type>
@@ -149,7 +157,7 @@ public:
     }
     /**
      * Assigns \p other to this
-     * @param other Other optional to move assign from
+     * @param[in] other Other optional to move assign from
      * @return Reference to this
      */
     Optional& operator=(Optional&& other)
@@ -165,7 +173,7 @@ public:
     /**
      * Assigns \p other to this
      * @tparam other_type The type of \p other
-     * @param other Other optional to move assign from
+     * @param[in] other Other optional to move assign from
      * @return Reference to this
      */
     template<typename other_type>
@@ -182,7 +190,7 @@ public:
     /**
      * Assigns \p other_value the value of to this
      * @tparam other_value_type The type of the other value
-     * @param other_value The other value to assign to the value of this
+     * @param[in] other_value The other value to assign to the value of this
      * @return Reference to this
      */
     template
@@ -237,7 +245,7 @@ public:
     }
     /**
      * Checks if this has a value
-     * @return True if this has a value, false otherwise
+     * @return @c true if this has a value, @c false otherwise
      */
     constexpr bool has_value() const noexcept
     {
@@ -298,7 +306,7 @@ public:
     /**
      * Returns the value or the passed \p default_value
      * @tparam default_value_type The type of the \p default_value
-     * @param default_value The default value to be returned if this has no value
+     * @param[in] default_value The default value to be returned if this has no value
      * @return The value if this has a value, \p default_value otherwise
      */
     template<typename default_value_type>
@@ -309,7 +317,7 @@ public:
     /**
      * Returns the value or the passed \p default_value
      * @tparam default_value_type The type of the \p default_value
-     * @param default_value The default value to be returned if this has no value
+     * @param[in] default_value The default value to be returned if this has no value
      * @return The value if this has a value, \p default_value otherwise
      */
     template<typename default_value_type>
@@ -319,7 +327,7 @@ public:
     }
     /**
      * Swaps the content with those of @p other
-     * @param other The other optional to swap content with
+     * @param[in,out] other The other optional to swap content with
      */
     void swap(Optional& other) noexcept
     {
@@ -352,7 +360,7 @@ public:
     /**
      * Emplaces the value by constructing it using \p arguments as parameters to the constructor
      * @tparam argument_types Parameter pack of the arguments to be passed to the constructor
-     * @param arguments The arguments to be passed to the constructor
+     * @param[in] arguments The arguments to be passed to the constructor
      * @return Reference to this
      */
     template<typename... argument_types>
@@ -372,9 +380,9 @@ private:
   * Comparison for equality of \ref fep3::arya::Optional
   * @tparam lhs_type The type of the left hand side optional
   * @tparam rhs_type The type of the right hand side optional
-  * @param lhs The left hand side optional
-  * @param rhs The right hand side optional
-  * @return True if left and right hand side optionals are equal, false otherwise
+  * @param[in] lhs The left hand side optional
+  * @param[in] rhs The right hand side optional
+  * @return @c true if left and right hand side optionals are equal, @c false otherwise
   */
 template<class lhs_type, class rhs_type>
 constexpr bool operator==(const fep3::arya::Optional<lhs_type>& lhs, const fep3::arya::Optional<rhs_type>& rhs)
@@ -387,9 +395,9 @@ constexpr bool operator==(const fep3::arya::Optional<lhs_type>& lhs, const fep3:
 * Comparison for inequality of \ref fep3::arya::Optional
 * @tparam lhs_type The type of the left hand side optional
 * @tparam rhs_type The type of the right hand side optional
-* @param lhs The left hand side optional
-* @param rhs The right hand side optional
-* @return True if left and right hand side optionals are not equal, false otherwise
+* @param[in] lhs The left hand side optional
+* @param[in] rhs The right hand side optional
+* @return @c true if left and right hand side optionals are not equal, @c false otherwise
 */
 template<class lhs_type, class rhs_type>
 constexpr bool operator!=(const fep3::arya::Optional<lhs_type>& lhs, const fep3::arya::Optional<rhs_type>& rhs)

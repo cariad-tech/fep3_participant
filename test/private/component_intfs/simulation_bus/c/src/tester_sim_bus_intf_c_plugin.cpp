@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -16,7 +25,7 @@
 #include <fep3/participant/component_factories/c/component_creator_c_plugin.h>
 #include <fep3/components/simulation_bus/mock/mock_simulation_bus.h>
 #include <fep3/base/sample/mock/mock_data_sample.h>
-#include <fep3/base/streamtype/mock/mock_streamtype.h>
+#include <fep3/base/stream_type/mock/mock_stream_type.h>
 #include <fep3/components/simulation_bus/c_access_wrapper/simulation_bus_c_access_wrapper.h>
 #include <fep3/base/sample/data_sample.h>
 #include <fep3/base/sample/raw_memory.h>
@@ -61,9 +70,9 @@ using SimulationBusLoaderFixture = MockedComponentCPluginLoaderFixture<Simulatio
  */
 TEST_F(SimulationBusLoaderFixture, testMethod_isSupported)
 {
-    const ::fep3::StreamType supported_stream_type_1(::fep3::StreamMetaType("test_stream_meta_type_1"));
-    const ::fep3::StreamType supported_stream_type_2(::fep3::StreamMetaType("test_stream_meta_type_2"));
-    const ::fep3::StreamType unsupported_stream_type(::fep3::StreamMetaType("test_stream_meta_type_3"));
+    const ::fep3::base::StreamType supported_stream_type_1(::fep3::base::StreamMetaType("test_stream_meta_type_1"));
+    const ::fep3::base::StreamType supported_stream_type_2(::fep3::base::StreamMetaType("test_stream_meta_type_2"));
+    const ::fep3::base::StreamType unsupported_stream_type(::fep3::base::StreamMetaType("test_stream_meta_type_3"));
 
     // setting of expectations
     {
@@ -90,7 +99,7 @@ TEST_F(SimulationBusLoaderFixture, testMethod_isSupported)
 TEST_F(SimulationBusLoaderFixture, testMethod_getReader)
 {
     const std::string signal_1_name{"signal_1"};
-    const ::fep3::StreamType stream_type_1(::fep3::StreamMetaType("test_stream_meta_type_1"));
+    const ::fep3::base::StreamType stream_type_1(::fep3::base::StreamMetaType("test_stream_meta_type_1"));
 
     // setting of expectations
     {
@@ -150,7 +159,7 @@ TEST_F(SimulationBusLoaderFixture, testMethod_getReader)
 TEST_F(SimulationBusLoaderFixture, testMethod_getWriter)
 {
     const std::string signal_1_name{"signal_1"};
-    const ::fep3::StreamType stream_type_1(::fep3::StreamMetaType("test_stream_meta_type_1"));
+    const ::fep3::base::StreamType stream_type_1(::fep3::base::StreamMetaType("test_stream_meta_type_1"));
 
     // setting of expectations
     {
@@ -194,13 +203,67 @@ TEST_F(SimulationBusLoaderFixture, testMethod_getWriter)
                 .WillOnce(::testing::Return(mock_data_writer.release()));
         }
     }
-    
+
     ::fep3::arya::ISimulationBus* simulation_bus = getComponent();
     ASSERT_NE(nullptr, simulation_bus);
     EXPECT_NO_THROW(simulation_bus->getWriter(signal_1_name, stream_type_1));
     EXPECT_NO_THROW(simulation_bus->getWriter(signal_1_name, stream_type_1, 3));
     EXPECT_NO_THROW(simulation_bus->getWriter(signal_1_name));
     EXPECT_NO_THROW(simulation_bus->getWriter(signal_1_name, 4));
+}
+
+/**
+ * Test method fep3::ISimulationBus::startBlockingReception of a simulation bus
+ * that resides in a C plugin
+ * @req_id FEPSDK-1915
+ */
+TEST_F(SimulationBusLoaderFixture, testMethod_startBlockingReception)
+{
+    // setting of expectations
+    {
+        auto& mock_simulation_bus = getMockComponent();
+
+        EXPECT_CALL(mock_simulation_bus, startBlockingReception(::testing::_))
+            .Times(2)
+            .WillRepeatedly(::testing::DoAll
+                (::testing::InvokeArgument<0>()
+                , ::testing::Return()
+                ))
+            ;
+    }
+    fep3::arya::ISimulationBus* simulation_bus = getComponent();
+    ASSERT_NE(nullptr, simulation_bus);
+    { // call with valid callback
+        bool reception_preparation_done_callback_called = false;
+        simulation_bus->startBlockingReception([&reception_preparation_done_callback_called]()
+            {
+                reception_preparation_done_callback_called = true;
+            });
+        EXPECT_TRUE(reception_preparation_done_callback_called);
+    }
+    { // call with invalid callback
+        simulation_bus->startBlockingReception({});
+    }
+}
+
+/**
+ * Test method fep3::ISimulationBus::stopBlockingReception of a simulation bus
+ * that resides in a C plugin
+ * @req_id FEPSDK-1915
+ */
+TEST_F(SimulationBusLoaderFixture, testMethod_stopBlockingReception)
+{
+    // setting of expectations
+    {
+        auto& mock_simulation_bus = getMockComponent();
+
+        EXPECT_CALL(mock_simulation_bus, stopBlockingReception())
+            .WillOnce(::testing::Return())
+            ;
+    }
+    fep3::arya::ISimulationBus* simulation_bus = getComponent();
+    ASSERT_NE(nullptr, simulation_bus);
+    simulation_bus->stopBlockingReception();
 }
 
 // action popping a stream type
@@ -212,7 +275,7 @@ ACTION_P(Pop, shared_pointer_to_item)
 // action receiving a stream type
 ACTION_P(Receive, shared_pointer_to_item)
 {
-    arg0.operator()(shared_pointer_to_item);
+    arg0->operator()(shared_pointer_to_item);
 }
 
 /**
@@ -250,30 +313,32 @@ TEST_F(SimulationBusLoaderFixture, testIDataReader)
     // setting of expectations for calls to ISimulationBus::IDataReader methods
     {
         ::testing::InSequence sequence;
-        
+
         EXPECT_CALL(mock_data_reader, size()).WillOnce(::testing::Return(11));
         EXPECT_CALL(mock_data_reader, capacity()).WillOnce(::testing::Return(22));
         EXPECT_CALL(mock_data_reader, pop(::testing::_))
             .WillOnce(Pop(mock_stream_type))
             .WillOnce(Pop(mock_data_sample))
             ;
-        EXPECT_CALL(mock_data_reader, receive(::testing::_))
+        EXPECT_CALL(mock_data_reader, reset_(::testing::_))
             .WillOnce(Receive(mock_stream_type))
             .WillOnce(Receive(mock_data_sample))
             ;
-        EXPECT_CALL(mock_data_reader, stop()).WillOnce(::testing::Return());
+        EXPECT_CALL(mock_data_reader, reset_(std::shared_ptr<fep3::ISimulationBus::IDataReceiver>{}))
+            .WillOnce(::testing::Return())
+            ;
         EXPECT_CALL(mock_data_reader, getFrontTime()).WillOnce(::testing::Return(::testing::ByMove(::fep3::Optional<::fep3::Timestamp>(next_timestamp))));
     }
     EXPECT_EQ(11, unique_pointer_to_data_reader->size());
     EXPECT_EQ(22, unique_pointer_to_data_reader->capacity());
 
-    auto mock_data_receiver = std::make_unique<::testing::NiceMock<::fep3::mock::DataReceiver>>();
+    auto mock_data_receiver = std::make_shared<::testing::NiceMock<::fep3::mock::DataReceiver>>();
 
     EXPECT_TRUE(unique_pointer_to_data_reader->pop(*mock_data_receiver.get()));
     EXPECT_TRUE(unique_pointer_to_data_reader->pop(*mock_data_receiver.get()));
-    unique_pointer_to_data_reader->receive(*mock_data_receiver.get());
-    unique_pointer_to_data_reader->receive(*mock_data_receiver.get());
-    unique_pointer_to_data_reader->stop();
+    unique_pointer_to_data_reader->reset(mock_data_receiver);
+    unique_pointer_to_data_reader->reset(mock_data_receiver);
+    unique_pointer_to_data_reader->reset();
     EXPECT_EQ(::fep3::Optional<::fep3::Timestamp>(next_timestamp), unique_pointer_to_data_reader->getFrontTime());
 }
 
@@ -284,10 +349,10 @@ TEST_F(SimulationBusLoaderFixture, testIDataReader)
 TEST_F(SimulationBusLoaderFixture, testIDataReceiver)
 {
     const std::string signal_1_name{"signal_1"};
-    const auto& stream_type_1 = std::make_shared<::fep3::StreamType>(::fep3::StreamMetaType("test_stream_meta_type_1"));
-    const auto& data_sample_1 = std::make_shared<::fep3::DataSample>();
+    const auto& stream_type_1 = std::make_shared<::fep3::base::StreamType>(::fep3::base::StreamMetaType("test_stream_meta_type_1"));
+    const auto& data_sample_1 = std::make_shared<::fep3::base::DataSample>();
     uint32_t data_sample_value{55};
-    data_sample_1->update(::fep3::Timestamp(33), 44, ::fep3::RawMemoryStandardType<decltype(data_sample_value)>(data_sample_value));
+    data_sample_1->update(::fep3::Timestamp(33), 44, ::fep3::base::RawMemoryStandardType<decltype(data_sample_value)>(data_sample_value));
 
     auto unique_pointer_to_mock_data_reader = std::make_unique<::testing::StrictMock<::fep3::mock::DataReader>>();
     auto& mock_data_reader = *unique_pointer_to_mock_data_reader.get();
@@ -351,10 +416,10 @@ ACTION_P(WriteStreamType, destination_stream_meta_type_name)
 TEST_F(SimulationBusLoaderFixture, testIDataWriter)
 {
     const std::string signal_1_name{"signal_1"};
-    ::fep3::DataSample data_sample_1;
+    ::fep3::base::DataSample data_sample_1;
     uint32_t data_sample_value{55};
-    data_sample_1.update(::fep3::Timestamp(33), 44, ::fep3::RawMemoryStandardType<decltype(data_sample_value)>(data_sample_value));
-    const ::fep3::StreamType stream_type_1(::fep3::StreamMetaType("test_stream_meta_type_1"));
+    data_sample_1.update(::fep3::Timestamp(33), 44, ::fep3::base::RawMemoryStandardType<decltype(data_sample_value)>(data_sample_value));
+    const ::fep3::base::StreamType stream_type_1(::fep3::base::StreamMetaType("test_stream_meta_type_1"));
 
     auto unique_pointer_to_mock_data_writer = std::make_unique<::testing::StrictMock<::fep3::mock::DataWriter>>();
     auto& mock_data_writer = *unique_pointer_to_mock_data_writer.get();
@@ -377,12 +442,12 @@ TEST_F(SimulationBusLoaderFixture, testIDataWriter)
     ASSERT_TRUE(unique_pointer_to_data_writer);
 
     uint32_t written_value{0};
-    ::fep3::RawMemoryStandardType<decltype(written_value)> written_raw_memory(written_value);
+    ::fep3::base::RawMemoryStandardType<decltype(written_value)> written_raw_memory(written_value);
     std::string written_stream_meta_type_name;
     // setting of expectations for calls to ISimulationBus::IDataWriter methods
     {
         ::testing::InSequence sequence;
-        
+
         EXPECT_CALL(mock_data_writer, write(::testing::Matcher<const ::fep3::IDataSample&>(::fep3::mock::DataSampleMatcher(data_sample_1))))
             .WillOnce(WriteDataSample(&written_raw_memory))
             ;

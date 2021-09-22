@@ -1,14 +1,18 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 set(FEP3_BASE_DIR ${PROJECT_SOURCE_DIR}/src/fep3/base)
 set(FEP3_BASE_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/base)
 
@@ -19,14 +23,19 @@ set(FEP3_BASE_SOURCES_PRIVATE
     ${FEP3_BASE_DIR}/environment_variable/environment_variable.cpp
     ${FEP3_BASE_DIR}/file/file.h
     ${FEP3_BASE_DIR}/file/file.cpp
+    ${FEP3_BASE_DIR}/queue/data_item_queue.cpp
+    ${FEP3_BASE_DIR}/compiler_warnings/disable_deprecation_warning.h
+    ${FEP3_BASE_DIR}/compiler_warnings/enable_deprecation_warning.h
 )
 
 set(FEP3_BASE_SOURCES_PUBLIC
     # directory "properties"
-    ${FEP3_BASE_INCLUDE_DIR}/properties/properties.h
     ${FEP3_BASE_INCLUDE_DIR}/properties/properties_intf.h
-    ${FEP3_BASE_INCLUDE_DIR}/properties/property_type.h
+    ${FEP3_BASE_INCLUDE_DIR}/properties/properties.h
     ${FEP3_BASE_INCLUDE_DIR}/properties/property_type_conversion.h
+    ${FEP3_BASE_INCLUDE_DIR}/properties/property_type.h
+    ${FEP3_BASE_INCLUDE_DIR}/properties/propertynode_helper.h
+    ${FEP3_BASE_INCLUDE_DIR}/properties/propertynode.h
     ${FEP3_BASE_INCLUDE_DIR}/properties/c_access_wrapper/properties_c_access_wrapper.h
     ${FEP3_BASE_INCLUDE_DIR}/properties/c_intf/properties_c_intf.h
 
@@ -40,12 +49,19 @@ set(FEP3_BASE_SOURCES_PUBLIC
     ${FEP3_BASE_INCLUDE_DIR}/sample/c_access_wrapper/raw_memory_c_access_wrapper.h
     ${FEP3_BASE_INCLUDE_DIR}/sample/c_intf/raw_memory_c_intf.h
 
-    # directory "streamtype"
-    ${FEP3_BASE_INCLUDE_DIR}/streamtype/default_streamtype.h
-    ${FEP3_BASE_INCLUDE_DIR}/streamtype/streamtype.h
-    ${FEP3_BASE_INCLUDE_DIR}/streamtype/streamtype_intf.h
-    ${FEP3_BASE_INCLUDE_DIR}/streamtype/c_access_wrapper/stream_type_c_access_wrapper.h
-    ${FEP3_BASE_INCLUDE_DIR}/streamtype/c_intf/stream_type_c_intf.h
+    # directory "stream_type"
+    ${FEP3_BASE_INCLUDE_DIR}/stream_type/default_stream_type.h
+    ${FEP3_BASE_INCLUDE_DIR}/stream_type/stream_type.h
+    ${FEP3_BASE_INCLUDE_DIR}/stream_type/stream_type_intf.h
+    ${FEP3_BASE_INCLUDE_DIR}/stream_type/c_access_wrapper/stream_type_c_access_wrapper.h
+    ${FEP3_BASE_INCLUDE_DIR}/stream_type/c_intf/stream_type_c_intf.h
+
+    # directory "queue"
+    ${FEP3_BASE_INCLUDE_DIR}/queue/data_item_queue_base.h
+    ${FEP3_BASE_INCLUDE_DIR}/queue/data_item_queue.h
+
+    # directory "data_registry"
+    ${FEP3_BASE_INCLUDE_DIR}/data_registry/data_registry.h
 )
 
 set(FEP3_BASE_SOURCES ${FEP3_BASE_SOURCES_PRIVATE} ${FEP3_BASE_SOURCES_PUBLIC})

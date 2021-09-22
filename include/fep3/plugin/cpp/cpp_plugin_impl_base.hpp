@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -49,21 +57,11 @@ extern "C"
     }
 
     /**
-     * Returns the version information of the plugin
-     * @note This function has to be implemented in the plugin
-     * @param callback The callback to be called with the plugin version string
-     * @param destination The pointer to the destination the callback
-     *                    target shall copy the plugin version string to
-     */
-    FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getPluginVersion
-        (void(*callback)(void*, const char*), void* destination);
-
-    /**
      * Returns the component factory of the plugin.
      * @note This function has to be implemented in the plugin
      * @return Pointer to the plugin component factory
      * @remark The function transfers ownership of the returned component factory to the caller.
      */
-    FEP3_PLUGIN_EXPORT fep3::arya::ICPPPluginComponentFactory* FEP3_PLUGIN_CALL fep3_plugin_cpp_arya_getFactory();
+    FEP3_PLUGIN_EXPORT fep3::plugin::cpp::arya::ICPPPluginComponentFactory* FEP3_PLUGIN_CALL fep3_plugin_cpp_arya_getFactory();
 
 }

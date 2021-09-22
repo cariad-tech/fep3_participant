@@ -1,14 +1,23 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
-#pragma once 
+
+#pragma once
 
 #include <string>
 #include <fep3/fep3_participant_types.h>
@@ -55,7 +64,7 @@ public:
     interface_type* getComponent() const
     {
         const std::string fep_iid = getComponentIID<interface_type>();
-        IComponent* component = findComponent(fep_iid);
+        arya::IComponent* component = findComponent(fep_iid);
         if (component)
         {
             return static_cast<interface_type*>(component->getInterface(fep_iid.c_str()));
@@ -67,11 +76,8 @@ public:
     }
 
 protected:
-    /**
-        * @brief Destroy the IComponents object
-        *
-        */
-    virtual ~IComponents() = default;
+    /// DTOR
+    ~IComponents() = default;
 
 private:
     /// @cond nodoc
@@ -81,23 +87,23 @@ private:
         * @brief Get the component pointer of the registered component that is registered
         * with the component interface id of \p fep_iid
         *
-        * @param fep_iid the component interface identifier to retrieve.
+        * @param[in] fep_iid the component interface identifier to retrieve.
         * @retval IComponent* valid pointer to a component which is registered for the given \p fep_iid
         * @retval nullptr if not found
         */
-    virtual IComponent* findComponent(const std::string& fep_iid) const = 0;
+    virtual arya::IComponent* findComponent(const std::string& fep_iid) const = 0;
 };
 
 /**
     * @brief helper function to retrieve a component from the modules components registry
     *
     * @tparam INTERFACE the interface of the component
-    * @param components the components container
+    * @param[in] components the components container
     * @return INTERFACE*
     * @retval nullptr the interface was not found
     */
 template <class interface_type>
-interface_type* getComponent(const IComponents& components)
+interface_type* getComponent(const arya::IComponents& components)
 {
     return components.getComponent<interface_type>();
 }
@@ -109,12 +115,12 @@ using arya::IComponents;
 /**
  * @brief extracting @ref fep3::arya::getComponent() from version namespace
  * @tparam interface_type the component interface looking for
- * @param components the reference to the components
+ * @param[in] components the reference to the components
  * @return interface_type* the valid interface pointer
  * @retval nullptr the interfac was not found
  */
 template<class interface_type>
-interface_type* getComponent(const IComponents& components)
+interface_type* getComponent(const arya::IComponents& components)
 {
     return arya::getComponent<interface_type>(components);
 }

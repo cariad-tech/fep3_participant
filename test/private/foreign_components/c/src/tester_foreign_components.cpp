@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 
 #include <fep3/plugin/c/c_host_plugin.h>
@@ -25,6 +34,7 @@
 #include <fep3/components/base/component_registry.h>
 #include <fep3/components/base/c_access_wrapper/component_getter_function_getter.h>
 #include <helper/component_c_plugin_helper.h>
+#include <helper/gmock_destruction_helper.h>
 
 struct Plugin1PathGetter
 {
@@ -75,8 +85,8 @@ TEST_F(ComponentALoaderFixture, testComponentCreation)
 {
     auto& mock_component_a = getMockComponent();
     EXPECT_CALL(mock_component_a, get()).WillOnce(::testing::Return(33));
-    EXPECT_CALL(mock_component_a, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_a);
+
     ::test_plugin_1::IComponentA* component_a = getComponent();
     ASSERT_NE(nullptr, component_a);
     // test calling a method
@@ -93,7 +103,7 @@ TEST_F(ComponentALoaderFixture, testGettingSpecificComponent)
     auto& mock_component_a = getMockComponent();
     EXPECT_CALL(mock_component_a, set(44)).WillOnce(::testing::Return());
     EXPECT_CALL(mock_component_a, get()).WillOnce(::testing::Return(55));
-    EXPECT_CALL(mock_component_a, die()).WillOnce(::testing::Return());
+    EXPECT_DESTRUCTION(mock_component_a);
 
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
@@ -126,13 +136,13 @@ TEST_F(ComponentALoaderFixture, testAccessingHostComponent)
 {
     // component A resides in the plugin
     auto& mock_component_a = ComponentALoader::getMockComponent();
-    EXPECT_CALL(mock_component_a, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_a);
+
     // component B resides in the host
     auto mock_component_b = std::make_unique<::test_plugin_1::mock::MockComponentB>();
     EXPECT_CALL(*mock_component_b, get()).WillOnce(::testing::Return(55));
-    EXPECT_CALL(*mock_component_b, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(*mock_component_b);
+
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
         ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>
@@ -142,7 +152,7 @@ TEST_F(ComponentALoaderFixture, testAccessingHostComponent)
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }
-    
+
     ::test_plugin_1::IComponentA* pointer_to_component_a = component_registry->getComponent<test_plugin_1::IComponentA>();
     ASSERT_NE(pointer_to_component_a, nullptr);
     EXPECT_EQ(55, pointer_to_component_a->getFromComponentB());
@@ -180,12 +190,12 @@ protected:
 TEST_F(ComponentABLoaderFixture, testAccessingOtherPluginComponent)
 {
     auto& mock_component_a = ComponentALoader::getMockComponent();
-    EXPECT_CALL(mock_component_a, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_a);
+
     auto& mock_component_b = ComponentBLoader::getMockComponent();
     EXPECT_CALL(mock_component_b, get()).WillOnce(::testing::Return(55));
-    EXPECT_CALL(mock_component_b, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_b);
+
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
         ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent()));
@@ -193,7 +203,7 @@ TEST_F(ComponentABLoaderFixture, testAccessingOtherPluginComponent)
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }
-    
+
     ::test_plugin_1::IComponentA* pointer_to_component_a = component_registry->getComponent<test_plugin_1::IComponentA>();
     ASSERT_NE(pointer_to_component_a, nullptr);
     EXPECT_EQ(55, pointer_to_component_a->getFromComponentB());
@@ -245,12 +255,12 @@ protected:
 TEST_F(ComponentACLoaderFixture, testAccessingOtherPluginComponent)
 {
     auto& mock_component_a = ComponentALoader::getMockComponent();
-    EXPECT_CALL(mock_component_a, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_a);
+
     auto& mock_component_c = ComponentCLoader::getMockComponent();
     EXPECT_CALL(mock_component_c, get()).WillOnce(::testing::Return(66));
-    EXPECT_CALL(mock_component_c, die()).WillOnce(::testing::Return());
-    
+    EXPECT_DESTRUCTION(mock_component_c);
+
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
         ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent()));
@@ -258,7 +268,7 @@ TEST_F(ComponentACLoaderFixture, testAccessingOtherPluginComponent)
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }
-    
+
     ::test_plugin_1::IComponentA* pointer_to_component_a = component_registry->getComponent<test_plugin_1::IComponentA>();
     ASSERT_NE(pointer_to_component_a, nullptr);
     EXPECT_EQ(66, pointer_to_component_a->getFromComponentC());

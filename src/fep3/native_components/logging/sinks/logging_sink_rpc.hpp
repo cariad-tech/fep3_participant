@@ -1,12 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -20,6 +30,7 @@
 
 #include <map>
 #include <tuple>
+#include <mutex>
 
 namespace fep3
 {
@@ -49,11 +60,10 @@ private:
 };
 
 /**
-* @brief Implementation of the rpc logging. Can be used as a base class for a custom sink.
-*        Logs will be send to the system library.
-*/
-class LoggingSinkRPC : public Properties<ILoggingService::ILoggingSink>
-{
+ * @brief Implementation of the rpc logging. Can be used as a base class for a custom sink.
+ *        Logs will be send to the system library.
+ */
+class LoggingSinkRPC : public base::Properties<ILoggingService::ILoggingSink> {
 public:
     explicit LoggingSinkRPC(IServiceBus& service_bus) : _service_bus(&service_bus)
     {
@@ -70,14 +80,14 @@ public:
         _client_filters.clear();
     }
 
-    fep3::Result log(logging::LogMessage log) const override
+    fep3::Result log(LogMessage log) const override
     {
         fep3::Result result = ERR_NOERROR;
         std::lock_guard<std::mutex> lock(_sync_filters);
 
         for (const auto& current_client : _client_filters)
         {
-            //TODO: Filter here! 
+            //TODO: Filter here!
             try
             {
                 result = static_cast<int32_t>(current_client.second._client->onLog(log._message,
@@ -86,9 +96,13 @@ public:
                     static_cast<int>(log._severity),
                     log._timestamp));
             }
-            catch (jsonrpc::JsonRpcException)
+            catch (const jsonrpc::JsonRpcException& ex)
             {
-                result = ERR_EXCEPTION_RAISED;
+                result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
+            }
+            catch (const std::exception& ex)
+            {
+                result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
             }
         }
         return result;
@@ -109,7 +123,7 @@ public:
 
             auto& new_filter = _client_filters[address];
             new_filter._name_filter = logger_name_filter;
-            new_filter._severity_filter = static_cast<fep3::logging::Severity>(severity);
+            new_filter._severity_filter = static_cast<fep3::LoggerSeverity>(severity);
             new_filter._client.reset(new_client.release());
             return 0;
         }
@@ -131,7 +145,7 @@ private:
     struct ClientFilter
     {
         std::string _name_filter;
-        fep3::logging::Severity _severity_filter;
+        fep3::LoggerSeverity _severity_filter;
         std::unique_ptr<RPCSinkClientClient> _client;
     };
     /// RPC client to send the logs to the system library

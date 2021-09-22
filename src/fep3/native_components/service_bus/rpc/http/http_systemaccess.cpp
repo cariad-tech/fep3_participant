@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include "http_systemaccess.h"
 #include "http_server.h"
 #include "http_client.h"
@@ -56,7 +64,7 @@ public:
         }
 
         //we only have a look on the received_system_name if is equal to the system_name
-        if (system_name == received_system_name 
+        if (system_name == received_system_name
             || search_all_systems)
         {
             if (update_event._event_id == update_event.notify_alive
@@ -72,7 +80,7 @@ public:
         }
         else
         {
-            //this is a server belongs to another system 
+            //this is a server belongs to another system
         }
     }
     void removeOldDevices()
@@ -169,7 +177,7 @@ struct HttpSystemAccess::Impl
                     FEP3_PARTICIPANT_LIBRARY_VERSION_ID,
                     FEP3_PARTICIPANT_LIBRARY_VERSION_STR,
                     HttpServer::_discovery_search_target);
-        
+
             _stop_loop = false;
             _loop = std::move(std::thread(
                 [&]
@@ -191,7 +199,7 @@ struct HttpSystemAccess::Impl
                             removeOldDevices();
                             searchNow();
                         }
-                        
+
                         checkForServices(1s);
                         std::this_thread::sleep_for(1ms);
                         if (m_search_now)
@@ -261,7 +269,7 @@ std::shared_ptr<IServiceBus::IParticipantServer> HttpSystemAccess::createAServer
     const std::string& server_name,
     const std::string& server_url)
 {
-    std::shared_ptr<rpc::arya::IRPCServer> server_to_set;
+    std::shared_ptr<arya::IRPCServer> server_to_set;
     {
         std::string _used_server_url = server_url;
         try

@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -23,18 +32,12 @@ namespace env
 
 struct SchedulerTestEnv
 {
-    inline SchedulerTestEnv()        
+    inline SchedulerTestEnv()
         : _logger(std::make_shared<fep3::mock::Logger>())
-        , _set_participant_to_error_state(
-            [&]() -> fep3::Result {return _set_participant_to_error_state_mock.Call(); })
-    {        
+    {
     }
 
     std::shared_ptr<fep3::mock::Logger> _logger;
-
-     /// necessary because MockFunction.AsStdFunction seems not be available with our gtest
-    std::function<fep3::Result()> _set_participant_to_error_state{};
-    ::testing::MockFunction<fep3::Result()> _set_participant_to_error_state_mock;
 };
 
 }

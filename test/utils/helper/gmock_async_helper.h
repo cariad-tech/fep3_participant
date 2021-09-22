@@ -1,15 +1,28 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
 
+
+#pragma once
+
 #include <condition_variable>
+
+#include <gmock/gmock.h>
 
 namespace test
 {
@@ -22,15 +35,7 @@ namespace helper
  * https://github.com/google/googletest/blob/master/googlemock/docs/cook_book.md
  * suggests on "Testing Asynchronous Behavior".
  *
- * Usage:
- * First define a gMock action like so:
- *
- * ACTION_P(Notify, notification)
- * {
- *     notification->notify();
- * }
- *
- * Then in your test do:
+ * Usage in your test:
  *
  * Notification done;
  * EXPECT_CALL(mock_event_dispatcher, dispatchEvent(kEventId))
@@ -41,7 +46,25 @@ namespace helper
  * done.waitForNotification();
  * // or done.waitForNotificationWithTimeout(std::chrono::milliseconds(0));
  *
+ * Note: The above example uses the simple action "Notify" as provided below. If you need to do more in the action you
+ * can define your own action, e. g. like so:
+ *
+ * ACTION_P(MyNotify, notification, value_to_be_incremented)
+ * {
+ *     value_to_be_incremented++;
+ *     notification->notify();
+ * }
+ *
  */
+
+/**
+ * @brief Simple action notifying the passed notification object
+ */
+ACTION_P(Notify, notification)
+{
+     notification->notify();
+}
+
 class Notification
 {
 public:
@@ -77,8 +100,8 @@ public:
      *
      * @tparam rep_type Arithmethic type representing the number of ticks (see std::chrono::duration for further information)
      * @tparam period_type Period representing the tick period (see std::chrono::duration for further information)
-     * @param timeout The duration how long to wait for the \ref Notify method to be called
-     * @return true if the notification has arrived in time, false otherwise
+     * @param[in]timeout The duration how long to wait for the \ref Notify method to be called
+     * @return @c true if the notification has arrived in time, @c false otherwise
      */
     template<typename rep_type, typename period_type>
     bool waitForNotificationWithTimeout(const std::chrono::duration<rep_type, period_type>& timeout)
@@ -94,7 +117,7 @@ public:
             );
         // reset _notified to be able to wait again on this Notification
         _notified = false;
-        
+
         return wait_flag;
     }
 

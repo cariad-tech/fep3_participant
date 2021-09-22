@@ -1,14 +1,23 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
- 
+
+
 #pragma once
 
 #include <map>
@@ -49,7 +58,7 @@ private:
     private:
         getter_function_type _getter_function;
     };
-    
+
     template<typename getter_function_type>
     static std::unique_ptr<GetterFunctionGetter<getter_function_type>> makeGetterFunctionGetter
         (getter_function_type&& getter_function)
@@ -57,9 +66,9 @@ private:
         return std::make_unique<GetterFunctionGetter<getter_function_type>>
             (std::forward<getter_function_type>(getter_function));
     }
-    
+
     using GetterFunctionGetters = std::map<std::string, std::unique_ptr<IGetterFunctionGetter>>;
-    
+
     template<typename... access_object_types>
     struct Factory
     {

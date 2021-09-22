@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "timer_scheduler_impl.h"
 
@@ -17,7 +25,6 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
-#include <cassert>
 
 namespace fep3
 {
@@ -28,9 +35,9 @@ TimerScheduler::TimerScheduler(fep3::IClockService& clock)
     : _clock(&clock)
     , _cancelled(false)
     , _started(false)
-   
-    , _startup_reset_time(fep3::Optional<Timestamp>())    
-{       
+
+    , _startup_reset_time(fep3::Optional<Timestamp>())
+{
     initBlockSchedulingStart();
 }
 
@@ -38,12 +45,12 @@ TimerScheduler::TimerScheduler(fep3::IClockService& clock)
 
 TimerScheduler::~TimerScheduler()
 {
-    stop();   
+    stop();
 }
 
 void TimerScheduler::initBlockSchedulingStart()
 {
-	_block_scheduling_start = IClock::ClockType::continuous == getClockType();
+    _block_scheduling_start = IClock::ClockType::continuous == getClockType();
 }
 
 fep3::Result TimerScheduler::addTimer(ITimer& timer, Duration period, Duration initial_delay)
@@ -73,12 +80,12 @@ fep3::Result TimerScheduler::removeTimer(ITimer& oTimer)
 
 
 fep3::Result TimerScheduler::start()
-{   
+{
     _cancelled = false;
 
      if (_startup_reset_time.has_value() && IClock::ClockType::discrete == getClockType())
     {
-        fep3::Optional<Duration> time_to_wait;     
+        fep3::Optional<Duration> time_to_wait;
         processSchedulerQueueSynchron(_startup_reset_time.value(), time_to_wait);
     }
 
@@ -87,28 +94,31 @@ fep3::Result TimerScheduler::start()
         // continuous clock will be started later on first reset event
         _started = true;
     }
-   
+
     return {};
 }
 
 fep3::Result TimerScheduler::stop()
 {
-	std::lock_guard<std::mutex> lock_guard_stop(_mutex_start_stop_update);
-	
-    initBlockSchedulingStart();    
+    std::lock_guard<std::mutex> lock_guard_stop(_mutex_start_stop_update);
+
+    initBlockSchedulingStart();
     _cancelled = true;
     _started = false;
     _startup_reset_time = fep3::Optional<Timestamp>();
     _cv_trigger_event.notify_all();
+    _cv_initial_reset.notify_all();
 
     return{};
 }
 
 void TimerScheduler::processSchedulerQueueSynchron(Timestamp current_time, fep3::Optional<Duration>& time_to_wait)
 {
-    assert(current_time >= Timestamp(0));
+    assert(current_time >= Timestamp(0)
+        && "Clock based scheduler may not use a timestamp < 0 as current time");
     assert(!time_to_wait.has_value()
-        || (time_to_wait.has_value() && time_to_wait.value() > Duration(0)));
+        || ((time_to_wait.has_value() && time_to_wait.value() > Duration(0))
+        && "Clock based scheduler may not use a duration < 0 as waiting time"));
 
     // ATTENTION: This is the old implementation of ProcessSchedulerQueue for the synchronous case.
     // If you have to change anything in this method have also a look at the asynchron version!!!
@@ -143,7 +153,7 @@ void TimerScheduler::processSchedulerQueueSynchron(Timestamp current_time, fep3:
         }
 
         TimerInfo timer_info = *timer_it;   // copy timer info
-        //we remember the simulated time step 
+        //we remember the simulated time step
         const auto current_time_for_call = timer_info._next_instant;
 
         if (timer_it->_period != Duration(0))
@@ -192,18 +202,21 @@ void TimerScheduler::processSchedulerQueueSynchron(Timestamp current_time, fep3:
         timers_lock.unlock();
         // in this case we have to wait until the timer has finished processing
         finished_promise.get_future().wait();
-    } 
-   
+    }
+
     // no negative duration
     assert(!time_to_wait.has_value()
-        || (time_to_wait.has_value() && time_to_wait.value() > Duration(0)));
+        || ((time_to_wait.has_value() && time_to_wait.value() > Duration(0))
+        && "Clock based scheduler may not use a duration < 0 as waiting time"));
 }
 
 void TimerScheduler::processSchedulerQueueAsynchron(Timestamp current_time, Optional<Duration>& time_to_wait)
 {
-    assert(current_time >= Timestamp(0));
+    assert(current_time >= Timestamp(0)
+        && "Clock based scheduler may not use a timestamp < 0 as current time");
     assert(!time_to_wait.has_value()
-        || (time_to_wait.has_value() && time_to_wait.value() > Duration(0)));
+        || ((time_to_wait.has_value() && time_to_wait.value() > Duration(0))
+        && "Clock based scheduler may not use a duration < 0 as waiting time"));
 
     // ATTENTION: This is the new implementation of ProcessSchedulerQueue for the asynchronous case.
     // If you have to change anything in this method have also a look at the synchron version!!!
@@ -255,7 +268,8 @@ void TimerScheduler::processSchedulerQueueAsynchron(Timestamp current_time, Opti
                 // the item must be triggered
 
                 // wakeup the thread
-                assert(current_time >= Timestamp(0));
+                assert(current_time >= Timestamp(0)
+                    && "Clock based scheduler may not use a timestamp < 0 to trigger jobs");
                 timer_it->_timer->wakeUp(current_time);
 
                 if (timer_it->_period <= Duration(0))
@@ -301,8 +315,9 @@ void TimerScheduler::processSchedulerQueueAsynchron(Timestamp current_time, Opti
     }
 
     // no negative duration
-    assert(!time_to_wait.has_value() 
-        || (time_to_wait.has_value() && time_to_wait.value() >= Duration(0)));
+    assert(!time_to_wait.has_value()
+        || ((time_to_wait.has_value() && time_to_wait.value() >= Duration(0))
+        && "Clock based scheduler may not use a duration < 0 as waiting time"));
 }
 
 Timestamp TimerScheduler::getTime() const
@@ -320,21 +335,21 @@ fep3::Result TimerScheduler::execute(Timestamp /*time_of_execution*/)
     using namespace std::chrono_literals;
 
     const auto clock_type = getClockType();
-       
-    while (!_cancelled) 
-    {     
-        while(_block_scheduling_start 
-            && !_cancelled) 
+
+    while (!_cancelled)
+    {
+        if (_block_scheduling_start)
         {
             // waiting for start (will be set by call to timeResetBegin)
-            std::this_thread::sleep_for(std::chrono::microseconds(300));
+            std::unique_lock<std::mutex> initial_reset_lock_guard(_mutex_initial_reset);
+            _cv_initial_reset.wait(initial_reset_lock_guard);
         }
-     
+
         auto time_to_wait = Optional<Duration>();
         if (clock_type == IClock::ClockType::continuous)
         {
             processSchedulerQueueAsynchron(getTime(), time_to_wait);
-        }               
+        }
 
         if (!time_to_wait.has_value())
         {
@@ -352,7 +367,7 @@ fep3::Result TimerScheduler::execute(Timestamp /*time_of_execution*/)
             }
         }
         else
-        {        
+        {
             if (time_to_wait.value() < 1ms)
             {
                 // timespan is to short for wait. so just yield the execution.
@@ -373,10 +388,10 @@ fep3::Result TimerScheduler::execute(Timestamp /*time_of_execution*/)
 
 void TimerScheduler::timeResetBegin(Timestamp old_time, Timestamp new_time)
 {
-    _mutex_processing_lock.lock();    
- 
+    _mutex_processing_lock.lock();
+
     const auto do_forward = old_time < new_time;
-    const Timestamp time_diff = (do_forward) ? new_time - old_time : old_time - new_time;  
+    const Timestamp time_diff = (do_forward) ? new_time - old_time : old_time - new_time;
     {
         std::lock_guard<std::mutex> lock(_mutex_timer);
 
@@ -398,11 +413,12 @@ void TimerScheduler::timeResetBegin(Timestamp old_time, Timestamp new_time)
     if (IClock::ClockType::continuous == getClockType())
     {
         _block_scheduling_start = false;
+        _cv_initial_reset.notify_all();
     }
 
     if(!_started)
     {
-       _startup_reset_time = new_time;     
+        _startup_reset_time = new_time;
     }
 
     // make sure any ongoing waiting is cancelled
@@ -413,11 +429,11 @@ void TimerScheduler::timeResetEnd(Timestamp new_time)
 {
     _mutex_processing_lock.unlock();
 
-	std::lock_guard<std::mutex> lock_guard_reset_end(_mutex_start_stop_update);
+    std::lock_guard<std::mutex> lock_guard_reset_end(_mutex_start_stop_update);
 
     if (_started && getClockType() == IClock::ClockType::discrete)
     {
-        fep3::Optional<Timestamp> time_to_wait;      
+        fep3::Optional<Timestamp> time_to_wait;
         processSchedulerQueueSynchron(new_time, time_to_wait);
     }
 
@@ -433,7 +449,7 @@ void TimerScheduler::timeUpdateBegin(Timestamp /*old_time*/, Timestamp /*new_tim
 
 void TimerScheduler::timeUpdating(Timestamp new_time)
 {
-	std::lock_guard<std::mutex> lock_guard_updating(_mutex_start_stop_update);
+    std::lock_guard<std::mutex> lock_guard_updating(_mutex_start_stop_update);
 
     if (_started)
     {

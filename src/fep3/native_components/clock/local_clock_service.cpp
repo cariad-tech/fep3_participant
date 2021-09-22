@@ -1,15 +1,22 @@
 /**
- * Implementation of the native clock service component
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "local_clock_service.h"
 
@@ -36,34 +43,72 @@ namespace fep3
 namespace native
 {
 
-class ClockEventSinkRegistry : public IClock::IEventSink
+class ClockEventSinkRegistry
+    : public IClock::IEventSink
+    , public base::EasyLogging
 {
+private:
+    class EventSinks {
+       using SinkVector = std::shared_ptr<std::vector<std::weak_ptr<IEventSink>>>;
+   public:
+        EventSinks()
+            : _event_sinks(std::make_shared<std::vector<std::weak_ptr<IEventSink>>>())
+        {
+        }
+    public:
+       auto read() {
+           std::lock_guard<std::mutex> lock(_mutex);
+
+           return _event_sinks;
+       }
+       void write(const SinkVector& event_sinks) {
+           std::lock_guard<std::mutex> lock(_mutex);
+
+           _event_sinks = event_sinks;
+       }
+
+    private:
+       std::mutex _mutex;
+       SinkVector _event_sinks;
+    };
+
 public:
     ClockEventSinkRegistry() = default;
 
-    void setLogger(const std::shared_ptr<const ILoggingService::ILogger>& logger)
-    {
-        _logger = logger;
-    }
-
-    ~ClockEventSinkRegistry() override = default;
+    ~ClockEventSinkRegistry() = default;
 
     void registerSink(const std::weak_ptr<IEventSink>& sink)
     {
         const auto sink_ptr = sink.lock();
         if (sink_ptr)
         {
-            std::lock_guard<std::mutex> lock_guard(_mutex);
-
-            for (auto& current_sink : _event_sinks)
             {
-                auto current_sink_ptr = current_sink.lock();
-                if (!current_sink_ptr || current_sink_ptr == sink_ptr)
+                std::lock_guard<std::mutex> lock_guard(_sinks_modification_mutex);
+
+                std::shared_ptr<std::vector<std::weak_ptr<IEventSink>>> event_sinks = _event_sinks.read();
+
+                for (auto& current_sink : *event_sinks)
                 {
-                    return;
+                    auto current_sink_ptr = current_sink.lock();
+                    if (!current_sink_ptr || current_sink_ptr == sink_ptr)
+                    {
+                        return;
+                    }
                 }
+
+                auto event_sinks_tmp = std::make_shared<std::vector<std::weak_ptr<IEventSink>>>();
+                *event_sinks_tmp = *event_sinks;
+
+                event_sinks_tmp->push_back(sink);
+
+                _event_sinks.write(event_sinks_tmp);
             }
-            _event_sinks.push_back(sink);
+
+            FEP3_LOG_DEBUG("Registered event sink at the clock event sink registry.");
+        }
+        else
+        {
+            FEP3_LOG_WARNING("Registration of invalid event sink at the clock event sink registry failed.");
         }
     }
 
@@ -72,162 +117,221 @@ public:
         auto sink_ptr = sink.lock();
         if (sink_ptr)
         {
-            std::lock_guard<std::mutex> lock_guard(_mutex);
 
-            const auto it = std::remove_if(_event_sinks.begin(), _event_sinks.end(),
-                [&sink_ptr](const std::weak_ptr<IEventSink> event_sink)
+            const auto delete_event_sink_locked = [&]() -> bool
             {
-                const auto event_sink_ptr = event_sink.lock();
-                if (event_sink_ptr)
+                std::lock_guard<std::mutex> lock_guard(_sinks_modification_mutex);
+
+                std::shared_ptr<std::vector<std::weak_ptr<IEventSink>>> event_sinks = _event_sinks.read();
+
+                auto event_sinks_tmp = std::make_shared<std::vector<std::weak_ptr<IEventSink>>>();
+                *event_sinks_tmp = *event_sinks;
+
+                const auto it = std::remove_if(
+                    event_sinks_tmp->begin(),
+                    event_sinks_tmp->end(),
+                    [&sink_ptr](const std::weak_ptr<IEventSink>& event_sink)
+                        {
+                            const auto event_sink_ptr = event_sink.lock();
+                            if (event_sink_ptr)
+                            {
+                                return sink_ptr == event_sink_ptr;
+                            }
+                            return false;
+                        });
+
+                if (it != event_sinks_tmp->end())
                 {
-                    return sink_ptr == event_sink_ptr;
-                }
-                return false;
-            });
+                    event_sinks_tmp->erase(it);
 
-            if (it != _event_sinks.end())
+                    _event_sinks.write(event_sinks_tmp);
+
+                    return true;
+                }
+
+                return false;
+            };
+
+            if (delete_event_sink_locked())
             {
-                _event_sinks.erase(it);;
+                FEP3_LOG_DEBUG("Unregistered event sink from the clock event sink registry.");
             }
+            else
+            {
+                FEP3_LOG_WARNING("Deregistration of event sink from the clock event sink registry failed. Event sink not found in the registry.");
+            }
+        }
+        else
+        {
+            FEP3_LOG_WARNING("Deregistration of invalid event sink from the clock event sink registry failed.");
         }
     }
 
 private:
     void timeUpdateBegin(Timestamp old_time, Timestamp new_time) override
     {
-        std::lock_guard<std::mutex> lock_guard(_mutex);
+        FEP3_LOG_DEBUG(a_util::strings::format(
+            "Distributing 'timeUpdateBegin' events. Old time '%lld', new time '%lld'.", old_time, new_time));
 
-        for (auto& sink : _event_sinks)
+        auto event_sinks = _event_sinks.read();
+
+        for (auto& event_sink : *event_sinks)
         {
-            auto sink_ptr = sink.lock();
+            auto sink_ptr = event_sink.lock();
             if (sink_ptr)
             {
                 sink_ptr->timeUpdateBegin(old_time, new_time);
             }
             else
             {
-                logWarning("Expired event sink addressed during 'timeUpdateBegin' event. Unregistering it from Event sink registry.");
-                unregisterSink(sink);
+                FEP3_LOG_DEBUG("Expired event sink addressed during 'timeUpdateBegin' event. Unregistering it from Event sink registry.");
+
+                unregisterSink(event_sink);
             }
         }
     }
     void timeUpdating(Timestamp new_time) override
     {
-        std::lock_guard<std::mutex> lock_guard(_mutex);
+        FEP3_LOG_DEBUG(a_util::strings::format(
+            "Distributing 'timeUpdating' events. New time '%lld'.", new_time));
 
-        for (auto& sink : _event_sinks)
+        auto event_sinks = _event_sinks.read();
+
+        for (auto& event_sink : *event_sinks)
         {
-            auto sink_ptr = sink.lock();
+            auto sink_ptr = event_sink.lock();
             if (sink_ptr)
             {
                 sink_ptr->timeUpdating(new_time);
             }
             else
             {
-                logWarning("Expired event sink addressed during 'timeUpdating' event. Unregistering it from Event sink registry.");
-                unregisterSink(sink);
+                FEP3_LOG_DEBUG("Expired event sink addressed during 'timeUpdating' event. Unregistering it from Event sink registry.");
+
+                unregisterSink(event_sink);
             }
         }
     }
     void timeUpdateEnd(Timestamp new_time) override
     {
-        std::lock_guard<std::mutex> lock_guard(_mutex);
+        FEP3_LOG_DEBUG(a_util::strings::format(
+            "Distributing 'timeUpdateEnd' events. New time '%lld'.", new_time));
 
-        for (auto& sink : _event_sinks)
+        auto event_sinks = _event_sinks.read();
+
+        for (auto& event_sink : *event_sinks)
         {
-            auto sink_ptr = sink.lock();
+            auto sink_ptr = event_sink.lock();
             if (sink_ptr)
             {
                 sink_ptr->timeUpdateEnd(new_time);
             }
             else
             {
-                logWarning("Expired event sink addressed during 'timeUpdateEnd' event. Unregistering it from Event sink registry.");
-                unregisterSink(sink);
+                FEP3_LOG_DEBUG("Expired event sink addressed during 'timeUpdateEnd' event. Unregistering it from Event sink registry.");
+
+                unregisterSink(event_sink);
             }
         }
     }
     void timeResetBegin(Timestamp old_time, Timestamp new_time) override
     {
-        std::lock_guard<std::mutex> lock_guard(_mutex);
 
-        for (auto& sink : _event_sinks)
+        FEP3_LOG_DEBUG(a_util::strings::format(
+            "Distributing 'timeResetBegin' events. Old time '%lld', new time '%lld'.", old_time, new_time));
+
+        auto event_sinks = _event_sinks.read();
+
+        for (auto& event_sink : *event_sinks)
         {
-            auto sink_ptr = sink.lock();
+            auto sink_ptr = event_sink.lock();
             if (sink_ptr)
             {
                 sink_ptr->timeResetBegin(old_time, new_time);
             }
             else
             {
-                logWarning("Expired event sink addressed during 'timeResetBegin' event. Unregistering it from Event sink registry.");
-                unregisterSink(sink);
+                FEP3_LOG_DEBUG("Expired event sink addressed during 'timeResetBegin' event. Unregistering it from Event sink registry.");
+
+                unregisterSink(event_sink);
             }
         }
     }
     void timeResetEnd(Timestamp new_time) override
     {
-        std::lock_guard<std::mutex> lock_guard(_mutex);
+        FEP3_LOG_DEBUG(a_util::strings::format(
+            "Distributing 'timeResetEnd' events. New time '%lld'.", new_time));
 
-        for (auto& sink : _event_sinks)
+        auto event_sinks = _event_sinks.read();
+
+        for (auto& event_sink : *event_sinks)
         {
-            auto sink_ptr = sink.lock();
+            auto sink_ptr = event_sink.lock();
             if (sink_ptr)
             {
                 sink_ptr->timeResetEnd(new_time);
             }
             else
             {
-                logWarning("Expired event sink addressed during 'timeResetEnd' event. Unregistering it from Event sink registry.");
-                unregisterSink(sink);
-            }
-        }
-    };
+                FEP3_LOG_DEBUG("Expired event sink addressed during 'timeResetEnd' event. Unregistering it from Event sink registry.");
 
-private:
-    fep3::Result logWarning(const std::string& message) const
-    {
-        if (_logger && _logger->isWarningEnabled())
-        {
-            return _logger->logWarning(message);
-        }
-        else
-        {
-            return {};
+                unregisterSink(event_sink);
+            }
         }
     }
 
 private:
-    std::mutex                                                  _mutex;
-    std::shared_ptr<const ILoggingService::ILogger>             _logger;
-    std::vector<std::weak_ptr<IEventSink>>                      _event_sinks;
+    mutable std::mutex _sinks_modification_mutex;
+    EventSinks _event_sinks;
 };
 
 class RPCClockSyncMaster
     : public rpc::RPCService<rpc_stubs::RPCClockSyncMasterServiceStub, rpc::arya::IRPCClockSyncMasterDef>
+    , public base::EasyLogging
 {
 public:
-    explicit RPCClockSyncMaster(LocalClockService& service) : _service(service)
+    explicit RPCClockSyncMaster(LocalClockService& service)
+    : _service(service)
     {
     }
 
 protected:
     int registerSyncSlave(int event_id_flag, const std::string& slave_name) override
     {
-        if (fep3::isOk(_service.masterRegisterSlave(slave_name, event_id_flag)))
+        const auto result = _service.masterRegisterSlave(slave_name, event_id_flag);
+        if (fep3::isOk(result))
         {
+            FEP3_LOG_DEBUG(a_util::strings::format(
+                    "Successfully registered timing slave '%s'.", slave_name.c_str()));
+
             return 0;
         }
+
+        FEP3_LOG_WARNING(a_util::strings::format(
+            "Failure during registration of timing slave '%s': '%d - %s'",
+            slave_name.c_str(), result.getErrorCode(), result.getDescription()));
+
         return -1;
     }
+
     int unregisterSyncSlave(const std::string& slave_name) override
     {
-        if (fep3::isOk(_service.masterUnregisterSlave(slave_name)))
+        const auto result = _service.masterUnregisterSlave(slave_name);
+        if (fep3::isOk(result))
         {
+            FEP3_LOG_DEBUG(a_util::strings::format(
+                "Successfully unregistered timing slave '%s'.", slave_name.c_str()));
+
             return 0;
         }
+
+        FEP3_LOG_WARNING(a_util::strings::format(
+            "Failure during deregistration of timing slave '%s': '%d - %s'",
+            slave_name.c_str(), result.getErrorCode(), result.getDescription()));
+
         return -1;
     }
+
     int slaveSyncedEvent(const std::string& new_time, const std::string& slave_name) override
     {
         if (fep3::isOk(
@@ -237,13 +341,26 @@ protected:
         }
         return -1;
     }
+
     std::string getMasterTime() override
     {
-        return a_util::strings::toString(_service.getTime().count());
+        auto current_time = a_util::strings::toString(_service.getTime().count());
+
+        FEP3_LOG_DEBUG(a_util::strings::format(
+                "Retrieved master time request. Responding '%s'.", current_time.c_str()));
+
+        return current_time;
     }
+
     int getMasterType() override
     {
-        return static_cast<int>(_service.getType());
+        const auto main_clock_type = static_cast<int>(_service.getType());
+
+        FEP3_LOG_DEBUG(a_util::strings::format(
+                "Retrieved master clock type request. Responding '%d' (%s).",
+            main_clock_type, 0 == main_clock_type ? "continuous" : "discrete"));
+
+        return main_clock_type;
     }
 
 private:
@@ -324,7 +441,7 @@ fep3::Result ClockServiceConfiguration::registerPropertyVariables()
     FEP3_RETURN_IF_FAILED(registerPropertyVariable(_main_clock_name, FEP3_MAIN_CLOCK_PROPERTY));
     FEP3_RETURN_IF_FAILED(registerPropertyVariable(_time_update_timeout, FEP3_TIME_UPDATE_TIMEOUT_PROPERTY));
     FEP3_RETURN_IF_FAILED(registerPropertyVariable(_clock_sim_time_time_factor, FEP3_CLOCK_SIM_TIME_TIME_FACTOR_PROPERTY));
-    FEP3_RETURN_IF_FAILED(registerPropertyVariable(_clock_sim_time_cycle_time, FEP3_CLOCK_SIM_TIME_CYCLE_TIME_PROPERTY));
+    FEP3_RETURN_IF_FAILED(registerPropertyVariable(_clock_sim_time_step_size, FEP3_CLOCK_SIM_TIME_STEP_SIZE_PROPERTY));
 
     return {};
 }
@@ -334,42 +451,86 @@ fep3::Result ClockServiceConfiguration::unregisterPropertyVariables()
     FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_main_clock_name, FEP3_MAIN_CLOCK_PROPERTY));
     FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_time_update_timeout, FEP3_TIME_UPDATE_TIMEOUT_PROPERTY));
     FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_clock_sim_time_time_factor, FEP3_CLOCK_SIM_TIME_TIME_FACTOR_PROPERTY));
-    FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_clock_sim_time_cycle_time, FEP3_CLOCK_SIM_TIME_CYCLE_TIME_PROPERTY));
+    FEP3_RETURN_IF_FAILED(unregisterPropertyVariable(_clock_sim_time_step_size, FEP3_CLOCK_SIM_TIME_STEP_SIZE_PROPERTY));
 
     return {};
 }
 
-fep3::Result ClockServiceConfiguration::validateSimClockConfiguration(const ILoggingService::ILogger& logger) const
+fep3::Result ClockServiceConfiguration::validateSimClockConfiguration(
+    const std::shared_ptr<ILogger>& logger) const
 {
-    if (_clock_sim_time_cycle_time < FEP3_CLOCK_SIM_TIME_CYCLE_TIME_MIN_VALUE)
-    {
-        const auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_ARG,
-            a_util::strings::format(
-                "Setting main clock cycle time of %d failed. Cycle time has to be > 0. Using default value.",
-                static_cast<int32_t>(_clock_sim_time_cycle_time))
-            .c_str());
+    FEP3_RETURN_IF_FAILED(validateSimClockConfigurationProperties(logger));
 
-        if (logger.isWarningEnabled())
-        {
-            FEP3_RETURN_IF_FAILED(logger.logWarning(result.getDescription()));
-        }
-        setPropertyValue(*getNode()->getChild(FEP3_CLOCK_SIM_TIME_CYCLE_TIME_PROPERTY), FEP3_CLOCK_SIM_TIME_CYCLE_TIME_DEFAULT_VALUE);
+    if (FEP3_CLOCK_SIM_TIME_TIME_FACTOR_AFAP_VALUE == _clock_sim_time_time_factor)
+    {
+        return {};
     }
 
-    if (_clock_sim_time_time_factor < FEP3_CLOCK_SIM_TIME_TIME_FACTOR_MIN_VALUE
-        && _clock_sim_time_time_factor != FEP3_CLOCK_SIM_TIME_TIME_FACTOR_AFAP_VALUE)
+    return validateWallClockStepSize(logger);
+}
+
+fep3::Result ClockServiceConfiguration::validateSimClockConfigurationProperties(
+        const std::shared_ptr<ILogger>& logger) const
+{
+    constexpr int64_t sim_time_step_size_min_value = FEP3_CLOCK_SIM_TIME_STEP_SIZE_MIN_VALUE;
+	constexpr int64_t sim_time_step_size_max_value = FEP3_CLOCK_SIM_TIME_STEP_SIZE_MAX_VALUE;
+    constexpr double sim_time_step_size_afap_value = FEP3_CLOCK_SIM_TIME_TIME_FACTOR_AFAP_VALUE;
+
+    if (sim_time_step_size_min_value > _clock_sim_time_step_size
+        || sim_time_step_size_max_value < _clock_sim_time_step_size)
     {
         const auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_ARG,
             a_util::strings::format(
-                "Setting main clock time factor of %f failed. Time factor has to be >= 0,1 or = 0. Using default value.",
-                static_cast<double>(_clock_sim_time_time_factor))
+                R"(Invalid clock service configuration: Invalid clock step size of '%f' ns. Clock step size has to be >= %lld and <= %lld.)",
+                static_cast<double>(_clock_sim_time_step_size),
+                sim_time_step_size_min_value,
+                sim_time_step_size_max_value)
             .c_str());
 
-        if (logger.isWarningEnabled())
-        {
-            FEP3_RETURN_IF_FAILED(logger.logWarning(result.getDescription()));
-        }
-        setPropertyValue(*getNode()->getChild(FEP3_CLOCK_SIM_TIME_TIME_FACTOR_PROPERTY), FEP3_CLOCK_SIM_TIME_TIME_FACTOR_DEFAULT_VALUE);
+        FEP3_ARYA_LOGGER_LOG_RESULT(logger, result);
+
+        return result;
+    }
+    else if (sim_time_step_size_afap_value > _clock_sim_time_time_factor)
+    {
+        const auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_ARG,
+            a_util::strings::format(
+                R"(Invalid clock service configuration: Invalid clock time factor of '%f'. Clock time factor has to be >= %f.)",
+                static_cast<double>(_clock_sim_time_time_factor),
+                sim_time_step_size_afap_value)
+            .c_str());
+
+        FEP3_ARYA_LOGGER_LOG_RESULT(logger, result);
+
+        return result;
+    }
+
+    return {};
+}
+
+fep3::Result ClockServiceConfiguration::validateWallClockStepSize(
+        const std::shared_ptr<ILogger>& logger) const
+{
+    constexpr int64_t wall_clock_step_size_min_value = FEP3_CLOCK_WALL_CLOCK_STEP_SIZE_MIN_VALUE;
+    constexpr int64_t wall_clock_step_size_max_value = FEP3_CLOCK_WALL_CLOCK_STEP_SIZE_MAX_VALUE;
+    const double wall_clock_step_size = static_cast<double>(_clock_sim_time_step_size) / _clock_sim_time_time_factor;
+
+    if (wall_clock_step_size < static_cast<double>(wall_clock_step_size_min_value)
+        || wall_clock_step_size > static_cast<double>(wall_clock_step_size_max_value))
+    {
+        const auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_ARG,
+            a_util::strings::format(
+                R"(Invalid clock service configuration: Invalid wall clock step size of '%f' ns resulting by dividing configured step size '%f' by time factor '%f'. Wall clock step size has to be >= %lld ns and <= %lld ns.)",
+                wall_clock_step_size,
+                static_cast<double>(_clock_sim_time_step_size),
+                static_cast<double>(_clock_sim_time_time_factor),
+                wall_clock_step_size_min_value,
+                wall_clock_step_size_max_value)
+            .c_str());
+
+        FEP3_ARYA_LOGGER_LOG_RESULT(logger, result);
+
+        return result;
     }
 
     return {};
@@ -377,6 +538,7 @@ fep3::Result ClockServiceConfiguration::validateSimClockConfiguration(const ILog
 
 LocalClockService::LocalClockService()
     : _is_started(false)
+    , _is_tensed(false)
     , _local_system_real_clock(std::make_shared<LocalSystemRealClock>())
     , _local_system_sim_clock(std::make_shared<LocalSystemSimClock>())
     , _current_clock(_local_system_real_clock)
@@ -386,16 +548,11 @@ LocalClockService::LocalClockService()
 
 fep3::Result LocalClockService::create()
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     const auto components = _components.lock();
     if (!components)
     {
         RETURN_ERROR_DESCRIPTION(ERR_INVALID_STATE, "No IComponents set, can not get logging and configuration interface");
     }
-
-    FEP3_RETURN_IF_FAILED(setupLogger(*components));
-    FEP3_RETURN_IF_FAILED(registerDefaultClocks());
 
     const auto configuration_service = components->getComponent<IConfigurationService>();
     if (!configuration_service)
@@ -411,6 +568,8 @@ fep3::Result LocalClockService::create()
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "Service Bus is not registered");
     }
 
+    FEP3_RETURN_IF_FAILED(setupLogger(*components));
+
     FEP3_RETURN_IF_FAILED(setupClockMaster(*service_bus));
 
     const auto rpc_server = service_bus->getServer();
@@ -421,15 +580,18 @@ fep3::Result LocalClockService::create()
 
     FEP3_RETURN_IF_FAILED(setupRPCClockSyncMaster(*rpc_server));
     FEP3_RETURN_IF_FAILED(setupRPCClockService(*rpc_server));
+    FEP3_RETURN_IF_FAILED(setupRPCLogger(*components));
+    FEP3_RETURN_IF_FAILED(registerDefaultClocks());
 
     return {};
 }
 
 fep3::Result LocalClockService::destroy()
 {
-    _logger.reset();
-    _clock_event_sink_registry->setLogger(_logger);
-    _clock_registry.setLogger(_logger);
+    deinitLogger();
+    _clock_event_sink_registry->deinitLogger();
+    _rpc_impl_master->deinitLogger();
+    _clock_registry.deinitLogger();
 
     const auto components = _components.lock();
     if (!components)
@@ -450,54 +612,58 @@ fep3::Result LocalClockService::initialize()
 
     // make sure the local clock service is in a defined state
     deinitialize();
-    
+
     return {};
 }
 
 fep3::Result LocalClockService::tense()
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     _configuration.updatePropertyVariables();
 
-    if (_configuration._main_clock_name != getMainClockName())
     {
+        std::lock_guard<std::mutex> lock_guard(_select_main_clock_mutex);
+
         FEP3_RETURN_IF_FAILED(selectMainClock(_configuration._main_clock_name));
     }
 
     try
     {
-        FEP3_RETURN_IF_FAILED(_clock_master->updateTimeout(std::chrono::milliseconds(_configuration._time_update_timeout)));
+        FEP3_RETURN_IF_FAILED(_clock_master->updateTimeout(Duration(_configuration._time_update_timeout)));
     }
     catch(const std::exception& exception)
     {
-        logError(std::string() + exception.what());
+        FEP3_LOG_ERROR(a_util::strings::format("Exception during update of clock master timeout configuration: %s", exception.what()));
         RETURN_ERROR_DESCRIPTION(ERR_EMPTY, exception.what());
     }
 
     if (FEP3_CLOCK_LOCAL_SYSTEM_SIM_TIME == static_cast<std::string>(_configuration._main_clock_name))
     {
-        FEP3_RETURN_IF_FAILED(_configuration.validateSimClockConfiguration(*_logger));
+        FEP3_RETURN_IF_FAILED(_configuration.validateSimClockConfiguration(getLogger()));
 
         _local_system_sim_clock->updateConfiguration(
-            Duration(std::chrono::milliseconds(_configuration._clock_sim_time_cycle_time)),
+            Duration(_configuration._clock_sim_time_step_size),
             _configuration._clock_sim_time_time_factor);
     }
 
+    _is_tensed = true;
+    return {};
+}
+
+fep3::Result LocalClockService::relax()
+{
+    _is_tensed = false;
     return {};
 }
 
 fep3::Result LocalClockService::start()
 {
-    std::shared_ptr<IClock> current_clock;
-    {
-        /// locking also current_clock->reset() would lead to a deadlock, because it will call getType()
-        std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-        current_clock = _current_clock;
-    }
-    
-    current_clock->start(_clock_event_sink_registry);    
-  
+    const auto current_clock = getClockLocked();
+
+    FEP3_LOG_DEBUG(a_util::strings::format(
+        "Clock '%s' is configured as main clock.", current_clock->getName().c_str()));
+
+    current_clock->start(_clock_event_sink_registry);
+
     _is_started = true;
 
     return {};
@@ -505,48 +671,41 @@ fep3::Result LocalClockService::start()
 
 fep3::Result LocalClockService::stop()
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+    const auto current_clock = getClockLocked();
 
-    _current_clock->stop();
+    current_clock->stop();
     _is_started = false;
- 
+
     return {};
 }
 
 std::string LocalClockService::getMainClockName() const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+    if (!_is_tensed)
+    {
+        _configuration.updatePropertyVariables();
 
-    if (_current_clock)
-    {
-        return _current_clock->getName();
+        return _configuration._main_clock_name.toString();
     }
-    else
-    {
-        return "";
-    }
+
+    const auto current_clock = getClockLocked();
+
+    return current_clock->getName();
 }
 
 Timestamp LocalClockService::getTime() const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     if (!_is_started)
     {
-        return Timestamp(0);
+        return Timestamp{0};
     }
 
-    return _current_clock->getTime();
+    const auto current_clock = getClockLocked();
+
+    return current_clock->getTime();
 }
 
 Optional<Timestamp> LocalClockService::getTime(const std::string& clock_name) const
-{
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
-    return getTimeUnlocked(clock_name);
-}
-
-Optional<Timestamp> LocalClockService::getTimeUnlocked(const std::string& clock_name) const
 {
     const auto clock_found = _clock_registry.findClock(std::string(clock_name));
     if (clock_found)
@@ -555,7 +714,7 @@ Optional<Timestamp> LocalClockService::getTimeUnlocked(const std::string& clock_
     }
     else
     {
-        logWarning(a_util::strings::format(
+        FEP3_LOG_WARNING(a_util::strings::format(
             "Receiving clock time failed. A clock with the name %s is not registered.",
             clock_name.c_str()));
 
@@ -565,27 +724,34 @@ Optional<Timestamp> LocalClockService::getTimeUnlocked(const std::string& clock_
 
 IClock::ClockType LocalClockService::getType() const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+    if (!_is_tensed)
+    {
+        _configuration.updatePropertyVariables();
 
-    return _current_clock->getType();
+        const auto clock_type = getType(_configuration._main_clock_name.toString());
+
+        if (clock_type.has_value())
+        {
+            return clock_type.value();
+        }
+    }
+
+    const auto current_clock = getClockLocked();
+
+    return current_clock->getType();
 }
 
 Optional<IClock::ClockType> LocalClockService::getType(const std::string& clock_name) const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+    const auto clock_found = _clock_registry.findClock(std::string(clock_name));
 
-        return getTypeUnlocked(clock_name);
-    }
-
-Optional<IClock::ClockType> LocalClockService::getTypeUnlocked(const std::string& clock_name) const
-{
-    if (const auto clock_found = _clock_registry.findClock(std::string(clock_name)))
+    if (clock_found)
     {
         return clock_found->getType();
     }
     else
     {
-        logWarning(a_util::strings::format(
+        FEP3_LOG_WARNING(a_util::strings::format(
             "Receiving clock type failed. A clock with the name %s is not registered.",
             clock_name.c_str())
             );
@@ -596,8 +762,6 @@ Optional<IClock::ClockType> LocalClockService::getTypeUnlocked(const std::string
 
 fep3::Result LocalClockService::selectMainClock(const std::string& clock_name)
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     if (_is_started)
     {
         auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_STATE,
@@ -606,38 +770,55 @@ fep3::Result LocalClockService::selectMainClock(const std::string& clock_name)
                 clock_name.c_str())
             .c_str());
 
-        result |= logError(result);
+        FEP3_LOG_RESULT(result);
 
         return result;
     }
 
+    const auto set_main_clock_locked = [&]() -> bool
     {
-        _current_clock = _clock_registry.findClock(clock_name);
+        {
+            auto current_clock = _clock_registry.findClock(clock_name);
+
+            std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+            _current_clock = std::move(current_clock);
+        }
+
         if (!_current_clock)
         {
-            _current_clock = _clock_registry.findClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME);
+            auto current_clock = _clock_registry.findClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME);
 
-            auto result = CREATE_ERROR_DESCRIPTION(ERR_NOT_FOUND,
-                a_util::strings::format(
-                    "Setting main clock failed. A clock with the name %s is not registered. Resetting to default.",
-                    clock_name.c_str())
-                .c_str());
+            std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+            _current_clock = std::move(current_clock);
 
-            result |= logError(result);
-
-            return result;
+            return false;
         }
-        
-        setPropertyValue(*_configuration.getNode()->getChild(FEP3_MAIN_CLOCK_PROPERTY), clock_name);
-        
-        return {};
+
+        return true;
+    };
+
+    if (!set_main_clock_locked())
+    {
+        auto result = CREATE_ERROR_DESCRIPTION(ERR_NOT_FOUND,
+            a_util::strings::format(
+                "Setting main clock failed. A clock with the name %s is not registered. Resetting to default.",
+                clock_name.c_str())
+            .c_str());
+
+        FEP3_LOG_RESULT(result);
+
+        return result;
     }
+
+    FEP3_RETURN_IF_FAILED(fep3::base::setPropertyValue(*_configuration.getNode()->getChild(FEP3_MAIN_CLOCK_PROPERTY), clock_name));
+
+    FEP3_LOG_DEBUG(a_util::strings::format("Clock '%s' set as main clock of the clock service.", clock_name.c_str()));
+
+    return {};
 }
 
 fep3::Result LocalClockService::registerClock(const std::shared_ptr<IClock>& clock)
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     if (_is_started)
     {
         auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_STATE,
@@ -646,17 +827,16 @@ fep3::Result LocalClockService::registerClock(const std::shared_ptr<IClock>& clo
                 clock->getName().c_str())
             .c_str());
 
-        result |= logError(result);
+        FEP3_LOG_RESULT(result);
 
         return result;
     }
+
     return _clock_registry.registerClock(clock);
 }
 
 fep3::Result LocalClockService::unregisterClock(const std::string& clock_name)
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     if (_is_started)
     {
         auto result = CREATE_ERROR_DESCRIPTION(ERR_INVALID_STATE,
@@ -665,41 +845,67 @@ fep3::Result LocalClockService::unregisterClock(const std::string& clock_name)
                 clock_name.c_str())
             .c_str());
 
-        result |= logError(result);
+        FEP3_LOG_RESULT(result);
 
         return result;
     }
-    return _clock_registry.unregisterClock(clock_name);
+
+    FEP3_RETURN_IF_FAILED(_clock_registry.unregisterClock(clock_name));
+
+    const auto is_main_clock_unregistered = [&] () -> std::pair<fep3::Result, bool>
+    {
+        std::lock_guard<std::mutex> lock_guard(_select_main_clock_mutex);
+
+        if (getMainClockName() == clock_name)
+        {
+            const auto result = selectMainClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME);
+
+            return {result, true};
+        }
+
+        return {{}, false};
+    };
+
+    const auto result = is_main_clock_unregistered();
+
+    FEP3_RETURN_IF_FAILED(result.first);
+
+    if (result.second)
+    {
+        FEP3_RETURN_IF_FAILED(selectMainClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME));
+
+        FEP3_LOG_WARNING(a_util::strings::format(
+            "Unregistered main clock %s. Reset main clock to default value %s.",
+            clock_name.c_str(),
+            FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME));
+    }
+
+    return {};
 }
 
 std::list<std::string> LocalClockService::getClockNames() const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     return _clock_registry.getClockNames();
 }
 
 std::shared_ptr<IClock> LocalClockService::findClock(const std::string& clock_name) const
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
     return _clock_registry.findClock(clock_name);
 }
 
 fep3::Result LocalClockService::registerEventSink(const std::weak_ptr<IClock::IEventSink>& clock_event_sink)
-{   
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
-    if (!clock_event_sink.lock())
+{
+    if (clock_event_sink.expired())
     {
         auto result = CREATE_ERROR_DESCRIPTION(ERR_POINTER,
             a_util::strings::format(
                 "Registering event sink failed. Event sink does not exist")
             .c_str());
 
-        result |= logError(result);
+        FEP3_LOG_RESULT(result);
         return result;
     }
+
     _clock_event_sink_registry->registerSink(clock_event_sink);
 
     return {};
@@ -707,18 +913,17 @@ fep3::Result LocalClockService::registerEventSink(const std::weak_ptr<IClock::IE
 
 fep3::Result LocalClockService::unregisterEventSink(const std::weak_ptr<IClock::IEventSink>& clock_event_sink)
 {
-    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
-    if (!clock_event_sink.lock())
+    if (clock_event_sink.expired())
     {
         auto result = CREATE_ERROR_DESCRIPTION(ERR_POINTER,
             a_util::strings::format(
                 "Unregistering event sink failed. Event sink does not exist")
             .c_str());
 
-        result |= logError(result);
+        FEP3_LOG_RESULT(result);
         return result;
     }
+
     _clock_event_sink_registry->unregisterSink(clock_event_sink);
 
     return {};
@@ -726,20 +931,21 @@ fep3::Result LocalClockService::unregisterEventSink(const std::weak_ptr<IClock::
 
 fep3::Result LocalClockService::setupLogger(const IComponents& components)
 {
-    auto logging_service = components.getComponent<arya::ILoggingService>();
-    if (!logging_service)
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, "Logging service is not registered");
-    }
-
-    _logger = logging_service->createLogger("clock_service.component");
-    _clock_registry.setLogger(_logger);
-    _clock_event_sink_registry->setLogger(_logger);
+    FEP3_RETURN_IF_FAILED(initLogger(components, "clock_service.component"));
+    FEP3_RETURN_IF_FAILED(_clock_registry.initLogger(components, "clock_registry.clock_service.component"));
+    FEP3_RETURN_IF_FAILED(_clock_event_sink_registry->initLogger(components, "event_sink_registry.clock_service.component"));
 
     return {};
 }
 
-fep3::Result LocalClockService::unregisterServices(const IComponents& components)
+fep3::Result LocalClockService::setupRPCLogger(const IComponents& components)
+{
+    FEP3_RETURN_IF_FAILED(_rpc_impl_master->initLogger(components, "clock_master.clock_service.component"));
+
+    return {};
+}
+
+fep3::Result LocalClockService::unregisterServices(const IComponents& components) const
 {
     const auto service_bus = components.getComponent<IServiceBus>();
     if (!service_bus)
@@ -774,14 +980,15 @@ fep3::Result LocalClockService::setupClockMaster(const IServiceBus& service_bus)
     try
     {
         _clock_master = std::make_shared<rpc::ClockMaster>(
-            _logger
-            , std::chrono::milliseconds(_configuration._time_update_timeout)
+            getLogger()
+            , Duration(_configuration._time_update_timeout)
             , _set_participant_to_error_state
             , get_rpc_requester_by_name);
     }
     catch (const std::runtime_error& ex)
     {
-        logError(std::string() + ex.what());
+        FEP3_LOG_ERROR(a_util::strings::format("Exception during setup of clock master: %s", ex.what()));
+
         RETURN_ERROR_DESCRIPTION(ERR_EMPTY, ex.what());
     }
 
@@ -815,6 +1022,13 @@ fep3::Result LocalClockService::setupRPCClockService(IServiceBus::IParticipantSe
     return {};
 }
 
+std::shared_ptr<IClock> LocalClockService::getClockLocked() const
+{
+    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+
+    return _current_clock;
+}
+
 fep3::Result LocalClockService::masterRegisterSlave(const std::string& slave_name,
     const int event_id_flag) const
 {
@@ -830,49 +1044,6 @@ fep3::Result LocalClockService::masterSlaveSyncedEvent(const std::string& slave_
     const Timestamp time) const
 {
     return _clock_master->receiveSlaveSyncedEvent(slave_name, time);
-}
-
-
-fep3::Result LocalClockService::logError(const fep3::Result& error) const
-{
-    if (_logger && _logger->isErrorEnabled())
-    {
-        return _logger->logError(error.getDescription());
-    }
-
-    return {};
-}
-
-fep3::Result LocalClockService::logError(const std::string& message) const
-{
-    if (_logger && _logger->isErrorEnabled())
-    {
-        return _logger->logError(message);
-    }
-
-    return {};
-
-}
-
-
-fep3::Result LocalClockService::logWarning(const fep3::Result& error) const
-{
-    if (_logger && _logger->isWarningEnabled())
-    {
-        return _logger->logWarning(error.getDescription());
-    }
-
-    return {};
-}
-
-fep3::Result LocalClockService::logWarning(const std::string& message) const
-{
-    if (_logger && _logger->isWarningEnabled())
-    {
-        return _logger->logWarning(message);
-    }
-
-    return {};
 }
 
 } // namespace native

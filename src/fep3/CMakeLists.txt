@@ -1,18 +1,22 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 
 
 ###################################################
-# Define the includes for building and target 
+# Define the includes for building and target
 #####################################################
 set(BUILD_INTERFACE_INCLUDES ${PROJECT_SOURCE_DIR}/include
                              ${PROJECT_BINARY_DIR}/include
@@ -34,8 +38,7 @@ install(
     DESTINATION include/fep3
 )
 
-find_package(a_util REQUIRED)
-find_package(pkg_rpc REQUIRED)
+find_package(dev_essential REQUIRED COMPONENTS pkg_rpc ddl)
 find_package(Boost 1.69.0 COMPONENTS REQUIRED)
 
 set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_export.h
@@ -46,6 +49,8 @@ set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_exp
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_types.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_timestamp.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_duration.h
+                         ${PROJECT_SOURCE_DIR}/include/fep3/c_access_wrapper/fep3_result_c_access_wrapper.h
+                         ${PROJECT_SOURCE_DIR}/include/fep3/c_intf/fep3_result_c_intf.h
                          ${PROJECT_BINARY_DIR}/include/fep3/fep3_participant_version.h)
 
 set (FEP3_SOURCES ${FEP3_COMMON_SOURCES})
@@ -60,7 +65,9 @@ source_group(common FILES ${FEP3_COMMON_SOURCES})
 include(base/cmake.sources)
 include(components/base/cmake.sources)
 include(components/clock/cmake.sources)
+include(components/configuration/cmake.sources)
 include(components/job_registry/cmake.sources)
+include(components/participant_info/cmake.sources)
 include(components/scheduler/cmake.sources)
 include(components/simulation_bus/cmake.sources)
 # native components
@@ -74,6 +81,8 @@ include(native_components/simulation_bus/cmake.sources)
 include(native_components/logging/cmake.sources)
 include(native_components/job_registry/cmake.sources)
 include(native_components/configuration/cmake.sources)
+include(native_components/participant_info/cmake.sources)
+include(native_components/health/cmake.sources)
 # plugin
 include(plugin/base/cmake.sources)
 include(plugin/c/cmake.sources)
@@ -107,17 +116,9 @@ target_include_directories(fep3_participant_object_lib PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     PRIVATE ${Boost_INCLUDE_DIRS}
 )
-
-target_link_libraries(fep3_participant_object_lib PUBLIC 
-    a_util_result
-    a_util_strings
-    a_util_filesystem
-    a_util_xml
-    a_util_memory
-    a_util_system
-    a_util_concurrency
-    a_util_datetime
-    pkg_rpc
+target_link_libraries(fep3_participant_object_lib PUBLIC
+    dev_essential::ddl
+    dev_essential::pkg_rpc
 )
 if(MSVC)
     target_link_libraries(fep3_participant_object_lib PUBLIC "Iphlpapi.lib")
@@ -125,7 +126,7 @@ endif()
 
 if (MSVC)
 else ()
-target_link_libraries(fep3_participant_object_lib PUBLIC 
+target_link_libraries(fep3_participant_object_lib PUBLIC
      pthread
      ${CMAKE_DL_LIBS})
 endif()
@@ -138,13 +139,12 @@ target_compile_definitions(fep3_participant_object_lib PRIVATE _FEP3_PARTICIPANT
 # configure fep_participant
 ###########################################
 
-target_link_libraries(fep3_participant PRIVATE
-    fep3_participant_object_lib
-)
+target_link_libraries(fep3_participant PRIVATE fep3_participant_object_lib
+                                       PUBLIC dev_essential::result
+                                              dev_essential::memory)
 
-target_link_libraries(fep3_participant PUBLIC a_util_result)
 target_compile_features(fep3_participant PUBLIC cxx_std_14)
-if(MSVC)    
+if(MSVC)
     # TODO /WD4100 should be removed when ODAUTIL-167 is fixed
     # 4251 is currently deactivated because some dll exported classes use std types within their interface (e.g. ComponentRegistry)
     target_compile_options(fep3_participant PUBLIC /wd4251 /wd4100)
@@ -153,7 +153,7 @@ endif()
 
 set_target_properties(fep3_participant PROPERTIES FOLDER "libraries")
 
-target_include_directories(fep3_participant PUBLIC    
+target_include_directories(fep3_participant PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
@@ -177,14 +177,14 @@ target_include_directories(fep3_participant_object_lib SYSTEM
 ##################################################
 
 # Add imported library target for the participant_cpp_plugin
-add_library(fep3_participant_cpp_plugin STATIC 
+add_library(fep3_participant_cpp_plugin STATIC
             ${FEP3_PLUGIN_CPP_LIB_SOURCES})
 target_compile_definitions(fep3_participant_cpp_plugin PUBLIC _FEP3_PARTICIPANT_INCLUDED_STATIC)
 target_include_directories(fep3_participant_cpp_plugin PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
-target_link_libraries(fep3_participant_cpp_plugin PUBLIC a_util_result)
+target_link_libraries(fep3_participant_cpp_plugin PUBLIC dev_essential::result)
 
 set_target_properties(fep3_participant_cpp_plugin PROPERTIES
     OUTPUT_NAME fep3_participant_cpp_plugin
@@ -200,19 +200,19 @@ set_target_properties(fep3_participant_cpp_plugin PROPERTIES FOLDER "libraries")
 ##################################################
 
 # Add imported library target for the participant_core
-add_library(fep3_participant_core STATIC 
+add_library(fep3_participant_core STATIC
             ${FEP3_CORE_LIB_SOURCES})
 
 target_include_directories(fep3_participant_core PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
-target_link_libraries(fep3_participant_core PUBLIC fep3_participant a_util_result a_util_strings)
+target_link_libraries(fep3_participant_core PUBLIC fep3_participant)
 if (MSVC)
 else ()
     target_link_libraries(fep3_participant_core PRIVATE pthread)
 endif()
-target_link_libraries(fep3_participant_core PRIVATE pkg_rpc)
+target_link_libraries(fep3_participant_core PRIVATE dev_essential::pkg_rpc)
 
 
 set_target_properties(fep3_participant_core PROPERTIES
@@ -229,14 +229,14 @@ set_target_properties(fep3_participant_core PROPERTIES FOLDER "libraries")
 ##################################################
 
 # Add imported library target for the participant_core
-add_library(fep3_participant_cpp STATIC 
+add_library(fep3_participant_cpp STATIC
             ${FEP3_CPP_LIB_SOURCES})
 
 target_include_directories(fep3_participant_cpp PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
-target_link_libraries(fep3_participant_cpp PUBLIC fep3_participant fep3_participant_core a_util_result)
+target_link_libraries(fep3_participant_cpp PUBLIC fep3_participant fep3_participant_core)
 
 set_target_properties(fep3_participant_cpp PROPERTIES
     OUTPUT_NAME fep3_participant_cpp
@@ -271,7 +271,7 @@ install(FILES fep3_participant_core-config.cmake DESTINATION .)
 install(FILES fep3_participant_cpp-config.cmake DESTINATION .)
 
 if(fep3_participant_use_rtidds)
-    #we copy this to the bin dir because the macros files must wurk for the tests too 
+    #we copy this to the bin dir because the macros files must wurk for the tests too
     add_custom_command(TARGET fep3_participant POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/fep3_participant.fep_components "$<TARGET_FILE_DIR:fep3_participant>"
         )

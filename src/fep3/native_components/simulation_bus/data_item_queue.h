@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -43,7 +52,7 @@ public:
     /**
      * @brief CTOR
      *
-     * @param capacity capacity by item count of the queue (there are sample + streamtype covered)
+     * @param[in] capacity capacity by item count of the queue (there are sample + stream type covered)
      */
     DataItemQueue(size_t capacity) : DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE>()
     {
@@ -66,7 +75,7 @@ public:
     /**
      * @brief pushes a sample data read pointer to the queue
      *
-     * @param sample the samples read pointer to push
+     * @param[in] sample the samples read pointer to push
      * @remark this is threadsafe against push and other pop calls
      */
     void push(const data_read_ptr<SAMPLE_TYPE>& sample) override
@@ -97,8 +106,8 @@ public:
     /**
      * @brief pushes a stream type data read pointer to the queue
      *
-     * @param type the types read pointer to push
-     * @param time_of_receiving the timestamp at which the sample was received
+     * @param[in] type the types read pointer to push
+     * @param[in] time_of_receiving the timestamp at which the sample was received
      * @remark this is threadsafe against push and other pop calls
      */
     void push(const data_read_ptr<STREAM_TYPE>& type) override

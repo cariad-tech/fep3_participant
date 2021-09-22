@@ -1,13 +1,22 @@
 /**
  * @file
- * Copyright &copy; Audi AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -18,8 +27,7 @@
 #define FEP3_CLOCKSYNC_SERVICE_CONFIG "clock_synchronization"
 
 /**
-* @brief Name of the property for the set timing master in the clock synchronizattion service
-* @see FEP3_CLOCKSYNC_SERVICE_CONFIG
+* @brief Name of the property to set the timing master in the clock synchronization service
 *
 */
 #define FEP3_TIMING_MASTER_PROPERTY "timing_master"
@@ -41,9 +49,9 @@
 
 /**
 * @brief Name of the clock of the synchronization service providing as timing slave discrete clock.
-* The clock receives time update events by a timing master which must be a discreate clock. 
+* The clock receives time update events by a timing master which must be a discreate clock.
 * Otherwise it will synchronize in discrete clock steps every given FEP3_CLOCK_SLAVE_SYNC_CYCLE_TIME
-* 
+*
 *
 */
 #define FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE  "slave_master_on_demand_discrete"
@@ -52,26 +60,26 @@
 * @brief Period at which the clock of the timing slave continuous clock synchronizes with the timing master.
 * Only relevant for timing slave configuration if the timing slave's main clock is set to FEP3_CLOCK_SLAVE_MASTER_ONDEMAND.
 * The timing slaves's clock cyclically requests the current simulation time from the timing master.
-* The duration in ms which has to pass between those time requests is configured by this property.
+* The duration in ns which has to pass between those time requests is configured by this property.
 *
 */
-#define FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY  "sync_cycle_time_ms"
+#define FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY  "sync_cycle_time"
 
 
 /**
-* @brief Period at which the native timing client continuous clock synchronizes with the timing master. 
+* @brief Period at which the native timing client continuous clock synchronizes with the timing master.
 * Only relevant for timing client configuration if the timing client's main clock is set to 'slave_master_on_demand'.
 * The timing client's slave clock cyclically requests the current simulation time from the timing master.
-* The duration which has to pass between those time requests is configured by this property.
+* The duration in ns which has to pass between those time requests is configured by this property.
 *
 */
 #define FEP3_CLOCKSYNC_SERVICE_CONFIG_SLAVE_SYNC_CYCLE_TIME FEP3_CLOCKSYNC_SERVICE_CONFIG "/" FEP3_SLAVE_SYNC_CYCLE_TIME_PROPERTY
 
 /**
-* @brief Default value of the built-in 'slave_master_on_demand' clock's slave sync cycle time property in millisec
+* @brief Default value of the built-in 'slave_master_on_demand' clock's slave sync cycle time property in ns.
 *
 */
-#define FEP3_SLAVE_SYNC_CYCLE_TIME_DEFAULT_VALUE 100
+#define FEP3_SLAVE_SYNC_CYCLE_TIME_DEFAULT_VALUE 100000000
 
 namespace fep3
 {
@@ -81,7 +89,7 @@ namespace arya
 * @brief Interface of the Clock Sync Service
 *
 */
-class FEP3_PARTICIPANT_EXPORT IClockSyncService 
+class IClockSyncService
 {
 public:
     /**
@@ -90,11 +98,8 @@ public:
     FEP_COMPONENT_IID("clock_sync_service.arya.fep3.iid");
 
 protected:
-    /**
-    * @brief DTOR
-    *
-    */
-    virtual ~IClockSyncService() = default;
+    /// DTOR
+    ~IClockSyncService() = default;
 };
 
 } // namespace arya

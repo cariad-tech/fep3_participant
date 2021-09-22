@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "find_free_port.h"
 
@@ -56,7 +64,7 @@ private:
         {
             WSACleanup();
         }
-        #else   
+        #else
         #endif
     }
 public:
@@ -98,7 +106,7 @@ int findFreeSocketPort(int begin_port, int count)
     opt = 1;
     #ifdef WIN32
     setsockopt(sockfd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&opt, sizeof(opt));
-    #endif 
+    #endif
     int found_port = -1;
     for (int currentport = begin_port;
          currentport <= currentport + count && found_port == -1;

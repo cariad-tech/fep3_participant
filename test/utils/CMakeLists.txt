@@ -1,21 +1,25 @@
-##################################################################
-# @file 
-# @copyright AUDI AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 
 add_library(participant_test_utils INTERFACE)
 
-target_include_directories(participant_test_utils INTERFACE 
+target_include_directories(participant_test_utils INTERFACE
     .
     $<TARGET_PROPERTY:fep3_participant,INTERFACE_INCLUDE_DIRECTORIES
     ../private/utils/common
 )
 
-target_link_libraries(participant_test_utils INTERFACE GMock::GMock)
+target_link_libraries(participant_test_utils INTERFACE GTest::gmock)

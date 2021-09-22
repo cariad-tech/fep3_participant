@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #include <gtest/gtest.h>
 
 #include <a_util/filesystem.h>
@@ -29,7 +37,7 @@ const std::string test_plugin_2_path = PLUGIN_2;
 
 /**
  * Test the loading and creating of a class from a CPPPlugin
- * @req_id 
+ * @req_id
 */
 TEST(BaseCPPPluginTester, testLoading)
 {
@@ -52,7 +60,7 @@ TEST(BaseCPPPluginTester, testLoading)
 
 /**
  * Test the loading and creating of a class from a CPPPluginFactory
- * @req_id 
+ * @req_id
 */
 TEST(BaseCPPPluginTester, testComponentFactory)
 {
@@ -60,7 +68,7 @@ TEST(BaseCPPPluginTester, testComponentFactory)
     std::unique_ptr<ComponentFactoryCPPPlugin> _factory;
     std::cout << "plugin path" << test_plugin_1_path;
     std::vector<std::string> plugins = { test_plugin_1_path, test_plugin_2_path };
-    
+
     ASSERT_NO_THROW
     (
         _factory = std::make_unique<ComponentFactoryCPPPlugin>(plugins);
@@ -181,10 +189,10 @@ TEST(BaseCPPPluginTester, testComponentsFactoryUsingCPPAndFails)
 
         out << in.rdbuf();
     }
-    
+
     ASSERT_ANY_THROW
     (
         auto registry = fep3::arya::ComponentsFactory::createComponentsByFile(components_file_path_target);
     );
-    
+
 }

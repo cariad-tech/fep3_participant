@@ -1,0 +1,36 @@
+#
+# Copyright @ 2021 VW Group. All rights reserved.
+# 
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
+set(COMPONENTS_CONFIGURATION_DIR ${PROJECT_SOURCE_DIR}/src/fep3/components/configuration)
+set(COMPONENTS_CONFIGURATION_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/configuration)
+
+set(COMPONENTS_CONFIGURATION_SOURCES_PRIVATE
+)
+
+set(COMPONENTS_CONFIGURATION_SOURCES_PUBLIC
+    ${COMPONENTS_CONFIGURATION_INCLUDE_DIR}/configuration_service_intf.h
+    ${COMPONENTS_CONFIGURATION_INCLUDE_DIR}/c_intf/configuration_service_c_intf.h
+    ${COMPONENTS_CONFIGURATION_INCLUDE_DIR}/c_intf/property_node_c_intf.h
+    ${COMPONENTS_CONFIGURATION_INCLUDE_DIR}/c_access_wrapper/configuration_service_c_access_wrapper.h
+    ${COMPONENTS_CONFIGURATION_INCLUDE_DIR}/c_access_wrapper/property_node_c_access_wrapper.h
+)
+
+set(COMPONENTS_CONFIGURATION_SOURCES ${COMPONENTS_CONFIGURATION_SOURCES_PRIVATE} ${COMPONENTS_CONFIGURATION_SOURCES_PUBLIC})
+source_group(components\\configuration FILES ${COMPONENTS_CONFIGURATION_SOURCES})
+
+######################################
+# Set up the variable
+######################################
+set(FEP3_SOURCES ${FEP3_SOURCES} ${COMPONENTS_CONFIGURATION_SOURCES})

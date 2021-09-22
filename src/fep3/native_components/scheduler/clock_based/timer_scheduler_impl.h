@@ -1,15 +1,22 @@
 /**
-* Kernel timer scheduler
-*
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 
 #pragma once
@@ -32,12 +39,14 @@ namespace native
 
 class ITimer
 {
+protected:
+    ~ITimer() = default;
 public:
     virtual fep3::Result wakeUp(Timestamp wakeup_time, std::promise<void>* finished = nullptr) = 0;
     virtual fep3::Result reset() = 0;
 };
 
-class TimerScheduler : 
+class TimerScheduler :
     public fep3::IClock::IEventSink,
     public fep3::IJob,
     public std::enable_shared_from_this<TimerScheduler>
@@ -53,20 +62,20 @@ private:
         {
             return _next_instant < other._next_instant;
         }
-    };           
+    };
 
-public:       
+public:
     explicit TimerScheduler(fep3::IClockService& clock);
     TimerScheduler() = delete;
 
-    virtual ~TimerScheduler();      
+    virtual ~TimerScheduler();
 
     fep3::Result addTimer(ITimer& timer, Duration period, Duration initial_delay);
     fep3::Result removeTimer(ITimer& timer);
     fep3::Result start();
-    fep3::Result stop();   
+    fep3::Result stop();
 
-private:        
+private:
     void processSchedulerQueueSynchron(Timestamp current_time, fep3::Optional<Duration>& time_to_wait);
     void processSchedulerQueueAsynchron(Timestamp current_time, fep3::Optional<Duration>& time_to_wait);
     Timestamp getTime() const;
@@ -89,9 +98,11 @@ private:
     std::list<TimerInfo> _timers;
     std::mutex _mutex_timer;
     std::mutex _mutex_processing_lock;
-	std::mutex _mutex_processing_trigger;
-	std::mutex _mutex_start_stop_update;
-	std::condition_variable _cv_trigger_event;
+    std::mutex _mutex_processing_trigger;
+    std::mutex _mutex_start_stop_update;
+    std::mutex _mutex_initial_reset;
+    std::condition_variable _cv_trigger_event;
+    std::condition_variable _cv_initial_reset;
     fep3::IClockService* _clock;
     fep3::Optional<Timestamp> _startup_reset_time;
 

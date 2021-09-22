@@ -1,14 +1,22 @@
 /**
-*
-* @file
-* Copyright &copy; AUDI AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -21,11 +29,11 @@
 #include <memory>
 
 #include <fep3/components/clock/clock_service_intf.h>
-#include <fep3/components/base/component_base.h>
+#include <fep3/components/base/component.h>
 
 namespace fep3
 {
-namespace mock 
+namespace mock
 {
 
 struct Clock : public fep3::IClock
@@ -33,7 +41,7 @@ struct Clock : public fep3::IClock
     MOCK_CONST_METHOD0(getName, std::string());
     MOCK_CONST_METHOD0(getType, ClockType());
     MOCK_CONST_METHOD0(getTime, Timestamp());
-    MOCK_METHOD0(reset, void());
+    MOCK_METHOD1(reset, void(Timestamp));
     MOCK_METHOD1(start, void(const std::weak_ptr<IEventSink>&));
     MOCK_METHOD0(stop, void());
 };
@@ -138,7 +146,7 @@ struct EventSinkTimeEventFrequency : fep3::mock::EventSink
     std::vector<Timestamp> _call_durations{};
 };
 
-template<template<typename...> class component_base_type = fep3::ComponentBase>
+template<template<typename...> class component_base_type = fep3::base::Component>
 struct ClockService
     : public component_base_type<IClockService>
 {
@@ -182,7 +190,7 @@ struct ClockServiceComponentWithDefaultBehaviour : public ClockService<>
     }
 };
 
-struct DiscreteSteppingClockService : public fep3::ComponentBase<fep3::IClockService>
+struct DiscreteSteppingClockService : public fep3::base::Component<fep3::IClockService>
 {
     MOCK_CONST_METHOD0(getTime, Timestamp());
     MOCK_CONST_METHOD1(getTime, Optional<Timestamp>(const std::string&));
@@ -219,9 +227,9 @@ struct DiscreteSteppingClockService : public fep3::ComponentBase<fep3::IClockSer
             .WillByDefault(Invoke([this](std::weak_ptr<fep3::IClock::IEventSink>) {return fep3::Result{}; }));
 
         ON_CALL(*this, getType())
-            .WillByDefault(Return(fep3::IClock::ClockType::continuous));    
+            .WillByDefault(Return(fep3::IClock::ClockType::continuous));
     }
-    
+
     void inline setCurrentTime(Timestamp current_time)
     {
         std::lock_guard<std::mutex> lock(_time_mutex);
@@ -240,7 +248,7 @@ private:
 };
 
 
-struct ChronoDrivenClockService : public fep3::ComponentBase<fep3::IClockService>
+struct ChronoDrivenClockService : public fep3::base::Component<fep3::IClockService>
 {
     MOCK_CONST_METHOD0(getTime, Timestamp());
     MOCK_CONST_METHOD1(getTime, Optional<Timestamp>(const std::string&));
@@ -264,13 +272,13 @@ struct ChronoDrivenClockService : public fep3::ComponentBase<fep3::IClockService
         _current_offset = std::chrono::steady_clock::now();
         _started = true;
         return {};
-    }  
+    }
 
     fep3::Result stop() override
-    {        
+    {
         _started = false;
         return {};
-    }  
+    }
 
     inline ChronoDrivenClockService()
     {
@@ -278,13 +286,13 @@ struct ChronoDrivenClockService : public fep3::ComponentBase<fep3::IClockService
         using namespace ::testing;
 
         ON_CALL(*this, getTime())
-            .WillByDefault(Invoke([this]() 
+            .WillByDefault(Invoke([this]()
                 {
                    return getChronoTime();
                 }));
 
         ON_CALL(*this, getTime(_))
-            .WillByDefault(Invoke([this](std::string /*dont_care_for_name*/) 
+            .WillByDefault(Invoke([this](std::string /*dont_care_for_name*/)
                 {
                     return getChronoTime();
                 }));
@@ -313,4 +321,4 @@ private:
 };
 
 }
-} 
+}

@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 #include <string>
 
@@ -17,8 +25,6 @@
 #include <memory>
 
 namespace fep3
-{
-namespace rpc
 {
 namespace arya
 {
@@ -33,12 +39,10 @@ public:
     class IRPCResponse
     {
     protected:
-        /**
-        * DTOR
-        */
-        virtual ~IRPCResponse() {};
-    public:
+        /// DTOR
+        ~IRPCResponse() = default;
 
+    public:
         /**
         * \c Sets the response message.
         *
@@ -49,16 +53,16 @@ public:
         virtual fep3::Result set(const std::string& response) = 0;
     };
 
+protected:
+    /// DTOR
+    ~IRPCRequester() = default;
+
 public:
     /**
-     * DTOR
-     */
-    virtual ~IRPCRequester() = default;
-    /**
      * @brief send a request to the server and will wait for an answer
-     * @param service_name the name of the service to reach
-     * @param request_message the request message (serialized!)
-     * @param response_callback the response callback interface to set the response to
+     * @param[in] service_name the name of the service to reach
+     * @param[in] request_message the request message (serialized!)
+     * @param[in] response_callback the response callback interface to set the response to
      * @return returns an error code
      * @retval ERR_TIMEOUT Timeout reached with no answer
      * @retval ERR_IO_ERROR server address not reachabl or connection closed
@@ -84,12 +88,9 @@ public:
      */
     class IRPCService
     {
-    public:
-        /**
-         * @brief DTOR
-         *
-         */
-        virtual ~IRPCService() = default;
+    protected:
+        /// DTOR
+        ~IRPCService() = default;
 
     public:
         /**
@@ -117,14 +118,14 @@ public:
          */
         virtual fep3::Result handleRequest(const std::string& content_type,
                                            const std::string& request_message,
-                                           IRPCRequester::IRPCResponse& response_message) = 0;
+                                           arya::IRPCRequester::IRPCResponse& response_message) = 0;
     };
+
+protected:
+    /// DTOR
+    ~IRPCServer() = default;
+
 public:
-    /**
-     * @brief DTOR
-     *
-     */
-    virtual ~IRPCServer() = default;
     /**
      * @brief Get the url of the server
      *
@@ -140,7 +141,7 @@ public:
     /**
      * @brief Sets the name
      *
-     * @param name the name
+     * @param[in] name the name
      */
     virtual void setName(const std::string& name) = 0;
 
@@ -177,5 +178,4 @@ public:
 }
 using arya::IRPCRequester;
 using arya::IRPCServer;
-} //namespace rpc
 } //namespace fep3

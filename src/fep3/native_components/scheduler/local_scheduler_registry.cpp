@@ -1,14 +1,22 @@
 /**
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #include "local_scheduler_registry.h"
 
@@ -22,24 +30,24 @@ namespace fep3
 namespace native
 {
 
-LocalSchedulerRegistry::LocalSchedulerRegistry(std::unique_ptr<fep3::IScheduler> default_scheduler) 
+LocalSchedulerRegistry::LocalSchedulerRegistry(std::unique_ptr<fep3::IScheduler> default_scheduler)
     : _default_scheduler_name(default_scheduler->getName())
     , _active_scheduler("")
 {
     registerScheduler(std::move(default_scheduler));
-    
+
     const auto result = activateDefaultScheduler();
     if (fep3::isFailed(result))
     {
         throw std::runtime_error(result.getDescription());
-    }  
-    
+    }
+
     assert(!_active_scheduler.empty());
 }
 
 fep3::Result LocalSchedulerRegistry::activateDefaultScheduler()
 {
-    return setActiveScheduler(_default_scheduler_name);    
+    return setActiveScheduler(_default_scheduler_name);
 }
 
 fep3::Result LocalSchedulerRegistry::setActiveScheduler(const std::string& scheduler_name)
@@ -50,8 +58,8 @@ fep3::Result LocalSchedulerRegistry::setActiveScheduler(const std::string& sched
         RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND,
             "Setting scheduler failed. A scheduler with the name '%s' is not registered.", scheduler_name.c_str());
     }
-    _active_scheduler = scheduler_name;       
-    
+    _active_scheduler = scheduler_name;
+
     return {};
 }
 
@@ -66,9 +74,9 @@ fep3::Result LocalSchedulerRegistry::deinitializeActiveScheduler() const
     if (!active_scheduler)
     {
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "there is no active scheduler set");
-    }   
-        
-    return active_scheduler->deinitialize();   
+    }
+
+    return active_scheduler->deinitialize();
 }
 
 
@@ -83,13 +91,13 @@ fep3::Result LocalSchedulerRegistry::startActiveScheduler() const
 }
 
 fep3::Result LocalSchedulerRegistry::stopActiveScheduler() const
-{    
+{
     auto active_scheduler = getActiveScheduler();
     if (!active_scheduler)
     {
-        RETURN_ERROR_DESCRIPTION(ERR_POINTER, "there is no active scheduler set");        
+        RETURN_ERROR_DESCRIPTION(ERR_POINTER, "there is no active scheduler set");
     }
-   
+
     return active_scheduler->stop();
 }
 
@@ -106,7 +114,7 @@ fep3::Result LocalSchedulerRegistry::initializeActiveScheduler(fep3::IClockServi
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "there is no active scheduler set");
     }
 
-    return active_scheduler->initialize(clock, jobs);    
+    return active_scheduler->initialize(clock, jobs);
 }
 
 
@@ -136,18 +144,18 @@ fep3::Result LocalSchedulerRegistry::registerScheduler(std::unique_ptr<fep3::ISc
     {
         RETURN_ERROR_DESCRIPTION(ERR_RESOURCE_IN_USE,
             "Registering scheduler failed. A scheduler with the name '%s' is already registered.", scheduler->getName().c_str());
-    }  
+    }
 
     _schedulers.push_back(std::move(scheduler));
-    return{};    
+    return{};
 }
 
 fep3::Result LocalSchedulerRegistry::unregisterScheduler(const std::string& scheduler_name)
-{        
+{
     if (_default_scheduler_name == scheduler_name)
     {
         RETURN_ERROR_DESCRIPTION(ERR_INVALID_ARG,
-            "Unregistering the default scheduler is not possible");                    
+            "Unregistering the default scheduler is not possible");
     }
 
     const auto it = std::remove_if(_schedulers.begin(), _schedulers.end(),
@@ -173,8 +181,8 @@ std::list<std::string> LocalSchedulerRegistry::getSchedulerNames() const
     std::list<std::string> scheduler_list;
 
     std::transform(
-        _schedulers.begin(), 
-        _schedulers.end(), 
+        _schedulers.begin(),
+        _schedulers.end(),
         std::back_inserter(scheduler_list),
          [](const std::unique_ptr<fep3::IScheduler>& scheduler){return scheduler->getName();});
 

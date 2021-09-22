@@ -1,14 +1,22 @@
 /**
  * @file
- * @copyright AUDI AG
- *            All right reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 #pragma once
 
 #include <fep3/fep3_participant_version.h>
@@ -36,15 +44,17 @@ namespace detail
 
 class IServiceRegistryRPCService
 {
+protected:
+    ~IServiceRegistryRPCService() = default;
 public:
     virtual std::vector<std::string> getRegisteredServiceNames() const = 0;
-    virtual std::shared_ptr<rpc::arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const = 0;
+    virtual std::shared_ptr<fep3::arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const = 0;
     virtual std::string getParticipantName() const = 0;
     virtual std::string getSystemName() const = 0;
 };
 
 class ServiceRegistryRPCService : public
-    rpc::arya::RPCService<fep3::rpc::arya::ParticipantInfoServiceStub,
+    rpc::arya::RPCService<fep3::rpc_stubs::RPCParticipantInfoServiceStub,
     rpc::arya::IRPCParticipantInfoDef>
 {
 public:
@@ -104,7 +114,7 @@ public:
         return FEP3_PARTICIPANT_LIBRARY_VERSION_STR;
     }
 private:
-    IServiceRegistryRPCService& _info;
+    arya::detail::IServiceRegistryRPCService& _info;
 };
 }
 /**
@@ -112,25 +122,25 @@ private:
  */
 
 /**
- * @brief ServiceRegistry Base class to implement the ParticipantInfo within 
+ * @brief ServiceRegistry Base class to implement the ParticipantInfo within
  *        the servicebus implementation
  * This class is only necessary if you want to implement your own IServiceBus::IParticipantServer
- * 
+ *
  * If using it you need to implement to retrieve information for the RPC call:
- * \li getRegisteredServiceNames 
+ * \li getRegisteredServiceNames
  * \li getServiceByName
 * And implement for the IParticipantServer:
- * \li registerService 
+ * \li registerService
  * \li unregisterService
  * \li getUrl
  */
 class ServiceRegistryBase : public fep3::arya::IServiceBus::IParticipantServer,
-    public detail::IServiceRegistryRPCService
+    public arya::detail::IServiceRegistryRPCService
 {
 public:
     /**
      * @brief Construct a Service Registry Base object
-     * 
+     *
      * @param name name of the participant server to register (this will be the IServiceBus::IParticipantServer)
      * @param system_name the participants system it belongs to (might change while runtime!!)
      */
@@ -148,14 +158,14 @@ public:
      */
     fep3::Result initialize()
     {
-        auto rpc_info_service = std::make_shared<detail::ServiceRegistryRPCService>(*this);
+        auto rpc_info_service = std::make_shared<arya::detail::ServiceRegistryRPCService>(*this);
         return registerService(rpc::arya::IRPCParticipantInfoDef::DEFAULT_NAME, rpc_info_service);
     }
 
 public: //rpc service ... needs to override it
-    
+
     //virtual std::vector<std::string> getRegisteredServiceNames() const = 0;
-    //virtual std::shared_ptr<rpc::arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const = 0;
+    //virtual std::shared_ptr<arya::IRPCServer::IRPCService> getServiceByName(const std::string& service_name) const = 0;
 
 public: //internal rpc server... needs to override it
     // virtual fep3::Result registerService(const std::string& service_name,
@@ -183,14 +193,14 @@ public: //rpc service pre-implementation
 
 public: //internal rpc server pre implementation
     /**
-     * @copydoc rpc::arya::IRPCServer::getName
+     * @copydoc arya::IRPCServer::getName
      */
     std::string getName() const override
     {
         return _name;
     }
     /**
-     * @copydoc rpc::arya::IRPCServer::setName
+     * @copydoc arya::IRPCServer::setName
      */
     void setName(const std::string& name) override
     {

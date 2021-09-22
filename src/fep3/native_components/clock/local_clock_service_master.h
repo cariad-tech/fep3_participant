@@ -1,13 +1,22 @@
 /**
-* @file
-* Copyright &copy; Audi AG. All rights reserved.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License, v. 2.0.
-* If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*
-*/
+ * @file
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
+ */
+
 
 #pragma once
 
@@ -63,10 +72,10 @@ public:
         _condition_sync_start.notify_one();
 
         return future;
-    }    
+    }
 
 private:
-    void executionLoop();   
+    void executionLoop();
 
 private:
     std::thread _sync_thread{};
@@ -88,7 +97,7 @@ public:
     bool isActive();
 
     bool isSet(IRPCClockSyncMasterDef::EventIDFlag flag);
-    void setEventIDFlag(int event_id_flag);   
+    void setEventIDFlag(int event_id_flag);
     std::string getName();
 
 private:
@@ -101,7 +110,7 @@ private:
 class ClockMaster : public IClock::IEventSink
 {
 public:
-    ClockMaster(const std::shared_ptr<const ILoggingService::ILogger>& logger
+    ClockMaster(const std::shared_ptr<const ILogger>& logger
     , std::chrono::nanoseconds rpc_timeout
     , const std::function<Result()>& set_participant_to_error_state
     , std::function<const std::shared_ptr<IRPCRequester>(const
@@ -130,15 +139,15 @@ public:
         {
         }
 
-        ~SlaveEntry() = default;            
-         
+        ~SlaveEntry() = default;
+
         SlaveEntry(SlaveEntry&) = delete;
         SlaveEntry(SlaveEntry&&) = delete;
         SlaveEntry& operator=(SlaveEntry&) = delete;
-        SlaveEntry& operator=(SlaveEntry&&) = delete;     
+        SlaveEntry& operator=(SlaveEntry&&) = delete;
 
     public:
-        std::shared_ptr<ClockSlave> _slave;      
+        std::shared_ptr<ClockSlave> _slave;
         AsyncExecutor _async_executor;
     };
 
@@ -146,7 +155,7 @@ public:
     {
     public:
         MultipleSlavesSynchronizer(std::chrono::nanoseconds timeout
-            , const std::shared_ptr<const ILoggingService::ILogger>& logger);
+            , const std::shared_ptr<const ILogger>& logger);
 
         void synchronize(const std::map<std::string, std::unique_ptr<ClockMaster::SlaveEntry>>& slaves
             , std::function<void(ClockSlave&)> sync_func
@@ -157,17 +166,17 @@ public:
         MultipleSlavesSynchronizer& operator=(MultipleSlavesSynchronizer&) = delete;
         MultipleSlavesSynchronizer& operator=(MultipleSlavesSynchronizer&&) = delete;
 
-        private:            
+        private:
             void waitUntilSyncFinish(
-                std::vector<std::pair<SlaveEntry&, std::future<void>>>& current_synchronizations) const;        
+                std::vector<std::pair<SlaveEntry&, std::future<void>>>& current_synchronizations) const;
         public:
             std::chrono::nanoseconds _safety_timeout;
-        
+
         private:
-            std::shared_ptr<const ILoggingService::ILogger> _logger;
+            std::shared_ptr<const ILogger> _logger;
     };
 
-private:    
+private:
     void createUpdateFunctions();
     void synchronizeEvent(const std::function<void(ClockSlave&)>& sync_func
         , const IRPCClockSyncMasterDef::EventIDFlag event_id_flag
@@ -175,7 +184,7 @@ private:
 
 private:
     std::shared_ptr<IServiceBus> _service_bus;
-    std::shared_ptr<const ILoggingService::ILogger> _logger;
+    std::shared_ptr<const ILogger> _logger;
     std::map<std::string, std::unique_ptr<SlaveEntry>> _slaves;
     std::chrono::nanoseconds _rpc_timeout;
     MultipleSlavesSynchronizer _slaves_synchronizer;
@@ -187,7 +196,7 @@ private:
     std::function<void(ClockSlave&, Timestamp, Timestamp)> _func_time_update_begin;
     std::function<void(ClockSlave&, Timestamp)> _func_time_updating;
     std::function<void(ClockSlave&, Timestamp)> _func_time_update_end;
-    std::function<void(ClockSlave&, Timestamp, Timestamp)> _func_time_reset_begin;    
+    std::function<void(ClockSlave&, Timestamp, Timestamp)> _func_time_reset_begin;
 };
 
 } // namespace rpc

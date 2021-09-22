@@ -29,17 +29,18 @@
         "name": "start",
         "returns": false
     },
-    // triggers the reinitialization of the participant's statemachine
+    // triggers stop of the participant's statemachine
     {
         "name": "stop",
         "returns": false
     },
-    // triggers the participant's statemachine to run (i. e. to enter the "normal" simulation mode)
+    // triggers pause of the participant's statemachine
+    // currently returns an error as pause mode is not implemented by the native participant components yet (see FEPSDK-2857)
     {
         "name": "pause",
         "returns": false
     },
-    // gets the string representation of the current state of the participants statemachine
+    // gets the string representation of the current state of the participant's statemachine
     {
         "name": "getCurrentStateName",
         "returns": "state_name"

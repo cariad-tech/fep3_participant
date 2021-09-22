@@ -1,15 +1,22 @@
 /**
- * Declaration of class ElementBase
- *
  * @file
- * Copyright &copy; AUDI AG. All rights reserved.
- *
- * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0.
- * If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
+ * @copyright
+ * @verbatim
+Copyright @ 2021 VW Group. All rights reserved.
+
+    This Source Code Form is subject to the terms of the Mozilla
+    Public License, v. 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file, then
+You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+@endverbatim
  */
+
 
 #pragma once
 
@@ -34,37 +41,39 @@ namespace arya
  * This is the base class for every FEP3 Element.
  * To implement your own FEP3 Element, derive from this class.
  */
-class ElementBase : public IElement,
-    public fep3::logging::arya::EasyLogging
-    
+class ElementBase : public fep3::arya::IElement,
+    public fep3::base::arya::EasyLogging
+
 {
 public:
     /**
-     * Deleted default CTOR
+     * Deleted default CTOR.
      */
     ElementBase() = delete;
 protected:
     /**
      * CTOR
      *
-     * @param type_name Name of the type the element presents
-     * @param version_info Version information of the element
+     * @param[in] type_name Name of the type the element presents
+     * @param[in] version_info Version information of the element
      */
     ElementBase(std::string type_name, std::string version_info) : _type_name(std::move(type_name)),
-                                                                   _version_info(std::move(version_info))
+                                                                   _version_info(std::move(version_info)),
+                                                                   _components(nullptr)
     {
     }
 public:
     /**
-     * Default DTOR
+     * Default DTOR.
      *
      */
     virtual ~ElementBase() = default;
 
 protected:
     /**
-     * return the typename of the element.
-     * the typename represents the type the element implementing.
+     * Return the typename of the element.
+     * The typename represents the type the element implementing.
+     *
      * @remark This is not the instance name of the element!
      *         the instance name is usually the same as the participant this element is loaded in.
      *
@@ -76,8 +85,9 @@ protected:
     }
 
     /**
-     * return the version of the element.
-     * the version of the element implementation
+     * Return the version of the element.
+     * The version of the element implementation.
+     *
      * @remark This is the instance version of the element type
      *         and will be used only for information at the moment!
      *         There is no further functionality or checks on that!
@@ -89,23 +99,24 @@ protected:
         return _version_info;
     }
     /**
-     * internal callback to load the element
+     * Internal callback to load the element.
      *
      * @param[in] components reference to the components. this pointer is valid until unload was called.
      *
      * @return Result error code
      * @retval NO_ERROR if succeded
      */
-    Result loadElement(const IComponents& components) override
+    Result loadElement(const fep3::arya::IComponents& components) override
     {
         auto init_logger_res = initLogger(components, "element");
         if (isFailed(init_logger_res))
         {
+            _components = nullptr;
             return init_logger_res;
         }
 
         _components = &components;
-        
+
         auto load_res = load();
         if (isFailed(load_res))
         {
@@ -114,10 +125,7 @@ protected:
         return load_res;
     }
     /**
-     * Initializes the element
-     *
-     * @return Result error code
-     * @retval NO_ERROR if succeded
+     * Internal callback to unload the element.
      */
     void unloadElement() override
     {
@@ -127,19 +135,20 @@ protected:
     }
 
     /**
-     * retrieves the component pointer
-     * this pointer is valid after before load() was called and before unload() was called
+     * Retrieves the component pointer.
+     * This pointer is only valid after loadElement() was successfully called and before unloadElement() was called.
+     *
      * @return the components pointer
-     * @retval nullptr the component pointer is not valid
+     * @retval nullptr if the component pointer is not valid
      */
-    const IComponents* getComponents() const
+    const fep3::arya::IComponents* getComponents() const
     {
         return _components;
     }
 
 public:
     /**
-     * callback to load the element
+     * Callback to load the element.
      *
      * @return Result error code
      * @retval NO_ERROR if succeded
@@ -149,12 +158,12 @@ public:
         return {};
     };
     /**
-     * callback to cleanup the element before unloading
+     * Callback to cleanup the element before unloading.
      *
      */
     virtual void unload()
     {
-        
+
     };
     /**
      * Does nothing.
@@ -205,14 +214,14 @@ public:
     void stop() override
     {
     }
-    
+
 private:
     ///type name of the element
     std::string _type_name;
     ///versioninformation of the element
     std::string _version_info;
     ///collection of components interfaces
-    const IComponents* _components;
+    const fep3::arya::IComponents* _components;
 };
 
 } // namespace arya

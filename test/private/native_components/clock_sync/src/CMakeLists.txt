@@ -1,30 +1,34 @@
-##################################################################
-# @file 
-# @copyright Audi AG
-#            All right reserved.
+#
+# Copyright @ 2021 VW Group. All rights reserved.
 # 
-# This Source Code Form is subject to the terms of the 
-# Mozilla Public License, v. 2.0. 
-# If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # 
-##################################################################
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+# 
+# You may add additional accurate notices of copyright ownership.
+# 
+#
+
 
 ##################################################################
 # Test of the interpolation time implementation
 ##################################################################
-add_executable(tester_interpolation_time 
+add_executable(tester_interpolation_time
                tester_interpolation_time.cpp
 )
 
 add_test(NAME tester_interpolation_time
     COMMAND tester_interpolation_time
     TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"        
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 target_link_libraries(tester_interpolation_time PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
     fep3_participant_private_lib
 )
 
@@ -33,18 +37,18 @@ set_target_properties(tester_interpolation_time PROPERTIES FOLDER "test/private/
 ##################################################################
 # Test of the native clock sync service implementation
 ##################################################################
-add_executable(tester_clock_sync_service 
+add_executable(tester_clock_sync_service
                tester_clock_sync_service.cpp
 )
 
 add_test(NAME tester_clock_sync_service
     COMMAND tester_clock_sync_service
     TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"        
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 target_link_libraries(tester_clock_sync_service PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -54,18 +58,18 @@ set_target_properties(tester_clock_sync_service PROPERTIES FOLDER "test/private/
 ##################################################################
 # Test of the clock sync client implementation
 ##################################################################
-add_executable(tester_clock_sync_client 
+add_executable(tester_clock_sync_client
                tester_clock_sync_client.cpp
 )
 
 add_test(NAME tester_clock_sync_client
     COMMAND tester_clock_sync_client
     TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"        
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 target_link_libraries(tester_clock_sync_client PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -75,18 +79,18 @@ set_target_properties(tester_clock_sync_client PROPERTIES FOLDER "test/private/n
 ##################################################################
 # Test of the clock sync master implementation
 ##################################################################
-add_executable(tester_clock_sync_master 
+add_executable(tester_clock_sync_master
                tester_clock_sync_master.cpp
 )
 
 add_test(NAME tester_clock_sync_master
     COMMAND tester_clock_sync_master
     TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"        
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 target_link_libraries(tester_clock_sync_master PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
 )
@@ -103,11 +107,11 @@ add_executable(tester_clock_synchronization
 add_test(NAME tester_clock_synchronization
     COMMAND tester_clock_synchronization
     TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"        
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 target_link_libraries(tester_clock_synchronization PRIVATE
-    GTest::Main
-    GMock::GMock
+    GTest::gtest_main
+    GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
 )
