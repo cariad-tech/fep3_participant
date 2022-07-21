@@ -18,7 +18,7 @@ You may add additional accurate notices of copyright ownership.
  */
 
 
-#include <gtest/gtest.h>
+#include "tester_logging_sink_folder_setup.h"
 
 #include "fep3/components/base/component_registry.h"
 #include "fep3/components/service_bus/rpc/fep_rpc.h"
@@ -30,7 +30,9 @@ You may add additional accurate notices of copyright ownership.
 #include "../test/private/utils/common/gtest_asserts.h"
 
 #include <a_util/system/system.h>
-#include "boost/filesystem.hpp"
+#include <json/json.h>
+#include <boost/regex.hpp>
+
 #include <fstream>
 #include <thread>
 #include <future>
@@ -48,26 +50,21 @@ namespace
     }
 }
 
-struct TestLoggingServiceFile : public ::testing::Test
+struct TestLoggingServiceFile : public TestLoggingSinkFolderSetup
 {
     std::shared_ptr<fep3::native::LoggingService> _logging{ std::make_shared<fep3::native::LoggingService>() };
     std::shared_ptr<fep3::native::ServiceBus> _service_bus{ std::make_shared<fep3::native::ServiceBus>() };
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{ std::make_shared<fep3::ComponentRegistry>() };
     std::unique_ptr<LoggingServiceClient> _logging_service_client;
-    const std::string _rel_path = "../files";
-    boost::filesystem::path _files_path;
-    boost::filesystem::path _test_log_file;
-    std::string _test_log_file_string;
-    std::string _content;
+	fep3::ComponentVersionInfo dummy_component_version_info{ "3.0.1","dummyPath", "3.1.0" };
 
     void SetUp()
     {
-        ASSERT_NO_THROW(clean_up_before());
-        set_up_file_paths();
+        ASSERT_NO_FATAL_FAILURE(TestLoggingSinkFolderSetup::SetUp());
 
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus), fep3::ERR_NOERROR);
-        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, dummy_component_version_info), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging, dummy_component_version_info), fep3::ERR_NOERROR);
         ASSERT_EQ(_component_registry->create(), fep3::ERR_NOERROR);
 
         _logging_service_client = std::make_unique<LoggingServiceClient>(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),
@@ -80,52 +77,31 @@ struct TestLoggingServiceFile : public ::testing::Test
         _logging.reset();
         _service_bus.reset();
         _logging_service_client.reset();
+
         // clean up leftover files...
-        ASSERT_NO_THROW(boost::filesystem::remove_all("../files")) << " Log file folder files still in use";
+        ASSERT_NO_FATAL_FAILURE(TestLoggingSinkFolderSetup::TearDown());
     }
 
-    void clean_up_before()
+    void readJsonFile(unsigned char index, const std::string& severity, const std::string& message)
     {
-        // clean up in case there are leftovers from previous tests.
-        if (boost::filesystem::exists("../files"))
-        {
-            boost::filesystem::remove_all("../files");
-        }
-        boost::filesystem::create_directory("../files");
+        Json::Value root;
+        std::ifstream t(_test_log_file_string);
+        ASSERT_NO_THROW(t >> root);
+
+        ASSERT_NO_THROW(checkIsoTime(root[index]["timestamp"].asString()));
+        ASSERT_EQ(root[index]["severity_level"].asString(), severity);
+        ASSERT_EQ(root[index]["logger_name"].asString(), "FileLogger.LoggingService.Tester");
+        ASSERT_EQ(root[index]["message"].asString(), message);
+        ASSERT_EQ(root[index]["participant_name"].asString(), fep3::native::testing::participant_name_default);
+        ASSERT_EQ(root[index]["log_type"].asString(), "message");
     }
 
-    void set_up_file_paths()
+    void checkIsoTime(const std::string& timeString)
     {
-        _files_path = boost::filesystem::canonical("../files");
-        _test_log_file = _files_path;
-        _test_log_file.append("some_logfile.txt");
-        _test_log_file_string = _test_log_file.string();
-    }
-
-    testing::AssertionResult readFileContent()
-    {
-        if (boost::filesystem::exists(_test_log_file_string))
-        {
-            std::ifstream ifs(_test_log_file_string);
-            _content = std::string(std::istreambuf_iterator<char>{ifs}, {});
-            return testing::AssertionSuccess();
-        }
-        else
-        {
-            return testing::AssertionFailure() << "Log file " << _test_log_file_string << " not found";
-        }
-    }
-
-    void findStringInFile(const std::string& expected_string)
-    {
-        ASSERT_NE(_content.find(expected_string), std::string::npos) << "expected string " << expected_string
-            << " not found in the log file";
-    }
-
-    void stringNotInFile(const std::string& unexpected_string)
-    {
-        ASSERT_EQ(_content.find(unexpected_string), std::string::npos) << "unexpected string " << unexpected_string
-            << " found in the log file";
+        boost::regex expr{ "(\\d{4})-(\\d{2})-(\\d{2})T(\\d*):(\\d*):(\\d*),(\\d*)[\\+-](\\d{2})" };
+        boost::smatch what;
+        std::cout << timeString << std::endl;
+        ASSERT_TRUE(boost::regex_search(timeString, what, expr)) << "Json timestamp does not comply to ISO8601 time format";
     }
 };
 
@@ -139,7 +115,7 @@ TEST_F(TestLoggingServiceFile, TestFileLog)
     ASSERT_TRUE(logger);
 
     ASSERT_NO_THROW(_logging_service_client->setLoggerFilter(
-        "file",
+        "file,console",
         "FileLogger.LoggingService.Tester",
         static_cast<int>(fep3::LoggerSeverity::warning)));
     ASSERT_NO_THROW(_logging_service_client->setSinkProperty(
@@ -206,4 +182,41 @@ TEST_F(TestLoggingServiceFile, TestFileStress)
         ASSERT_NO_FATAL_FAILURE(findStringInFile("First:  " + a_util::strings::toString(i)));
         ASSERT_NO_FATAL_FAILURE(findStringInFile("Second:  " + a_util::strings::toString(i)));
     }
+}
+
+/**
+*The file logger should be able to write in json format
+*/
+TEST_F(TestLoggingServiceFile, TestFileLogJson)
+{
+    std::shared_ptr<fep3::ILogger> logger = _logging->createLogger("FileLogger.LoggingService.Tester");
+    ASSERT_TRUE(logger);
+
+    ASSERT_NO_THROW(_logging_service_client->setLoggerFilter(
+        "file_json",
+        "FileLogger.LoggingService.Tester",
+        static_cast<int>(fep3::LoggerSeverity::warning)));
+    ASSERT_NO_THROW(_logging_service_client->setSinkProperty(
+        "file_path",
+        "file_json",
+        "string",
+        _test_log_file_string));
+
+    ASSERT_FEP3_NOERROR(logger->logError("First message"));
+    ASSERT_FEP3_NOERROR(logger->logWarning("Second message"));
+    // severity == info should not appear because it's not configured
+    ASSERT_FEP3_NOERROR(logger->logInfo("Test log: must not appear in file"));
+
+    // wait until the logs are executed from queue
+    a_util::system::sleepMilliseconds(300);
+
+    // clean everything so that the destructor of LoggingFormaterJson is called
+    _component_registry->clear();
+    _logging.reset();
+    _service_bus.reset();
+    _logging_service_client.reset();
+
+    // validate file content
+    ASSERT_NO_FATAL_FAILURE(readJsonFile(0, "Error", "First message"));
+    ASSERT_NO_FATAL_FAILURE(readJsonFile(1, "Warning", "Second message"));
 }

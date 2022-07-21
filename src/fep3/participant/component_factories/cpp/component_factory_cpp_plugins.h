@@ -36,7 +36,7 @@ namespace fep3
             ComponentFactoryCPPPlugin(const std::string& file_path);
             virtual ~ComponentFactoryCPPPlugin();
             std::unique_ptr<fep3::arya::IComponent> createComponent(const std::string& iid, const ILogger* logger) const override;
-
+            ComponentVersionInfo getPluginInfo() const override;
         private:
             struct Implementation;
             std::unique_ptr<Implementation> _impl;

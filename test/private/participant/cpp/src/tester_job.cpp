@@ -22,6 +22,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/core/job.h>
 #include <fep3/components/job_registry/mock/mock_job_registry.h>
 #include <fep3/components/base/component_registry.h>
@@ -45,7 +46,7 @@ struct JobComponentRegistryWithJobRegistry : ::testing::Test
     void createComponents()
     {
         auto job_registry = std::make_unique<fep3::mock::JobRegistryComponent<>>();
-        ASSERT_FEP3_RESULT(_component_registry->registerComponent<fep3::IJobRegistry>(std::move(job_registry)), fep3::ERR_NOERROR);
+        ASSERT_FEP3_RESULT(_component_registry->registerComponent<fep3::IJobRegistry>(std::move(job_registry), _dummy_component_version_info), fep3::ERR_NOERROR);
     }
 
     void setComponents()
@@ -56,6 +57,8 @@ struct JobComponentRegistryWithJobRegistry : ::testing::Test
 
     fep3::mock::JobRegistry* _job_registry_mock;
     std::shared_ptr<fep3::ComponentRegistry> _component_registry;
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 struct JobComponentRegistryWithoutJobRegistry : ::testing::Test

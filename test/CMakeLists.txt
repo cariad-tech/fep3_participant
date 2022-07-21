@@ -23,7 +23,9 @@ if (NOT fep3_participant_cmake_integrated_tests)
 
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_STANDARD 14)
+    if (NOT DEFINED CMAKE_CXX_STANDARD)
+        set(CMAKE_CXX_STANDARD 17)
+    endif()
 
     # if Conan is used, we have to include the generated file and doing some basic setup
     if(CONAN_COMPILER)

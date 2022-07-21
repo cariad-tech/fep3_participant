@@ -118,13 +118,11 @@ std::string ClockSlave::getName()
 
 ClockMaster::ClockMaster(const std::shared_ptr<const ILogger>& logger
     , nanoseconds rpc_timeout
-    , const std::function<fep3::Result()>& set_participant_to_error_state
     , const std::function<const std::shared_ptr<IRPCRequester>(const
         std::string& service_participant_name)> get_rpc_requester_by_name)
     : _logger(logger)
     , _rpc_timeout(rpc_timeout)
     , _slaves_synchronizer(calculateSafetyTimeout(_rpc_timeout), logger)
-    , _set_participant_to_error_state(set_participant_to_error_state)
     , _get_rpc_requester_by_name(get_rpc_requester_by_name)
 
 {
@@ -310,8 +308,6 @@ void ClockMaster::synchronizeEvent(const std::function<void(ClockSlave&)>& sync_
     {
         const auto actual_message = std::string(message + ": " + ex.what());
         _logger->logError(actual_message);
-
-        _set_participant_to_error_state();
     }
 }
 

@@ -19,7 +19,6 @@ You may add additional accurate notices of copyright ownership.
 
 
 #include <stdexcept>
-
 #include "host_plugin_base.h"
 #include "shared_library.h"
 
@@ -103,6 +102,11 @@ std::string HostPluginBase::getPluginVersion() const
 ParticipantLibraryVersion HostPluginBase::getParticipantLibraryVersion() const
 {
     return _participant_library_version;
+}
+
+ComponentVersionInfo HostPluginBase::getPluginInfo() const
+{
+    return ComponentVersionInfo(getPluginVersion(), getFilePath(), getParticipantLibraryVersion().toString());
 }
 
 } // namespace arya

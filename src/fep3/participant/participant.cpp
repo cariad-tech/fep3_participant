@@ -42,6 +42,8 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/rpc_services/participant_statemachine/participant_statemachine_rpc_intf_def.h>
 #include <fep3/rpc_services/participant_statemachine/participant_statemachine_service_stub.h>
 
+#include "component_registry_rpc/component_registry_rpc.h"
+
 namespace fep3
 {
 namespace arya
@@ -50,6 +52,7 @@ namespace arya
 class Participant::Impl : public rpc::RPCService<fep3::rpc_stubs::RPCParticipantStateMachineServiceStub,
                                                  fep3::rpc::arya::IRPCParticipantStateMachineDef>
 {
+
 public:
     /**
      * @brief A runner functor to encapsulate the multithread access.
@@ -77,7 +80,8 @@ public:
           _system_name(system_name),
           _component_registry(comp_registry),
           _element_factory(elem_factory),
-          _default_logger(default_logger)
+          _default_logger(default_logger),
+        _component_registry_service(std::make_shared<fep3::native::ComponentRegistryRpcService>(_component_registry))
     {
     }
 
@@ -165,10 +169,16 @@ public:
         return _version_info;
     }
 
+    std::shared_ptr<fep3::native::ComponentRegistryRpcService> getComponentRegistryRpcService()
+    {
+        return _component_registry_service;
+    }
+
 private:
     std::string _name;
     std::string _system_name;
     std::string _version_info;
+    std::shared_ptr<fep3::native::ComponentRegistryRpcService> _component_registry_service;
 };
 
 void Participant::Impl::Runner::operator()(const std::weak_ptr<ParticipantStateMachine>& weak_ptr_to_participant_state_machine)
@@ -271,6 +281,10 @@ int Participant::exec(const std::function<void()>& start_up_callback)
             {
                 server->registerService(rpc::IRPCParticipantStateMachineDef::getRPCDefaultName(),
                                         _impl);
+
+                server->registerService(fep3::rpc::bronn::IRPCComponentRegistryDef::getRPCDefaultName(),
+                    _impl->getComponentRegistryRpcService());
+
                 if (start_up_callback)
                 {
                     start_up_callback();
@@ -278,6 +292,7 @@ int Participant::exec(const std::function<void()>& start_up_callback)
                 _impl->_runner(_impl->_participant_state_machine);
 
                 server->unregisterService(rpc::IRPCParticipantStateMachineDef::getRPCDefaultName());
+                server->unregisterService(fep3::rpc::bronn::IRPCComponentRegistryDef::getRPCDefaultName());
 
                 //we release the logger
                 participant_logger.reset();

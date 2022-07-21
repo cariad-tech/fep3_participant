@@ -22,6 +22,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 
 #include <fep3/fep3_errors.h>
+#include <fep3/fep3_participant_version.h>
 #include <fep3/components/base/component_registry.h>
 #include <fep3/components/configuration/mock/mock_configuration_service.h>
 #include <fep3/components/job_registry/mock/mock_transferable_job_registry_with_access_to_jobs.h>
@@ -113,12 +114,12 @@ struct JobRegistryRPCCPlugin : public JobRegistryLoaderFixture
 
         JobRegistryLoaderFixture::SetUp();
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            JobRegistryLoaderFixture::extractComponent()))
+            JobRegistryLoaderFixture::extractComponent(), _dummy_component_version_info))
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingServiceMock>(_logger_mock)))
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus))
+            std::make_shared<LoggingServiceMock>(_logger_mock), _dummy_component_version_info))
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info))
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock))
+            _configuration_service_mock, _dummy_component_version_info))
 
         ASSERT_FEP3_NOERROR(_component_registry->create())
     }
@@ -127,6 +128,8 @@ struct JobRegistryRPCCPlugin : public JobRegistryLoaderFixture
     std::shared_ptr<LoggerMock> _logger_mock{};
     std::shared_ptr<native::ServiceBus> _service_bus{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{ FEP3_PARTICIPANT_LIBRARY_VERSION_STR,"dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR };
 };
 
 /**

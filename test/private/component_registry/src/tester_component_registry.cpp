@@ -24,6 +24,21 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/components/base/component_registry.h>
 #include <helper/gmock_destruction_helper.h>
 
+namespace
+{
+    fep3::ComponentVersionInfo dummy_component_version_info{ "3.0.1","dummyPath", "3.1.0" };
+}
+
+namespace fep3
+{
+    bool operator == (const fep3::ComponentVersionInfo& lhs, const fep3::ComponentVersionInfo& rhs)
+    {
+        return (lhs.getVersion() == rhs.getVersion()) &&
+            (lhs.getParticipantLibraryVersion() == rhs.getParticipantLibraryVersion()) &&
+            (lhs.getFilePath() == rhs.getFilePath());
+    }
+}
+
 class IMyFancyInterface1
 {
     protected:
@@ -126,16 +141,16 @@ const auto& registry = std::make_shared<fep3::ComponentRegistry>();
     }
 
     //we check if registration is okay
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1)));
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(mock_component_2));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1), dummy_component_version_info));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(mock_component_2, dummy_component_version_info));
 
     //we check if registration is not okay if we want to register the pointer with the same COMP IID again
     // Note: In the following we are not testing the destruction the mock objects
     // , so we can use the NiceMock of MockComponent2 and don't set expectations.
     auto mock_component_1b = std::make_unique<::testing::NiceMock<MockComponent1>>();
     auto mock_component_2b = std::make_unique<::testing::NiceMock<MockComponent2>>();
-    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1b)));
-    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(std::move(mock_component_2b)));
+    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1b), dummy_component_version_info));
+    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(std::move(mock_component_2b), dummy_component_version_info));
 
     // test getting pointers to the components from the registry
     EXPECT_EQ(pointer_to_mock_component_1, registry->getComponent<IMyFancyInterface1>());
@@ -154,7 +169,7 @@ const auto& registry = std::make_shared<fep3::ComponentRegistry>();
     auto mock_component_2c = std::make_unique<::testing::NiceMock<MockComponent2>>();
 
     //check if we only can register IMyFancyInterface1 if the class really supports it
-    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface3>(std::move(mock_component_2c)));
+    ASSERT_NE(fep3::Result(), registry->registerComponent<IMyFancyInterface3>(std::move(mock_component_2c), dummy_component_version_info));
 }
 
 /**
@@ -206,8 +221,8 @@ const auto& registry = std::make_shared<fep3::ComponentRegistry>();
     }
 
     //we check if registration is okay
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1)));
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(std::move(mock_component_2)));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1), dummy_component_version_info));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(std::move(mock_component_2), dummy_component_version_info));
 
     // test that all function calls lead to the corresponding function call of the components
     EXPECT_EQ(fep3::Result{}, registry->create());
@@ -260,8 +275,8 @@ TEST(BaseComponentRegistryTester, testRegistrationOfSuperComponent)
     EXPECT_DESTRUCTION(*mock_super_component.get());
 
     // test registration of one component by multiple component iids
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(mock_super_component));
-    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(mock_super_component));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(mock_super_component, dummy_component_version_info));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(mock_super_component, dummy_component_version_info));
 
     // test getting pointers to the components from the registry
     EXPECT_EQ(mock_super_component.get(), registry->getComponent<IMyFancyInterface1>());
@@ -273,4 +288,50 @@ TEST(BaseComponentRegistryTester, testRegistrationOfSuperComponent)
     ASSERT_EQ(fep3::Result(), registry->unregisterComponent<IMyFancyInterface1>());
     //the ComponentRegistry must have released one reference
     EXPECT_EQ(2, mock_super_component.use_count());
+}
+
+/**
+ * Tests the getComponentVersion
+ * @req_id FEPSDK-3239
+*/
+TEST(BaseComponentRegistryTester, testGetComponentVersion)
+{
+    const auto& registry = std::make_shared<fep3::ComponentRegistry>();
+
+    auto mock_component_1 = std::make_unique<::testing::StrictMock<MockComponent1>>();
+    auto mock_component_2 = std::make_unique<::testing::StrictMock<MockComponent2>>();
+
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface1>(std::move(mock_component_1), dummy_component_version_info));
+    ASSERT_EQ(fep3::Result(), registry->registerComponent<IMyFancyInterface2>(std::move(mock_component_2), dummy_component_version_info));
+
+    //test getComponentVersion
+    {
+        auto get_version_result = registry->getComponentVersion(mock_component_1->getComponentIID());
+        ASSERT_EQ(fep3::Result(), get_version_result.first);
+        ASSERT_EQ(dummy_component_version_info, get_version_result.second);
+
+        get_version_result = registry->getComponentVersion(mock_component_2->getComponentIID());
+        ASSERT_EQ(fep3::Result(), get_version_result.first);
+        ASSERT_EQ(dummy_component_version_info, get_version_result.second);
+    }
+
+    //test getComponentVersion of non existing component
+    {
+        auto get_version_result = registry->getComponentVersion("NonExistingComponent");
+        ASSERT_FALSE(a_util::result::isOk(get_version_result.first));
+    }
+
+    ASSERT_EQ(fep3::Result(), registry->unregisterComponent(mock_component_1->getComponentIID()));
+    //test getComponentVersion of component after unregistering the component
+    {
+        auto get_version_result = registry->getComponentVersion(mock_component_1->getComponentIID());
+        ASSERT_FALSE(a_util::result::isOk(get_version_result.first));
+    }
+
+    registry->clear();
+    //test getComponentVersion of component after clearing all components
+    {
+        auto get_version_result = registry->getComponentVersion(mock_component_2->getComponentIID());
+        ASSERT_FALSE(a_util::result::isOk(get_version_result.first));
+    }
 }

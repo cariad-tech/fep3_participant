@@ -45,12 +45,12 @@ public:
 
 public:
     /**
-     * Returns the typename of the element.
-     * The typename represents the type the element is implementing.
+     * Returns the type name of the element.
+     * The type name represents the type the element is implementing.
      * @remark This is not the instance name of the element!
      *         The instance name is usually the same as the name of the participant this element is loaded in.
      *
-     * @return std::string The typename
+     * @return std::string Result of getTypename
      */
     virtual std::string getTypename() = 0;
     /**
@@ -60,7 +60,7 @@ public:
      *         and will be used only for information at the moment!
      *         There is no further functionality or checks on that!
      *
-     * @return std::string The version as string (this is vendor dedendent, and only for information!)
+     * @return std::string The version as string (this is vendor dependent, and only for information!)
      */
     virtual std::string getVersion() = 0;
     /**
@@ -69,21 +69,21 @@ public:
      * @param[in] components Reference to the components. This pointer is valid until @ref unloadElement was called.
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     virtual Result loadElement(const arya::IComponents& components) = 0;
     /**
      * Unloads internals of the element
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     virtual void unloadElement() = 0;
     /**
      * Initializes the element
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     virtual Result initialize() = 0;
     /**
@@ -96,7 +96,7 @@ public:
      * Runs the element
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     virtual Result run() = 0;
     /**

@@ -774,7 +774,7 @@ TEST_F(ClockBasedSchedulerDiscrete, SchedulingDelayLargerThanCycleTime)
 
     scheduler.stop();
 }
-
+    
 /**
 * @brief A continuous scheduler is executed for 9223372036850 ms with a job cycle time of 10ms and offset of 9223372036800 ms.
 * Job has to be called 6 times.
@@ -800,6 +800,9 @@ TEST_F(ClockBasedSchedulerContinuous, SchedulingLargeDelay)
         ::test::helper::Notification called;
 
         ASSERT_FEP3_RESULT(scheduler.initialize(clock_service, jobs), fep3::ERR_NOERROR);
+        // if we do not increment before starting, the scheduler could have initial time 0 and then wait fot the delay time
+        // failing the test
+        clock_service.incrementTime(delay_time);
         ASSERT_FEP3_RESULT(scheduler.start(), fep3::ERR_NOERROR);
 
         EXPECT_CALL(*my_job, execute(_)).Times(0);
@@ -814,8 +817,6 @@ TEST_F(ClockBasedSchedulerContinuous, SchedulingLargeDelay)
         scheduler_event_sink.lock()->timeResetEnd(Timestamp(0));
 
         // this will push the clock until 9223372036850ms in 10ms steps
-        ASSERT_FALSE(called.waitForNotificationWithTimeout(timeout)); // 0ms
-        clock_service.incrementTime(delay_time);
         ASSERT_TRUE(called.waitForNotificationWithTimeout(timeout)); // 9223372036800ms
         clock_service.incrementTime(10ms);
         ASSERT_TRUE(called.waitForNotificationWithTimeout(timeout)); // ...10ms

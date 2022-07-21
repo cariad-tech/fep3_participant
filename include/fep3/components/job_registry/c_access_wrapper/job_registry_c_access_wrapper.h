@@ -337,7 +337,7 @@ fep3_plugin_c_InterfaceError createJobRegistry
  * Creates a job registry object of type \p job_registry_type
  * @tparam The type of the job registry object to be created
  * @param[in,out] result Pointer to the access structure to the created job registry object
- * @param[in] shared_binary_access Access strcuture to the shared binary the job registry object resides in
+ * @param[in] shared_binary_access Access structure to the shared binary the job registry object resides in
  * @param[in] iid The interface ID of the job registry interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred

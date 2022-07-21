@@ -23,6 +23,14 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/core/participant_executor.hpp>
 #include <chrono>
 
+#include <fep3/fep3_participant_version.h>
+#include <component_registry_rpc_service_helper.h>
+#include <fep3/fep3_participant_version.h>
+#include <fep3/rpc_services/component_registry/component_registry_rpc_intf_def.h>
+#include <fep3/rpc_services/component_registry/component_registry_client_stub.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
+#include "fep3/components/service_bus/service_bus_intf.h"
+
 using namespace std::literals::chrono_literals;
 using namespace fep3::cpp;
 
@@ -91,6 +99,48 @@ private:
 std::atomic<int32_t> MyJobReceive::_counter;
 std::string MyJobReceive::_last_value;
 
+class TestClient : public fep3::rpc::RPCServiceClient<::fep3::rpc_stubs::RPCParticipantComponentRegistryClientStub, fep3::rpc::bronn::IRPCComponentRegistryDef>
+{
+private:
+    using base_type = fep3::rpc::RPCServiceClient<::fep3::rpc_stubs::RPCParticipantComponentRegistryClientStub, fep3::rpc::bronn::IRPCComponentRegistryDef>;
+
+public:
+    using base_type::GetStub;
+
+    TestClient(const std::string& server_object_name,
+        const std::shared_ptr<fep3::arya::IRPCRequester>& rpc_requester)
+        : base_type(server_object_name, rpc_requester)
+    {
+    }
+protected:
+
+};
+
+void PerformComponentRegistryRpcTest(Participant& participant)
+{
+    auto _service_bus = participant.getComponent<fep3::IServiceBus>();
+    ASSERT_NE(nullptr, _service_bus);
+
+    TestClient client(fep3::rpc::bronn::IRPCComponentRegistryDef::getRPCDefaultName(),
+        _service_bus->getRequester("test_sender"));
+
+    // test existing component
+    auto json_value = client.getPluginVersion(_service_bus->getComponentIID());
+    ASSERT_NO_FATAL_FAILURE(fep3::test::helper::validateJsonKey(json_value, "version", FEP3_PARTICIPANT_LIBRARY_VERSION_STR))
+        << "Json return value not as expected";
+    json_value = client.getFilePath(_service_bus->getComponentIID());
+    ASSERT_NO_FATAL_FAILURE(fep3::test::helper::validateJsonKey(json_value, "file_path"))
+        << "Json return value not as expected";
+    json_value = client.getParticipantLibraryVersion(_service_bus->getComponentIID());
+    // participant is in the form fep3_participant @ 3.0.1 build 0
+    ASSERT_NO_FATAL_FAILURE(fep3::test::helper::keyContains(json_value, "participant_version", { FEP3_PARTICIPANT_LIBRARY_VERSION_STR , "fep3_participant"}))
+        << "Json return value not as expected";
+
+
+    // test non existing component
+    json_value = client.getPluginVersion("nonExistingComponent");
+    ASSERT_NO_FATAL_FAILURE(fep3::test::helper::validateJsorError(json_value)) << "Json return value not as expected";
+}
 
 /**
  * @detail Test the registration, unregistration and memorymanagment of the ComponentRegistry
@@ -120,6 +170,8 @@ TEST(CPPAPITester, testSimpleUse)
 
     ASSERT_TRUE(executor_receiver.start());
     ASSERT_TRUE(executor_sender.start());
+
+    ASSERT_NO_FATAL_FAILURE(PerformComponentRegistryRpcTest(partsender));
 
     int try_count = 20;
     while (MyJobReceive::_counter < 1 && try_count > 0)

@@ -94,7 +94,7 @@ public:
      * Gets a component from a participant
      *
      * @tparam T Type of the component to get
-     * @return Result 'NO_ERROR' if succeded, error code otherwise
+     * @return Result 'NO_ERROR' if succeeded, error code otherwise
     */
     template <class T>
     T* getComponent() const
@@ -150,7 +150,7 @@ Participant FEP3_PARTICIPANT_EXPORT createParticipant(const std::string& name,
     const std::string& server_address_url = std::string() );
 /**
  * @brief Creates a participant
- * @tparam element_factory type of the fatory which is able to create the element
+ * @tparam element_factory type of the factory which is able to create the element
  * @param[in] name Name of the participant to be created
  * @param[in] system_name Name of the system this participant belongs to
  * @param[in] version_info Version information of the participant to be created

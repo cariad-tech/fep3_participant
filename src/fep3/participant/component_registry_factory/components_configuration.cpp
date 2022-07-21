@@ -113,18 +113,16 @@ namespace arya
                     auto source_type = fep3::arya::getComponentSourceType(source_node.getAttribute("type"));
                     auto source_file_string = source_node.getData();
                     a_util::strings::trim(source_file_string);
-                    a_util::filesystem::Path source_file_path;
+                    boost::filesystem::path component_lib_path;
                     if (!source_file_string.empty())
                     {
-                        source_file_path = source_file_string;
+                        component_lib_path = source_file_string;
                     }
-                    if (!source_file_path.isEmpty() && source_file_path.isRelative())
+                    if (!component_lib_path.empty() && component_lib_path.is_relative())
                     {
-                        //we make it relative to the File! (not the workingdirectory!!)
-                        source_file_path = a_util::filesystem::Path(file_path).getParent().append(source_file_path);
-                        source_file_path.makeCanonical();
+                        component_lib_path = getAbsoluteComponentLibPath(component_lib_path, file_path);
                     }
-                    items.push_back({comp_iid, {source_type, source_file_path}});
+                    items.push_back({comp_iid, {source_type, component_lib_path.string()}});
                 }
             }
         }
@@ -138,6 +136,23 @@ namespace arya
     std::vector<ComponentsConfiguration::ComponentConfiguration> ComponentsConfiguration::getItems() const
     {
         return _items;
+    }
+
+    boost::filesystem::path ComponentsConfiguration::getAbsoluteComponentLibPath(
+        const boost::filesystem::path& component_lib_rel_path,
+        const std::string& fep_component_file_path) const
+    {
+        //we make it relative to the File! (not the workingdirectory!!)
+       // first get the directory of the components dll
+        boost::filesystem::path component_lib_directory = component_lib_rel_path.parent_path();
+        //calculate the absolute path to the fep components file, usually it has a dot in the path
+        boost::filesystem::path fep_components_file_path_absolute = boost::filesystem::canonical(fep_component_file_path);
+        //now get the directory of the fep components file
+        fep_components_file_path_absolute = fep_components_file_path_absolute.parent_path();
+        // calculate the absolute directory of the components dll
+        component_lib_directory = boost::filesystem::canonical(component_lib_directory, fep_components_file_path_absolute);
+
+        return component_lib_directory / component_lib_rel_path.filename();
     }
 }
 }

@@ -272,7 +272,7 @@ struct NodePropertyType
 
 /**
  * @brief spezialized PropertyType for type NodePropertyType. Can be used for @ref fep3::arya::IProperties.
- * The type is is used for a property node that has no value but only children nodes.
+ * The type is used for a property node that has no value but only children nodes.
  *
  */
 template<>

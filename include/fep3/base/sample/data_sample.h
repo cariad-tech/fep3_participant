@@ -148,8 +148,8 @@ public:
     /**
      * @brief Construct a new data sample
      *
-     * @param[in] pre_allocated_capacity will prealocate the raw memory data area of the data sample
-     * @param[in] fixed_size marks the sample to have no dynamic memory. if capacity size is reached no realocation is possible.
+     * @param[in] pre_allocated_capacity will preallocate the raw memory data area of the data sample
+     * @param[in] fixed_size marks the sample to have no dynamic memory. if capacity size is reached no reallocation is possible.
      */
     DataSample(size_t pre_allocated_capacity, bool fixed_size)
         : _fixed_size(fixed_size), _current_size(0), _buffer(pre_allocated_capacity)
@@ -368,8 +368,8 @@ private:
 };
 
 /**
- * @brief Data sample helper template to wrap a non standard layout type T by default
- * @tparam T the non standard layout type
+ * @brief Data sample helper template to wrap a non-standard layout type T by default
+ * @tparam T the non-standard layout type
  * @tparam is_standard_layout_type the standard layout type check
  */
 template<typename T, typename is_standard_layout_type = void>
@@ -396,7 +396,7 @@ public:
     /**
      * Copy assignment
      * @param[in] other the other to copy from
-     * @return this sample type
+     * @return this type of sample
      */
     DataSampleType& operator=(const DataSampleType& other)
     {
@@ -405,9 +405,9 @@ public:
         return *this;
     }
     /**
-     * Assignment from other sample
+     * Assignment from another sample
      * @param[in] other the other to copy from
-     * @return this sample type
+     * @return this type of sample
      */
     DataSampleType& operator=(const fep3::arya::IDataSample& other)
     {
@@ -432,8 +432,8 @@ public:
 };
 
 /**
- * @brief Data sample helper template to wrap a non standard layout type T by default
- * @tparam T the non standard layout type
+ * @brief Data sample helper template to wrap a standard layout type T by default
+ * @tparam T the standard layout type
  */
 template <typename T>
 class DataSampleType<T, typename std::enable_if<std::is_standard_layout<T>::value>::type>

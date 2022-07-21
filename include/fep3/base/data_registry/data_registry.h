@@ -33,39 +33,47 @@ namespace base
 namespace arya
 {
 
-    ///@copydoc fep3::arya::addDataIn
-    inline std::unique_ptr<fep3::arya::IDataRegistry::IDataReader> addDataIn(fep3::arya::IDataRegistry& data_registry,
+    /**
+     * @brief Helper function to register data to a given registry and create a reader immediately.
+     *
+     * @param[in,out] data_registry The data registry to register the incoming data to
+     * @param[out] reader The returned reference is only valid when the function returns ERR_NOERROR
+     * @param[in] name The name of the incoming data (must be unique)
+     * @param[in] stream_type The stream type of this data (see @ref fep3::arya::IStreamType)
+     * @param[in] queue_capacity The maximum number of items that the reader queue can hold at a time
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
+     *
+     */
+    inline fep3::Result addDataIn(fep3::arya::IDataRegistry& data_registry,
+        std::unique_ptr<fep3::arya::IDataRegistry::IDataReader>& reader,
         const std::string& name,
         const fep3::arya::IStreamType& stream_type,
         size_t queue_capacity = 1)
     {
-        auto res = data_registry.registerDataIn(name, stream_type);
-        if (isFailed(res))
-        {
-            return{};
-        }
-        else
-        {
-            return data_registry.getReader(name,
-                                           queue_capacity);
-        }
+        fep3::Result res = data_registry.registerDataIn(name, stream_type);
+        reader = isFailed(res) ? nullptr : data_registry.getReader(name, queue_capacity);
+        return res;
     }
 
-    ///@copydoc fep3::arya::addDataOut
-    inline std::unique_ptr<fep3::arya::IDataRegistry::IDataWriter> addDataOut(fep3::arya::IDataRegistry& data_registry,
+    /**
+     * @brief Helper function to register data to a given registry and create a writer immediately.
+     *
+     * @param[in,out] data_registry The data registry to register the outgoing data to
+     * @param[out] writer The returned reference is only valid when the function returns ERR_NOERROR
+     * @param[in] name The name of the outgoing data (must be unique)
+     * @param[in] stream_type The stream type of this data (see @ref fep3::arya::IStreamType)
+     * @param[in] queue_capacity The maximum number of items that the transmit queue can hold at a time.
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
+     */
+    inline fep3::Result addDataOut(fep3::arya::IDataRegistry& data_registry,
+        std::unique_ptr<fep3::arya::IDataRegistry::IDataWriter>& writer,
         const std::string& name,
         const fep3::arya::IStreamType& stream_type,
         size_t queue_capacity = 0)
     {
-        auto res = data_registry.registerDataOut(name, stream_type);
-        if (isFailed(res))
-        {
-            return{};
-        }
-        else
-        {
-            return data_registry.getWriter(name, queue_capacity);
-        }
+        fep3::Result res = data_registry.registerDataOut(name, stream_type);
+        writer = isFailed(res) ? nullptr : data_registry.getWriter(name, queue_capacity);
+        return res;
     }
 
     /**

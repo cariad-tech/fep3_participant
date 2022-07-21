@@ -69,7 +69,7 @@ public:
      * @brief Set the value of the node to @p value.
      *
      * If a @p type_name is provided it has to be either equal to the type name of this node,
-     * or the implementation has to provide a internal conversion. If no conversion is provided
+     * or the implementation has to provide an internal conversion. If no conversion is provided
      * an error will be returned.
      *
      * @param[in] value The value to set for the node as std::string

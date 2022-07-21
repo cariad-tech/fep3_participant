@@ -23,6 +23,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/scheduler/local_scheduler_service.h>
 #include <fep3/native_components/clock/local_clock_service.h>
 #include <fep3/native_components/clock_sync/clock_sync_service.h>
@@ -94,28 +95,34 @@ struct SchedulingWithNativeClock : ::testing::Test
         using namespace fep3::arya::detail;
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            std::make_unique<JobRegistry>()));
+            std::make_unique<JobRegistry>(),
+            _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ISchedulerService>(
-            std::make_shared<LocalSchedulerService>()));
+            std::make_shared<LocalSchedulerService>(),
+            _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingService>(_logger)));
+            std::make_shared<LoggingService>(_logger),
+            _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus));
+            _service_bus, _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(
-            std::make_shared <LocalClockService>()));
+            std::make_shared <LocalClockService>(),
+            _dummy_component_version_info));
 
         if (hasClockSyncService())
         {
             ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockSyncService>(
-                std::make_shared<fep3::native::ClockSynchronizationService>()));
+                std::make_shared<fep3::native::ClockSynchronizationService>(),
+                _dummy_component_version_info));
         }
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            std::make_shared <ConfigurationService>()));
+            std::make_shared <ConfigurationService>(),
+            _dummy_component_version_info));
     }
 
     void setComponents()
@@ -149,6 +156,8 @@ struct SchedulingWithNativeClock : ::testing::Test
     std::shared_ptr<ClockEventSinkMock> _clock_event_sink_mock{};
 
     virtual bool hasClockSyncService() const { return false; }
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 struct SchedulingWithDiscreteClock

@@ -19,6 +19,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <gtest/gtest.h>
 
+#include <fep3/fep3_participant_version.h>
 #include "test_job_registry_client_stub.h"
 #include <fep3/rpc_services/job_registry/job_registry_rpc_intf_def.h>
 #include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
@@ -78,12 +79,12 @@ struct NativeJobRegistryRPC : public Test
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            _job_registry));
+            _job_registry, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingServiceMock>(_logger_mock)));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus));
+            std::make_shared<LoggingServiceMock>(_logger_mock), _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock, _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->create());
     }
@@ -93,6 +94,8 @@ struct NativeJobRegistryRPC : public Test
     std::shared_ptr<LoggerMock> _logger_mock{};
     std::shared_ptr<native::ServiceBus> _service_bus{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 TEST_F(NativeJobRegistryRPC, testGetJobNames)

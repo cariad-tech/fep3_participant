@@ -95,15 +95,15 @@ struct NativeClockService : public ::testing::Test
     virtual void registerComponents()
     {
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus));
+            _service_bus, _dummyComponentVersionInfo));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingService>(_logger)));
+            std::make_shared<LoggingService>(_logger), _dummyComponentVersionInfo));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock, _dummyComponentVersionInfo));
 
         _clock_service_impl = std::make_shared<fep3::native::LocalClockService>();
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(
-            _clock_service_impl));
+            _clock_service_impl, _dummyComponentVersionInfo));
     }
 
     virtual void setComponents()
@@ -133,6 +133,7 @@ struct NativeClockService : public ::testing::Test
     std::shared_ptr<fep3::native::LocalClockService> _clock_service_impl{ nullptr };
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
     std::shared_ptr<IPropertyNode> _clock_service_property_node;
+    fep3::ComponentVersionInfo _dummyComponentVersionInfo{ "3.0.1","dummyPath", "3.1.0" };
 };
 
 struct NativeClockServiceWithClockMocks : NativeClockService

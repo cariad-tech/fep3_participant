@@ -982,7 +982,6 @@ fep3::Result LocalClockService::setupClockMaster(const IServiceBus& service_bus)
         _clock_master = std::make_shared<rpc::ClockMaster>(
             getLogger()
             , Duration(_configuration._time_update_timeout)
-            , _set_participant_to_error_state
             , get_rpc_requester_by_name);
     }
     catch (const std::runtime_error& ex)

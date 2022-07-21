@@ -98,7 +98,7 @@ fep3::Result setPropertyValue(fep3::arya::IConfigurationService& config_service,
 
 /**
  * @brief Get the value of the @p property_node in a typed way.
- * If the property value can not be represented by @p T a default value is returned.
+ * If the property value cannot be represented by @p T a default value is returned.
  * See implementation of @ref fep3::base::arya::DefaultPropertyTypeConversion<T>::fromString() for used @p T.
  * By default only these types are supported: @ref fep3::base::arya::PropertyType<T>.
  *
@@ -120,7 +120,7 @@ T getPropertyValue(const fep3::arya::IPropertyNode& property_node)
  * @tparam T Type of the property with @p property_path.
  * @param[in] config_service The configuration service of the fep element
  * @param[in] property_path Path of the property (e.g. Clock/CycleTime).
- * @return If the node can not be found, an empty @ref fep3::arya::Optional<T> is returned
+ * @return If the node cannot be found, an empty @ref fep3::arya::Optional<T> is returned
  */
 template <typename T>
 fep3::arya::Optional<T> getPropertyValue(const fep3::arya::IConfigurationService& config_service, const std::string& property_path)

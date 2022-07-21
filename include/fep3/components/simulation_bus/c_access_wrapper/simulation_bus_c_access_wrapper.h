@@ -806,7 +806,7 @@ inline fep3_plugin_c_InterfaceError createSimulationBus
  * Creates a simulation bus object of type \p simulation_bus_type
  * @tparam simulation_bus_type The type of the simulation bus object to be created
  * @param[out] result Pointer to the access structure to the created simulation bus object
- * @param[in] shared_binary_access Access strcuture to the shared binary the simulation bus object resides in
+ * @param[in] shared_binary_access Access structure to the shared binary the simulation bus object resides in
  * @param[in] iid The interface ID of the simulation bus interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred

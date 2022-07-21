@@ -35,7 +35,7 @@ namespace arya
 {
 
 /**
-* @brief helper class to change a participants state from system side
+* @brief helper class to change a participant's state from system side
 * Since the participant does not have another possibility to change the state than from service bus
 * this testing helper will add state machine change functionality for you.
 */
@@ -46,7 +46,7 @@ public:
      * @brief CTOR
      *
      * @param[in] part participant to manage
-     * @remark the participants servicebus will be used to obtain the participant requester
+     * @remark the participants service bus will be used to obtain the participant requester
      */
     ParticipantStateChanger(fep3::arya::Participant& part);
     /**
@@ -89,7 +89,7 @@ public:
      */
     bool load();
     /**
-     * @brief sends a unload request
+     * @brief sends an unload request
      *
      * @return @c true if the request reached participant, @c false otherwise
      */
@@ -125,7 +125,7 @@ public:
      */
     bool stop();
     /**
-     * @brief sends a exit request
+     * @brief sends an exit request
      *
      * @return @c true if the request reached participant, @c false otherwise
      */

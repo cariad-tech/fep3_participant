@@ -19,7 +19,7 @@ You may add additional accurate notices of copyright ownership.
 
 
 #include "job_runner.h"
-
+#include <stdexcept>
 #include <cassert>
 #include <a_util/strings/strings_format.h>
 

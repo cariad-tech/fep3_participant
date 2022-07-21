@@ -90,7 +90,7 @@ using DataSampleTypeTypes = ::testing::Types
     <int
     , MyClass
     >;
-TYPED_TEST_CASE(DataSampleTypeTest, DataSampleTypeTypes);
+TYPED_TEST_SUITE(DataSampleTypeTest, DataSampleTypeTypes);
 
 /**
  * @detail Test the counter and time functionality of class fep3::base::DataSampleType<int>

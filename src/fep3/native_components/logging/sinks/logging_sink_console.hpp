@@ -20,17 +20,19 @@ You may add additional accurate notices of copyright ownership.
 
 #pragma once
 
-#include <fep3/components/logging/logging_service_intf.h>
-#include <fep3/base/properties/properties.h>
 #include "logging_sink_common.hpp"
 
 #include <a_util/concurrency/mutex.h>
 
-#include <mutex>
+#include <fep3/base/properties/properties.h>
+#include <fep3/components/logging/logging_service_intf.h>
 #include <iostream>
+#include <mutex>
+#ifdef WIN32
+#include <windows.h>
+#endif
 
-namespace fep3
-{
+namespace fep3 {
 /**
  * @brief Implementation of the console logging. Can be used as a base class for a custom sink.
  *        This sink will write fatal and error to stderr and everything else to stdout.

@@ -20,6 +20,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <gtest/gtest.h>
 
+#include <fep3/fep3_participant_version.h>
 #include "fep3/components/base/component_registry.h"
 #include "fep3/native_components/logging/sinks/logging_sink_common.hpp"
 #include "fep3/native_components/logging/sinks/logging_sink_rpc.hpp"
@@ -73,7 +74,9 @@ struct TestLoggingServiceRPC : public ::testing::Test
     std::shared_ptr<TestRPCSinkClient> _test_sink_client;
     std::shared_ptr<LoggingSinkServiceClient> _sink_service;
     std::string _address;
-
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
+public:
     TestLoggingServiceRPC()
     {
 
@@ -82,8 +85,8 @@ struct TestLoggingServiceRPC : public ::testing::Test
     void SetUp()
     {
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus), fep3::ERR_NOERROR);
-        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging, _dummy_component_version_info), fep3::ERR_NOERROR);
         ASSERT_EQ(_component_registry->create(), fep3::ERR_NOERROR);
 
         _logging_service_client = std::make_unique<LoggingServiceClient>(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),

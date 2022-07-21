@@ -43,7 +43,7 @@ namespace arya
             ~IRPCConfigurationDef() = default;
 
         public:
-            ///definiton of the FEP rpc service iid for the configuration interface
+            ///definition of the FEP rpc service iid for the configuration interface
             FEP_RPC_IID("configuration_service.arya.fep3.iid", "configuration");
     };
 } // namespace arya

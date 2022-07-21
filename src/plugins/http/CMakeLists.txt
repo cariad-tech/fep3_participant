@@ -33,7 +33,8 @@ add_library(${PLUGIN_NAME} SHARED
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_server.cpp
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_systemaccess.h
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/http_systemaccess.cpp
-
+            ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.h
+            ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.cpp
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/find_free_port.h
             ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/http/find_free_port.cpp
             ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.h

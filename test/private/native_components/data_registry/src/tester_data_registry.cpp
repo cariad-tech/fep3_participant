@@ -362,8 +362,8 @@ struct NativeDataCommunication : public ::testing::Test
         }
     }
 
-    ParticipantUnderTest<fep3::native::SimulationBus> _sender{"test_sender", 9921};
-    ParticipantUnderTest<fep3::native::SimulationBus> _receiver{"test_receiver", 9922};
+    ParticipantUnderTest<fep3::native::SimulationBus> _sender{"test_sender"};
+    ParticipantUnderTest<fep3::native::SimulationBus> _receiver{"test_receiver"};
 
     bool _is_running{false};
 };
@@ -889,6 +889,7 @@ TEST_F(NativeDataCommunication, testCurrentStreamTypeViaRPC)
 
 TEST_F(NativeDataRegistry, checkRegistrationOnServiceBus)
 {
+    const fep3::ComponentVersionInfo dummy_component_version_info{ "3.0.1","dummyPath", "3.1.0" };
     auto service_bus = std::make_shared<::testing::NiceMock<fep3::mock::ServiceBusComponent>>();
     auto server = std::make_shared<::testing::NiceMock<fep3::mock::RPCServer>>();
 
@@ -897,7 +898,7 @@ TEST_F(NativeDataRegistry, checkRegistrationOnServiceBus)
     EXPECT_CALL(*server.get(), unregisterService(::fep3::rpc::IRPCDataRegistryDef::getRPCDefaultName())).Times(1).WillRepeatedly(::testing::Return(fep3::Result()));
 
     auto components = std::make_shared< fep3::ComponentRegistry >();
-    components->registerComponent<fep3::IServiceBus>(service_bus);
+    components->registerComponent<fep3::IServiceBus>(service_bus, dummy_component_version_info);
     auto data_registry = std::make_shared<fep3::native::DataRegistry>();
     data_registry->createComponent(components);
     data_registry->initialize();

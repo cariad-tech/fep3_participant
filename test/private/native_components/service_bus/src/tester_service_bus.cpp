@@ -22,6 +22,10 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/rpc_services/base/fep_rpc_client.h>
 #include <a_util/process.h>
 #include <list>
+#include <thread>
+#include <chrono>
+#include <condition_variable>
+#include <boost/thread/barrier.hpp>
 
 #include <fep3/native_components/service_bus/service_bus.h>
 #include <fep3/native_components/service_bus/rpc/http/http_server.h>
@@ -100,8 +104,8 @@ TEST(ServiceBusServer, testCreationAndDestroyingOfServer)
     ASSERT_FALSE(server);
 
     //now create the server
-    ASSERT_TRUE(fep3::isOk(sys_access->createServer("name_of_server",
-                                                    "http://localhost:9900")));
+    ASSERT_TRUE(fep3::isOk(sys_access->createServer("name_of_server", 
+        fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //default server set now
     server = bus.getServer();
@@ -144,11 +148,11 @@ TEST(ServiceBusServer, testCreationAndDestroyingOfServer)
 TEST(ServiceBusServer, testDefaultLoadingOfServiceBus)
 {
     fep3::native::ServiceBus bus;
-    ASSERT_TRUE(fep3::isOk(bus.createSystemAccess("default_system",
-                                                  fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(bus.createSystemAccess("default_system", 
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
     auto sys_access = bus.getSystemAccess("default_system");
-    ASSERT_TRUE(fep3::isOk(sys_access->createServer("default_server",
-                                                  fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(sys_access->createServer("default_server", 
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 }
 
 
@@ -200,8 +204,10 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
 
     //create one server within this system_name_for_test_1 (so it is discoverable)
     auto sys_access1 = bus1.getSystemAccess(system_name_for_test_1);
-    ASSERT_TRUE(fep3::isOk(sys_access1->createServer("server_1",
-        fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(
+                sys_access1->createServer(
+                    "server_1", 
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //create another system access to the same system under the same discovery url in another ServiceBus instance
     fep3::native::ServiceBus bus2;
@@ -219,8 +225,10 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
     ASSERT_EQ(ref->first, "server_1");
 
     //create another server within this system_name_for_test_1 (so it is discoverable)
-    ASSERT_TRUE(fep3::isOk(sys_access2->createServer("server_2",
-        fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(
+                sys_access2->createServer(
+                    "server_2",
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //make sure this both server is now discoverable thru both access points
     //this is now the first access point on bus1
@@ -275,15 +283,19 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
     //create one server within this system_name_for_test_1 (so it is discoverable)
     //so we have server1@system_name_for_test_1
     auto sys_access1 = bus1.getSystemAccess(system_name_for_test_1);
-    ASSERT_TRUE(fep3::isOk(sys_access1->createServer("server_1",
-        fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(
+                sys_access1->createServer(
+                    "server_1",
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //create one server within this system_name_for_test_2 (so it is discoverable)
     //so we have server2@system_name_for_test_2
     //       AND server1@system_name_for_test_1
     auto sys_access2 = bus1.getSystemAccess(system_name_for_test_2);
-    ASSERT_TRUE(fep3::isOk(sys_access2->createServer("server_2",
-        fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(
+                sys_access2->createServer(
+                    "server_2", 
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //create another system access to the same system under the same discovery url in another ServiceBus instance
     fep3::native::ServiceBus bus2;
@@ -295,8 +307,10 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
     //       AND server2@system_name_for_test_2
     //       AND server1@system_name_for_test_1
     auto sys_access3 = bus2.getSystemAccess(system_name_for_test_1);
-    ASSERT_TRUE(fep3::isOk(sys_access3->createServer("server_3",
-        fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_TRUE(fep3::isOk(
+                sys_access3->createServer(
+                    "server_3",
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //create a system access to special discovery mode "fep3::IServiceBus::ISystemAccess::_discover_all_systems"
     // on given URL (where the above servers must be available to)
@@ -351,8 +365,10 @@ TEST(ServiceBusServer, testServiceBusLocking)
     ASSERT_TRUE(sys_access);
 
     //but the creation of createServer within this is locked!
-    ASSERT_FALSE(fep3::isOk(sys_access->createServer("test_server",
-                                                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
+    ASSERT_FALSE(fep3::isOk(
+                sys_access->createServer(
+                    "test_server", 
+                    fep3::IServiceBus::ISystemAccess::_use_default_url)));
 
     //call the destuctor is still possible also if everythis is locked
     ASSERT_NO_THROW(bus1->~ServiceBus());
@@ -364,8 +380,35 @@ TEST(ServiceBusServer, testServiceBusLocking)
  */
 TEST(ServiceBusServer, testHttpPorts)
 {
-    fep3::native::HttpServer server_1("s1", "http://0.0.0.0:0", "sys", "");
-    fep3::native::HttpServer server_2("s2", "http://0.0.0.0:0", "sys", "");
-    EXPECT_NE(server_1.getUrl(), server_2.getUrl());
-    EXPECT_ANY_THROW(fep3::native::HttpServer server_3("s3", server_1.getUrl(), "sys", ""));
+    std::vector<std::thread> my_threads;
+    std::set<std::string> urls;
+    std::mutex mtx_set;
+    const int number_of_servers = 100;
+    boost::barrier bar(number_of_servers + 1);
+
+    auto start_server = [&]() {
+        fep3::native::HttpServer server("s1", "http://0.0.0.0:0", "sys", "");
+        {
+            std::lock_guard<std::mutex> lk_set(mtx_set);
+            urls.insert(server.getUrl());
+        }
+
+        // wait until main thread finishes
+        bar.wait();
+    };
+    for (int i = 0; i < number_of_servers; ++i)
+    {
+        my_threads.emplace_back(start_server);
+    }
+
+    for (auto s : urls)
+    {
+        EXPECT_ANY_THROW(fep3::native::HttpServer server_X("sX", s, "sys", ""));
+    }
+
+    bar.wait();
+    for (auto& t : my_threads) {
+        t.join();
+    }
+    EXPECT_EQ(int(urls.size()), number_of_servers);
 }

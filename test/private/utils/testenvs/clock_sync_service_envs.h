@@ -79,22 +79,22 @@ struct NativeClockSyncService : NativeClockService
     void registerComponents() override
     {
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus));
+            _service_bus, _dummyComponentVersionInfo));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingService>(_logger)));
+            std::make_shared<LoggingService>(_logger), _dummyComponentVersionInfo));
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock, _dummyComponentVersionInfo));
 
         _clock_service_impl = std::make_shared<fep3::native::LocalClockService>();
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(
-            _clock_service_impl));
+            _clock_service_impl, _dummyComponentVersionInfo));
 
         _clock_sync_service_impl = std::make_shared<fep3::native::ClockSynchronizationService>();
 
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockSyncService>(
-            _clock_sync_service_impl));
+            _clock_sync_service_impl, _dummyComponentVersionInfo));
     }
 
     void setComponents() override
@@ -106,6 +106,7 @@ struct NativeClockSyncService : NativeClockService
     std::shared_ptr<fep3::native::ClockSynchronizationService> _clock_sync_service_impl{};
     fep3::IClockSyncService* _clock_sync_service_intf{ nullptr };
     std::shared_ptr<IPropertyNode> _clock_sync_service_property_node;
+    fep3::ComponentVersionInfo _dummyComponentVersionInfo{ "3.0.1","dummyPath", "3.1.0" };
 };
 
 }

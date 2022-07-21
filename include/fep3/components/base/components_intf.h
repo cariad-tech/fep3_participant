@@ -95,7 +95,7 @@ private:
 };
 
 /**
-    * @brief helper function to retrieve a component from the modules components registry
+    * @brief helper function to retrieve a component from the module's components registry
     *
     * @tparam INTERFACE the interface of the component
     * @param[in] components the components container
@@ -117,7 +117,7 @@ using arya::IComponents;
  * @tparam interface_type the component interface looking for
  * @param[in] components the reference to the components
  * @return interface_type* the valid interface pointer
- * @retval nullptr the interfac was not found
+ * @retval nullptr the interface was not found
  */
 template<class interface_type>
 interface_type* getComponent(const arya::IComponents& components)

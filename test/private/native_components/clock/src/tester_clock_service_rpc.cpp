@@ -19,6 +19,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <gtest/gtest.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/base/properties/properties.h>
 #include <fep3/components/configuration/mock/mock_configuration_service.h>
 #include <fep3/components/logging/mock/mock_logging_service.h>
@@ -77,12 +78,12 @@ struct NativeClockServiceRPC : public ::testing::Test
 
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingService>(_logger)));
+            std::make_shared<LoggingService>(_logger), _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(
-            _clock_service));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus));
+            _clock_service, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->create());
     }
 
@@ -91,6 +92,8 @@ struct NativeClockServiceRPC : public ::testing::Test
     std::shared_ptr<WarningLogger> _logger{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
     std::shared_ptr<native::LocalClockService> _clock_service{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 TEST_F(NativeClockServiceRPC, testGetClockNames)

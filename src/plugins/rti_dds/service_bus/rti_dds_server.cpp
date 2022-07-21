@@ -131,7 +131,7 @@ fep3::Result DDSServer::unregisterService(const std::string& service_name)
     }
     else
     {
-       // DDSServer.UnregisterRPCObject(servcie_name.c_str());
+       // DDSServer.UnregisterRPCObject(service_name.c_str());
         _service_wrappers.erase(service_name);
         return {};
     }

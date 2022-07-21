@@ -59,12 +59,12 @@ void check_version_info(Json::Value json, const std::string& participant_name, i
  */
 TEST_F(ReaderWriterTestClass, TestAvailableInformations)
 {
-    // We need a small sync delay because we dosn't call startReception(getSimulationBus());
+    // We need a small sync delay because we don't call startReception(getSimulationBus());
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // Use the hidden
     auto simbus_1_businfo_reader =  getSimulationBus()->getReader("_built_in_topic_businfo", base::StreamTypePlain<uint32_t>());
-    ASSERT_TRUE(simbus_1_businfo_reader);
+    ASSERT_TRUE(simbus_1_businfo_reader) << "failed to get reader from simlution bus";
 
     TestReceiver simbus_1_businfo_reciever;
     simbus_1_businfo_reader->pop(simbus_1_businfo_reciever);
@@ -72,36 +72,38 @@ TEST_F(ReaderWriterTestClass, TestAvailableInformations)
     ASSERT_EQ(simbus_1_businfo_reciever._samples.size(), 1);
     auto json = read_json(simbus_1_businfo_reciever._samples[0]);
     ASSERT_EQ(json.isArray(), true);
-    check_version_info(json[0], "simbus_participant_2",
+    check_version_info(json[0], _sim_participant_name_2,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
 
     // Add a late joiner
-    auto simbus3 = createSimulationBus(getDomainId(), "simbus_participant_3");
-    ASSERT_TRUE(simbus3);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto simbus3 = createSimulationBus(getDomainId(), _sim_participant_name_3, _sim_test_system_name);
+    ASSERT_TRUE(simbus3) << "failed to create simulation bus";
+    simbus_1_businfo_reciever.clear();
 
+    // 1 second will fail almost every 10-20 times. Reason not found
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Read an check information from simbus_1
-    simbus_1_businfo_reciever.clear();
     simbus_1_businfo_reader->pop(simbus_1_businfo_reciever);
 
     ASSERT_EQ(simbus_1_businfo_reciever._samples.size(), 1);
     json = read_json(simbus_1_businfo_reciever._samples[0]);
     ASSERT_EQ(json.isArray(), true);
 
-    check_version_info(json[0], "simbus_participant_2",
+    check_version_info(json[0], _sim_participant_name_2,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
-    check_version_info(json[1], "simbus_participant_3",
+    check_version_info(json[1], _sim_participant_name_3,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
 
     // Read an check information from simbus_3 (late joiner)
     auto simbus_3_businfo_reader = dynamic_cast<ISimulationBus*>(simbus3.get())->getReader("_built_in_topic_businfo", base::StreamTypePlain<uint32_t>());
+    ASSERT_TRUE(simbus_3_businfo_reader) << "failed to get reader from simluation bus";
     TestReceiver simbus_3_businfo_reciever;
     // We have two updates so we take the last
     simbus_3_businfo_reader->pop(simbus_3_businfo_reciever);
@@ -110,11 +112,11 @@ TEST_F(ReaderWriterTestClass, TestAvailableInformations)
     json = read_json(simbus_3_businfo_reciever._samples[1]);
 
     // late joiner detected all participants
-    check_version_info(json[0], "simbus_participant_1",
+    check_version_info(json[0], _sim_participant_name_1,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);
-    check_version_info(json[1], "simbus_participant_2",
+    check_version_info(json[1], _sim_participant_name_2,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR,
         FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH);

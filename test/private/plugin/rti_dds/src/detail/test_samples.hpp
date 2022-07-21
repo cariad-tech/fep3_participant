@@ -22,6 +22,8 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/base/sample/data_sample.h>
 #include <fep3/base/sample/raw_memory.h>
 
+#include <random>
+
 using namespace fep3;
 
 /**
@@ -119,7 +121,13 @@ public:
     void fillRandom()
     {
         std::vector<uint8_t> data(_size);
-        std::fill(data.begin(), data.end(), static_cast<uint8_t>(rand()));
+
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        // standard does not allow uint8_t distribution
+        std::uniform_int_distribution<uint16_t> dist(0,  static_cast<uint16_t>(std::numeric_limits<uint8_t>::max()));
+        // we are sure that the random number is inside the numberical limits of uint8_t
+        std::generate(data.begin(), data.end(), [&]() {return  static_cast<uint8_t>(dist(mt));});
         set(data.data(), data.size());
     }
 
@@ -132,14 +140,7 @@ public:
 
         auto data = reinterpret_cast<const uint8_t*>(sample.cdata());
         auto own_data = reinterpret_cast<const uint8_t*>(cdata());
-        for (uint32_t i = 0; i < sample.getSize(); i++)
-        {
-            if (data[i] != own_data[i])
-            {
-                return false;
-            }
-        }
-        return true;
+        return std::equal(data, std::next(data, sample.getSize()), own_data);
     }
 
 };

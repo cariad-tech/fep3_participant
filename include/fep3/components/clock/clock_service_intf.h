@@ -34,13 +34,13 @@ You may add additional accurate notices of copyright ownership.
 #define FEP3_CLOCK_SERVICE_CONFIG "clock"
 
 /**
-* @brief The mainclock configuration property name
+* @brief The main clock configuration property name
 * Use this to set the main clock by configuration.
 *
 */
 #define FEP3_MAIN_CLOCK_PROPERTY "main_clock"
 /**
-* @brief The clock service mainclock configuration node
+* @brief The clock service main clock configuration node
 * Use this to set the main clock by configuration.
 *
 */

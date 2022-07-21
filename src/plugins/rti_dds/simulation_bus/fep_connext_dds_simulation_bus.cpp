@@ -33,6 +33,8 @@ You may add additional accurate notices of copyright ownership.
 #include <vector>
 #include <cstring>
 #include <regex>
+#include <locale>
+#include <codecvt>
 
 #include <dds/dds.hpp>    
 
@@ -65,7 +67,7 @@ a_util::filesystem::Path getFilePath()
         , &hModule
         ))
     {
-        std::vector<wchar_t> file_path_buffer;
+        std::wstring file_path_buffer;
         DWORD number_of_copied_characters = 0;
         // note: to support paths with length > MAX_PATH we have do trial-and-error
         // because GetModuleFileName does not indicate if the path was truncated
@@ -74,8 +76,12 @@ a_util::filesystem::Path getFilePath()
             file_path_buffer.resize(file_path_buffer.size() + MAX_PATH);
             number_of_copied_characters = GetModuleFileNameW(hModule, &file_path_buffer[0], static_cast<DWORD>(file_path_buffer.size()));
         }
+
         file_path_buffer.resize(number_of_copied_characters);
-        current_binary_file_path = std::string(file_path_buffer.cbegin(), file_path_buffer.cend());
+        auto size_needed = WideCharToMultiByte(CP_UTF8, 0, &file_path_buffer[0], (int)file_path_buffer.size(), NULL, 0, NULL, NULL);
+        std::string str_utf8(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, &file_path_buffer[0], (int)file_path_buffer.size(), &str_utf8[0], size_needed, NULL, NULL);
+        current_binary_file_path = str_utf8;
     }
 #else   // WIN32
     Dl_info dl_info;
@@ -392,7 +398,15 @@ fep3::Result ConnextDDSSimulationBus::destroy()
 
 fep3::Result ConnextDDSSimulationBus::initialize()
 {
-    auto qos_libraries = _impl->LoadQosProfile()->extensions().qos_profile_libraries();
+    // the mutex ensures that qos profile is not read while the working dir is changed and
+    // ensures there are not parallel calls to the non thread safe constructor of DomainParticipant
+    static std::mutex domain_participant_constructor_mutex;
+    dds::core::StringSeq qos_libraries;
+    {
+        std::unique_lock<std::mutex> constrLock(domain_participant_constructor_mutex);
+        qos_libraries = _impl->LoadQosProfile()->extensions().qos_profile_libraries();
+    }
+
     if (std::find(qos_libraries.begin(), qos_libraries.end(), "fep3") == qos_libraries.end())
     {
         RETURN_ERROR_DESCRIPTION(fep3::ERR_NOT_FOUND, "Could not find fep3 library in USER_QOS_PROFILES.xml. \n"
@@ -422,35 +436,39 @@ fep3::Result ConnextDDSSimulationBus::initialize()
 
     _impl->initBusInfo(participant_qos, participant_name);
 
+    {
+        // call DomainParticipant thread safe and not LoadQosProfile while changing the working directories
+        std::unique_lock<std::mutex> constr_lock(domain_participant_constructor_mutex);
+
 #ifdef WIN32
-    //in windows the rtimonitoring is loaded lazy ... so we need to change working dir here for
-    //creating time
-    auto orig_wd = a_util::filesystem::getWorkingDirectory();
-    auto res = a_util::filesystem::setWorkingDirectory(getFilePath());
-    if (isFailed(res))
-    {
-        orig_wd = getFilePath();
-    }
+        //in windows the rtimonitoring is loaded lazy ... so we need to change working dir here for
+        //creating time
+        auto orig_wd = a_util::filesystem::getWorkingDirectory();
+        auto res = a_util::filesystem::setWorkingDirectory(getFilePath());
+        if (isFailed(res))
+        {
+            orig_wd = getFilePath();
+        }
 #endif
-    try
-    {
-        _impl->_participant = std::make_unique<DomainParticipant>
-            (domain_id
-             , participant_qos);
-        _impl->_bus_info->registerParticipant(*_impl->_participant);
-    }
-    catch (const std::exception& ex)
-    {
+        try
+        {
+            _impl->_participant = std::make_unique<DomainParticipant>
+                (domain_id
+                 , participant_qos);
+            _impl->_bus_info->registerParticipant(*_impl->_participant);
+        }
+        catch (const std::exception& ex)
+        {
+#ifdef WIN32
+            a_util::filesystem::setWorkingDirectory(orig_wd);
+#endif
+            RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
+        }
+    
 #ifdef WIN32
         a_util::filesystem::setWorkingDirectory(orig_wd);
 #endif
-        RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
-    
-#ifdef WIN32
-    a_util::filesystem::setWorkingDirectory(orig_wd);
-#endif
-    
     _impl->createDataAccessCollection();
     
     return {};

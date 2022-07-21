@@ -76,7 +76,7 @@ namespace arya
     };
 
     /**
-     * @brief definition of the external service interface of the clock synchronisation service as clock slave
+     * @brief definition of the external service interface of the clock synchronization service as clock slave
      * @see delivered clock_sync_slave.json file
      */
     class IRPCClockSyncSlaveDef
@@ -86,7 +86,7 @@ namespace arya
         ~IRPCClockSyncSlaveDef() = default;
 
     public:
-        ///definiton of the FEP rpc service iid for a clock synchronization slave
+        ///definition of the FEP rpc service iid for a clock synchronization slave
         FEP_RPC_IID("clock_sync_slave.arya.fep3.iid", "clock_sync_slave");
     };
 } // namespace arya

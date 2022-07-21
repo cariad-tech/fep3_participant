@@ -22,6 +22,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 #include "../test/private/utils/common/gtest_asserts.h"
 
+#include <fep3/fep3_participant_version.h>
 #include "fep3/components/mock/mock_components.h"
 #include "fep3/components/simulation_bus/mock/mock_simulation_bus.h"
 #include "fep3/components/service_bus/mock/mock_service_bus.h"
@@ -96,27 +97,24 @@ struct NativeDataRegistryWithMocks : public ::testing::Test
 template <typename sim_bus = fep3::mock::SimulationBus<>>
 struct ParticipantUnderTest {
     ParticipantUnderTest(const std::string& test_participant_name_default =
-                             fep3::native::testing::participant_name_default,
-                         const uint32_t test_participant_port_default = 9090)
+                             fep3::native::testing::participant_name_default)
         : _registry{std::make_shared<fep3::native::DataRegistry>()},
           _service_bus{std::make_shared<fep3::native::ServiceBus>()},
           _configuration_service{std::make_shared<fep3::native::ConfigurationService>()},
           _simulation_bus{std::make_shared<sim_bus>()},
           _component_registry{std::make_shared<fep3::ComponentRegistry>()},
-          _test_participant_name_default(test_participant_name_default),
-          _test_participant_port_default(test_participant_port_default)
+          _test_participant_name_default(test_participant_name_default)
     {
     }
 
     void SetUp()
     {
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus,
-            _test_participant_name_default,
-            _test_participant_port_default));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ISimulationBus>(_simulation_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IDataRegistry>(_registry));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(_configuration_service));
+            _test_participant_name_default));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ISimulationBus>(_simulation_bus, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IDataRegistry>(_registry, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(_configuration_service, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->create());
     }
 
@@ -127,7 +125,7 @@ struct ParticipantUnderTest {
     std::shared_ptr<fep3::ComponentRegistry> _component_registry;
 
     std::string _test_participant_name_default;
-    uint32_t _test_participant_port_default;
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 struct NativeDataRegistry : public ::testing::Test,
@@ -140,4 +138,5 @@ struct NativeDataRegistry : public ::testing::Test,
     {
         ParticipantUnderTest<>::SetUp();
     }
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };

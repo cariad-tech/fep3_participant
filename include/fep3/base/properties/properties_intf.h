@@ -42,7 +42,7 @@ public:
 
     /**
      * @brief sets the value and type of the given property.
-     * If the property not exists it will add one.
+     * If the property does not exist it will add one.
      * If the type is different, than the existing one it will change it.
      *
      * @param[in] name  name of the property (this is not a path, a single name)
@@ -78,7 +78,7 @@ public:
      * the properties are equal if each property of this will have the same value within \p properties
      *
      * @param[in] properties the properties instance to compare to
-     * @return @c true if each properties of this have the same value within \p properties,
+     * @return @c true if each property of this have the same value within \p properties,
      * @c false otherwise
      */
     virtual bool isEqual(const IProperties& properties) const = 0;

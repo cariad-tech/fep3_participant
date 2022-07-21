@@ -31,8 +31,11 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/native_components/configuration/configuration_service.h>
 #include <fep3/participant/component_factories/cpp/component_factory_cpp_plugins.h>
 #include <fep3/components/logging/mock/mock_logging_service.h>
+#include <helper/platform_dep_name.h>
 
 using namespace fep3;
+
+static const std::string default_test_name = "default_test_system";
 
 class TestConnextDDSSimulationBus
     : public ::testing::Test
@@ -42,9 +45,10 @@ public:
     {
         std::random_device rd;
         std::mt19937 mt(rd());
-        std::uniform_real_distribution<float> dist(1.0, 200.0);
+        // the actual property is int32, so we cannot set the full value span of uint32
+        std::uniform_int_distribution<uint32_t> dist(1, 200u);
 
-        return static_cast<unsigned int>(dist(mt)) % 200;
+        return dist(mt);
     }
 
     void SetUp() override
@@ -63,10 +67,18 @@ public:
         EXPECT_EQ(fep3::Result(), component.deinitialize());
     }
 
+    std::unique_ptr<fep3::IComponent> createSimulationBusDep
+        (uint32_t domain_id
+         , const std::string& participant_name
+         , const std::string& system_name = default_test_name
+         ) const {
+        return createSimulationBus(domain_id, makePlatformDepName(participant_name), makePlatformDepName(system_name));
+    }
+
     std::unique_ptr<fep3::IComponent> createSimulationBus
         (uint32_t domain_id
         , const std::string& participant_name
-        , const std::string& system_name = "default_test_system"
+        , const std::string& system_name = default_test_name
         ) const
     {
         auto simulation_bus = _factory->createComponent(fep3::ISimulationBus::getComponentIID(), nullptr);
@@ -189,7 +201,7 @@ public:
         std::unique_ptr<fep3::mock::LoggingService> _logging_service;
     public:
         Components(const std::string participant_name
-            , const std::string system_name = "default_test_system"
+            , const std::string system_name = default_test_name
             , std::shared_ptr<fep3::mock::LoggerMock> logging_mock = std::make_shared<::testing::NiceMock<fep3::mock::LoggerMock>>())
             : _participant_info(std::make_unique<ParticipantInfo>(participant_name, system_name))
             , _logging_service(std::make_unique<fep3::mock::LoggingService>(logging_mock))

@@ -126,7 +126,7 @@ private:
  *        the servicebus implementation
  * This class is only necessary if you want to implement your own IServiceBus::IParticipantServer
  *
- * If using it you need to implement to retrieve information for the RPC call:
+ * If using it, you need to implement to retrieve information for the RPC call:
  * \li getRegisteredServiceNames
  * \li getServiceByName
 * And implement for the IParticipantServer:
@@ -152,7 +152,7 @@ public:
 
     /**
      * @brief intializes the RPC ServiceRegistryRPCService and register it
-     * @remark Unfortunately this MUST be called separately since virtual functiona calls are not possible while CTOR
+     * @remark Unfortunately, this MUST be called separately since virtual functional calls are not possible by a CTOR
      *         We could also fake here, that the first registerService call will call also for IRPCParticipantInfoDef!
      * @return returns the error values of arya::IServiceBus::IParticipantServer::registerService
      */

@@ -32,9 +32,9 @@ namespace arya
 {
 
 /**
-* @brief The configuration service is a tree based container for configuration information.
+* @brief The configuration service is a tree-based container for configuration information.
 *
-* It's purpose is to act as a central instance for providing configuration information of a participant.
+* Its purpose is to act as a central instance for providing configuration information of a participant.
 * Components can use the service to access configuration information of other components and provide their one.
 * The service manages property nodes implementing @ref fep3::arya::IPropertyNode.
 * An @ref fep3::arya::IPropertyNode stores a value as well as a list of childs of type @ref fep3::arya::IPropertyNode.

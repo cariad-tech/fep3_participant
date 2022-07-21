@@ -26,6 +26,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <atomic>
 
 #ifdef WIN32
 
@@ -755,7 +756,7 @@ public:
     {
         close();
     }
-    void open(uint32_t multicast_socket_addr, uint16_t multicast_socket_port)
+    void open(uint32_t multicast_socket_addr, uint16_t multicast_socket_port, uint32_t multicast_interface)
     {
         Initializer::init();
 
@@ -768,6 +769,7 @@ public:
         }
         _multicast_socket_addr = multicast_socket_addr;
         _multicast_socket_port = multicast_socket_port;
+        _multicast_interface = multicast_interface;
 
         // create UDP socket
         _socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -863,7 +865,14 @@ public:
         struct ip_mreq imr;
         memset(&imr, 0, sizeof(imr));
         imr.imr_multiaddr.s_addr = multicast_address.s_addr;
-        imr.imr_interface.s_addr = htonl(INADDR_ANY);
+        // bind the specified interface
+        if (_multicast_interface == 0) {
+            imr.imr_interface.s_addr = htonl(INADDR_ANY);
+        } else {
+            imr.imr_interface.s_addr = _multicast_interface;
+            char str[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(imr.imr_interface.s_addr), str, INET_ADDRSTRLEN);
+        }
 
 #ifdef WIN32
         if (setsockopt(_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&imr, sizeof(imr)) != 0)
@@ -966,6 +975,16 @@ public:
             }
         }
 
+        struct in_addr multicast_intf = {};
+        multicast_intf.s_addr = address;
+        // set the interface for sending out the data
+        if(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char*)&multicast_intf.s_addr, sizeof(struct in_addr))) {
+                std::string throw_msg = std::string("setsockopt IP_MULTICAST_IF failed, errno = ")
+                    + getErrorAsString();
+                closeSocket(&fd);
+                throw std::runtime_error(throw_msg);
+        }
+
         // 4. set destination address
         struct sockaddr_in dest_addr;
         memset(&dest_addr, 0, sizeof(dest_addr));
@@ -1038,6 +1057,7 @@ public:
 
     SOCKET_TYPE _socket = 0;
     uint32_t    _multicast_socket_addr = 0;
+    uint32_t    _multicast_interface = 0;
     uint16_t    _multicast_socket_port = 0;
 };
 
@@ -1046,15 +1066,16 @@ public:
 struct Service::Impl : public ServiceDescription
 {
     Impl(std::string discover_url,
-        std::chrono::seconds max_age,
-        std::string location_url,
-        std::string unique_service_name,
-        std::string search_target,
-        std::string product_name,
-        std::string product_version,
-        std::string sm_id,
-        std::string device_type)
-        : ServiceDescription(location_url,
+         std::string network_interface,
+         std::chrono::seconds max_age,
+         std::string location_url,
+         std::string unique_service_name,
+         std::string search_target,
+         std::string product_name,
+         std::string product_version,
+         std::string sm_id,
+         std::string device_type)
+         : ServiceDescription(location_url,
                              unique_service_name,
                              search_target,
                              product_name,
@@ -1077,6 +1098,11 @@ struct Service::Impl : public ServiceDescription
             throw std::runtime_error("The given url " + discover_url + " does not contain a IPv4 multicast address for host");
         }
         _address = inet_addr(url.host().c_str());
+
+        if (!network_interface.empty()) 
+        {
+            _interface = inet_addr(network_interface.c_str());
+        }
 
         //prepare notify alive message
         _notify_alive_message =
@@ -1141,7 +1167,7 @@ struct Service::Impl : public ServiceDescription
 
     void openSocket()
     {
-        _multicast_socket.open(_address, _port);
+        _multicast_socket.open(_address, _port, _interface);
     }
 
     void closeSocket()
@@ -1177,6 +1203,15 @@ struct Service::Impl : public ServiceDescription
                 {
                     continue;
                 }
+            }
+
+            // If network interface is set
+            // It should skip other interface, except for the localhost
+            if (_interface != 0 && 
+                current_interface.getAddrIp4() != _interface &&
+                current_interface.getIp4() != LSSDP_ADDR_LOCALHOST)
+            {
+                continue;
             }
 
             const char* message_to_send = _notify_byebye_message.c_str();
@@ -1238,7 +1273,7 @@ struct Service::Impl : public ServiceDescription
         try
         {
             _multicast_socket.sendDataTo(response_message_generic.c_str(),
-                address_to,
+                inet_addr(found_address.c_str()),
                 _port);
         }
         catch (std::runtime_error& ex)
@@ -1274,6 +1309,7 @@ private:
 
     uint16_t _port = 0;
     uint32_t _address = 0;
+    uint32_t _interface = 0;
 
     std::string _dicover_url;
 
@@ -1290,6 +1326,7 @@ private:
 
 /*****************************************************************************************/
 Service::Service(std::string discover_url,
+                 std::string network_interface,
                  std::chrono::seconds max_age,
                  std::string location_url,
                  std::string unique_service_name,
@@ -1299,6 +1336,7 @@ Service::Service(std::string discover_url,
                  std::string sm_id ,
                  std::string device_type) :
     _impl(std::make_unique<Impl>(discover_url,
+        network_interface,
         max_age,
         location_url,
         unique_service_name,
@@ -1426,11 +1464,13 @@ public:
         //todo : make that ready !
         _discover_url = other._discover_url;
         _search_target = other._search_target;
+        _interface = other._interface;
         _device_type_filter = other._device_type_filter;
         _port = other._port;
     }
 
     Impl(const std::string& discover_url,
+         const std::string& network_interface,
          const std::string& product_name,
          const std::string& product_version,
          const std::string& search_target,
@@ -1441,8 +1481,12 @@ public:
           _rcv_packetes_from_myself(true)
     {
         fep3::helper::Url url(discover_url);
-
          _port = static_cast<uint16_t>(std::stoi(url.port()));
+
+         if (!network_interface.empty())
+         {
+            _interface = inet_addr(network_interface.c_str());
+         }
 
          //very important !! this must be an IP address ... we check that
          if (url.ip_version() != 4)
@@ -1476,7 +1520,7 @@ public:
 
     void openSocket()
     {
-        _multicast_socket.open(_address, _port);
+        _multicast_socket.open(_address, _port, _interface);
     }
 
     void closeSocket()
@@ -1507,6 +1551,16 @@ public:
                     continue;
                 }
             }
+
+            // If network interface is set
+            // It should skip other interface, except for the localhost
+            if (_interface != 0 && 
+                current_interface.getAddrIp4() != _interface &&
+                current_interface.getIp4() != LSSDP_ADDR_LOCALHOST)
+            {
+                continue;
+            }
+
             try
             {
                 _multicast_socket.sendDataTo(_m_search_message.c_str(),
@@ -1541,12 +1595,23 @@ public:
         return created_message;
     }
 
+    void setDiscoveryActive(bool flag)
+    {
+        _discovery_active = flag;
+    }
+
+    bool getDiscoveryActive() const
+    {
+        return _discovery_active;
+    }
+
 private:
     friend class ServiceFinder;
     bool _rcv_packetes_from_myself;
 
     uint16_t _port = 0;
     uint32_t _address = 0;
+    uint32_t _interface = 0;
 
     std::string _discover_url;
     std::string _search_target;
@@ -1558,6 +1623,7 @@ private:
     NonBlockingMulticastSocket      _multicast_socket;
 
     std::map<std::string, std::string> _send_errors;
+    std::atomic<bool> _discovery_active{true};
 };
 
 ServiceFinder::~ServiceFinder()
@@ -1565,11 +1631,13 @@ ServiceFinder::~ServiceFinder()
 }
 
 ServiceFinder::ServiceFinder(const std::string& url,
+                             const std::string& network_interface,
                              const std::string& product_name,
                              const std::string& product_version,
                              const std::string& search_target,
                              const std::string& device_type_filter)
     : _impl(std::make_unique<Impl>(url,
+                                   network_interface,
                                    product_name,
                                    product_version,
                                    search_target,
@@ -1595,6 +1663,8 @@ void ServiceFinder::checkNetworkChanges()
 bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdateEvent& update_service)>& update_callback,
                                      std::chrono::milliseconds timeout)
 {
+    _impl->setDiscoveryActive(true);
+
     fd_set fs;
     FD_ZERO(&fs);
     FD_SET(_impl->_multicast_socket._socket, &fs);
@@ -1697,13 +1767,18 @@ bool ServiceFinder::checkForServices(const std::function<void(const ServiceUpdat
             go_ahead = false;
         }
 
-    } while (go_ahead);
+    } while (go_ahead && _impl->getDiscoveryActive());
     return return_value;
 }
 
 std::string ServiceFinder::getLastSendErrors() const
 {
     return _impl->getSendErrors();
+}
+
+void ServiceFinder::disableDiscovery()
+{
+    _impl->setDiscoveryActive(false);
 }
 
 } //namespace lssdp

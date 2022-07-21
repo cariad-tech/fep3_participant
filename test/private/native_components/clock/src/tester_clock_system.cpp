@@ -28,7 +28,7 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/native_components/clock/local_system_clock.h>
 #include <fep3/components/clock/mock/mock_clock_service.h>
 #include <fep3/components/clock/clock_service_intf.h>
-
+#include <fep3/native_components/clock/local_clock_service.h>
 
 using namespace ::testing;
 using namespace fep3::arya;
@@ -102,4 +102,111 @@ TEST_F(ContinuousClockTest, ClockReset)
     }
 
     local_system_real_clock.stop();
+}
+
+class TestContinuousClock : public fep3::base::ContinuousClock
+{
+public:
+    TestContinuousClock()
+        : ContinuousClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME)
+    {
+    }
+    Timestamp getNewTime() const override
+    {
+        return std::chrono::nanoseconds(100)* (_count++ + 1) + _m_timestamp_offs;
+    }
+    Timestamp resetTime(Timestamp) override
+    {
+        return _m_timestamp_offs;
+    }
+    Timestamp _m_timestamp_offs = std::chrono::nanoseconds(100000000);
+    mutable uint16_t _count = 0;
+};
+
+class TestEventSink : public fep3::arya::IClock::IEventSink
+{
+    void timeUpdateBegin(fep3::arya::Timestamp, fep3::arya::Timestamp) override
+    {
+    }
+    void timeUpdating(fep3::arya::Timestamp) override
+    {
+    }
+
+    void timeUpdateEnd(fep3::arya::Timestamp) override
+    {
+    }
+
+    void timeResetBegin(fep3::arya::Timestamp, fep3::arya::Timestamp) override
+    {
+        _clock->getTime();
+    }
+
+    void timeResetEnd(fep3::arya::Timestamp) override
+    {
+    }
+public:
+    fep3::arya::IClock* _clock;
+};
+
+/**
+ * @detail Test whether a call of getTime causes a recursion crash.
+ * @req_id FEPSDK-3212
+ */
+TEST_F(ContinuousClockTest, RecursiveSetResetTimeCall)
+{
+    std::shared_ptr<TestEventSink> test_event_sink = std::make_shared<TestEventSink>();
+    TestContinuousClock test_clock;
+    fep3::arya::IClock* clock_interface = &test_clock;
+    test_event_sink->_clock = clock_interface;
+
+    // first tick
+    clock_interface->start(test_event_sink);
+    // second tick
+    ASSERT_EQ(clock_interface->getTime(), std::chrono::nanoseconds(100000200))
+        << "Clock time is not the expected ";
+    // thirds tick
+    ASSERT_EQ(clock_interface->getTime(), std::chrono::nanoseconds(100000300))
+        << "Clock time is not the expected ";
+    /*now the clocked is forced to go back causing a reset*/
+    test_clock._m_timestamp_offs = std::chrono::nanoseconds(100);
+    test_clock._count = 0;
+    /*two ticks, one from this call and one from  TestEventSink::timeResetBegin*/
+    ASSERT_EQ(clock_interface->getTime(), std::chrono::nanoseconds(200))
+        << "Clock time is not the expected ";
+}
+
+class TestNonMonotonicClock : public fep3::base::ContinuousClock
+{
+public:
+    TestNonMonotonicClock()
+        : ContinuousClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME)
+    {
+    }
+    Timestamp getNewTime() const override
+    {
+        return  _m_timestamp_offs - std::chrono::nanoseconds(100) * (_count++ + 1);
+    }
+    Timestamp resetTime(Timestamp) override
+    {
+        return _m_timestamp_offs;
+    }
+    Timestamp _m_timestamp_offs = std::chrono::nanoseconds(100000000);
+    mutable int16_t _count = 0;
+};
+
+TEST_F(ContinuousClockTest, NoResetCallsWithNonMonotonicClock)
+{
+    auto mock_event_sink = std::make_shared<::testing::StrictMock<::fep3::mock::EventSink>>();
+    TestNonMonotonicClock test_clock;
+    fep3::arya::IClock* clock_interface = &test_clock;
+    
+    EXPECT_CALL(*mock_event_sink, timeResetBegin(_, { std::chrono::nanoseconds(100000000) }));
+    EXPECT_CALL(*mock_event_sink, timeResetEnd({ std::chrono::nanoseconds(100000000) }));
+    test_clock.start(mock_event_sink);
+
+    // even if clock is non monotonic there should be no resets
+    ASSERT_EQ(clock_interface->getTime(), std::chrono::nanoseconds(99999900))
+        << "Clock time is not the expected ";
+    ASSERT_EQ(clock_interface->getTime(), std::chrono::nanoseconds(99999800))
+        << "Clock time is not the expected ";
 }

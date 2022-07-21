@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/scheduler/local_scheduler_service.h>
 #include <fep3/native_components/job_registry/local_job_registry.h>
 #include <fep3/components/scheduler/mock/mock_scheduler.h>
@@ -77,17 +78,28 @@ struct SchedulerServiceWithSchedulerMock : ::testing::Test
     void registerComponents()
     {
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus));
+            _service_bus,
+            _dummy_component_version_info));
+
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            std::make_unique<fep3::native::JobRegistry>()));
+            std::make_unique<fep3::native::JobRegistry>(),
+            _dummy_component_version_info));
+
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ISchedulerService>(
-            _scheduler_service_impl));
+            _scheduler_service_impl,
+            _dummy_component_version_info));
+
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock,
+            _dummy_component_version_info));
+
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_unique<LoggingService>(_logger_mock)));
+            std::make_unique<LoggingService>(_logger_mock),
+            _dummy_component_version_info));
+
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(
-            _clock_service_mock));
+            _clock_service_mock,
+            _dummy_component_version_info));
 
         EXPECT_CALL(*_clock_service_mock, getType()).WillRepeatedly(Return(fep3::IClock::ClockType::continuous));
 
@@ -120,6 +132,8 @@ struct SchedulerServiceWithSchedulerMock : ::testing::Test
     std::shared_ptr<ClockMockComponent> _clock_service_mock{};
     std::shared_ptr<ServiceBusComponentMock> _service_bus{};
     std::shared_ptr<RPCServerMock> _rpc_server{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**

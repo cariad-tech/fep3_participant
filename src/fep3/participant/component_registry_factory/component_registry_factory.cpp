@@ -23,7 +23,6 @@ You may add additional accurate notices of copyright ownership.
 #include "component_registry_factory.h"
 #include "components_configuration.h"
 #include <fep3/base/environment_variable/environment_variable.h>
-#include <fep3/participant/component_factories/built_in/component_factory_built_in.h>
 #include <fep3/participant/component_factories/cpp/component_factory_cpp_plugins.h>
 #include <fep3/participant/component_factories/c/component_factory_c_plugins.h>
 #include <fep3/base/file/file.h>
@@ -80,11 +79,11 @@ namespace fep3
             }
             if(component_config_file_path.isEmpty())
             {
-                FEP3_LOGGER_LOG_INFO
-                    (logger
-                    , std::string() + "No FEP Component Configuration File found; loading default FEP Components"
-                    )
-                return createRegistryDefault(logger);
+                FEP3_LOGGER_LOG_ERROR
+                (logger
+                    , std::string() + "No FEP Component Configuration File found; Built-in component loading is deprecated, use a FEP Component Configuration File"
+                )
+                throw std::runtime_error("No FEP Component Configuration File found; Built-in component loading is deprecated, use a FEP Component Configuration File");
             }
             else
             {
@@ -96,13 +95,6 @@ namespace fep3
             }
         }
 
-        std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistryDefault(const ILogger* logger)
-        {
-            ComponentFactoryBuiltIn native_factory;
-            auto registry = std::make_shared<ComponentRegistry>();
-            native_factory.createDefaults(*registry.get(), logger);
-            return registry;
-        }
         std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistryByFile
             (const a_util::filesystem::Path& file_path
             , const ILogger* logger
@@ -126,7 +118,11 @@ namespace fep3
                 std::unique_ptr<ComponentFactoryBase> component_factory;
                 switch(component_source_type)
                 {
-                    case ComponentSourceType::built_in: component_factory = std::make_unique<ComponentFactoryBuiltIn>(); break;
+                    case ComponentSourceType::built_in:
+                    {
+                        throw std::runtime_error( "Built in components are deprecated, use a cpp-plugin component");
+                        break;
+                    }
                     case ComponentSourceType::cpp_plugin: component_factory = std::make_unique<ComponentFactoryCPPPlugin>(plugin_file_path); break;
                     case ComponentSourceType::c_plugin: component_factory = std::make_unique<ComponentFactoryCPlugin>(plugin_file_path); break;
                     default: throw std::runtime_error
@@ -137,9 +133,11 @@ namespace fep3
                 }
                 if(auto component = component_factory->createComponent(component_iid, logger))
                 {
+                    auto plugin_info = component_factory->getPluginInfo();
                     registry->registerComponent
                         (component_iid
                         , std::move(component)
+                        , plugin_info
                         );
                 }
                 else

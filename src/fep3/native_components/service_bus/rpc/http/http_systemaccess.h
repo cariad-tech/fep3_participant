@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <fep3/components/service_bus/system_access_base.hpp>
 
+
 namespace fep3
 {
 
@@ -43,9 +44,11 @@ public:
         const std::string& far_server_url) const override;
 
     std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout) const override;
+    std::multimap<std::string, std::string> getCurrentlyDiscoveredServices() const override;
 
     static constexpr const char* const _default_url = "http://230.230.230.1:9990";
 
+    static const std::string getNetworkInterface();
 private:
     struct Impl;
     std::unique_ptr<Impl> _impl;

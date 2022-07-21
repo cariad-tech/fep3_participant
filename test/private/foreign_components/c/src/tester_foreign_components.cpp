@@ -36,6 +36,11 @@ You may add additional accurate notices of copyright ownership.
 #include <helper/component_c_plugin_helper.h>
 #include <helper/gmock_destruction_helper.h>
 
+namespace
+{
+    fep3::ComponentVersionInfo dummy_component_version_info{ "3.0.1","dummyPath", "3.1.0" };
+}
+
 struct Plugin1PathGetter
 {
     std::string operator()() const
@@ -108,7 +113,7 @@ TEST_F(ComponentALoaderFixture, testGettingSpecificComponent)
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
         // test registering at component registry (this is a precondition for getting the component via "getComponent" from the component registry)
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(extractComponent()));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(extractComponent(), dummy_component_version_info));
 
         test_plugin_1::IComponentA* pointer_to_component_a = component_registry->getComponent<test_plugin_1::IComponentA>();
         ASSERT_NE(pointer_to_component_a, nullptr);
@@ -146,9 +151,9 @@ TEST_F(ComponentALoaderFixture, testAccessingHostComponent)
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
         ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>
-            (ComponentALoader::extractComponent()
+            (ComponentALoader::extractComponent(), dummy_component_version_info
             ));
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentB>(std::move(mock_component_b)));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentB>(std::move(mock_component_b), dummy_component_version_info));
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }
@@ -198,8 +203,8 @@ TEST_F(ComponentABLoaderFixture, testAccessingOtherPluginComponent)
 
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent()));
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentB>(ComponentBLoader::extractComponent()));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent(), dummy_component_version_info));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentB>(ComponentBLoader::extractComponent(), dummy_component_version_info));
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }
@@ -245,6 +250,7 @@ protected:
         ComponentALoader::SetUp();
         ComponentCLoader::SetUp();
     }
+
 };
 
 /**
@@ -263,8 +269,8 @@ TEST_F(ComponentACLoaderFixture, testAccessingOtherPluginComponent)
 
     const auto& component_registry = std::make_shared<::fep3::ComponentRegistry>();
     {
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent()));
-        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_2::IComponentC>(ComponentCLoader::extractComponent()));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_1::IComponentA>(ComponentALoader::extractComponent(), dummy_component_version_info));
+        ASSERT_EQ(::fep3::Result(), component_registry->registerComponent<test_plugin_2::IComponentC>(ComponentCLoader::extractComponent(), dummy_component_version_info));
         // create the components through the component registry (this is a precondition for accessing the component from within another component)
         component_registry->create();
     }

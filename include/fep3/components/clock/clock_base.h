@@ -46,7 +46,7 @@ public:
     */
     explicit ClockBase(const std::string& clock_name)
         : _clock_name(clock_name)
-        , _current_time(fep3::arya::Timestamp(0))
+        , _event_sink_and_time(fep3::arya::Timestamp(0))
         , _updated(false)
         , _started(false)
     {
@@ -103,8 +103,8 @@ public:
     {
         _updated = false;
         {
-            std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-            _event_sink = event_sink;
+            std::lock_guard<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+            _event_sink_and_time._event_sink = event_sink;
         }
         _started = true;
         reset(fep3::arya::Timestamp(0));
@@ -117,27 +117,44 @@ public:
     {
         _started = false;
         {
-            std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-            _event_sink.reset();
+            std::lock_guard<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+            _event_sink_and_time._event_sink.reset();
         }
         _updated = false;
     }
 
-
 protected:
+    /**
+    * @brief Helper struct containing the current clock time, event sink and
+    *        the corresponding mutex.
+    */
+    struct EventSinkAndTime
+    {
+        /**
+        * @brief CTOR
+        *
+        * @param[in] timestamp Starting times of the clock
+        */
+        EventSinkAndTime(fep3::arya::Timestamp timestamp)
+            : _current_time(timestamp)
+        {}
+        ///event sink given on start call which receives time events
+        std::weak_ptr<fep3::arya::IClock::IEventSink> _event_sink;
+        ///the current time of this clock
+        fep3::arya::Timestamp _current_time;
+        ///recursive mutex
+        std::recursive_mutex _mutex_sink_and_time;
+    };
+
     ///members have to be secured versus multi threaded access in derived classes
-    ///event sink given on start call which receives time events
-    std::weak_ptr<fep3::arya::IClock::IEventSink> _event_sink;
     ///the name of this clock
     std::string _clock_name;
-    ///the current time of this clock
-    mutable fep3::arya::Timestamp _current_time;
+    ///holds the event sink and current time with the mutex.
+    mutable EventSinkAndTime _event_sink_and_time;
     ///determine if the clock was set by any setNewTime call
     mutable std::atomic_bool _updated;
     ///determine wether the clock is started or not
     mutable std::atomic_bool _started;
-    ///recursive mutex
-    mutable std::recursive_mutex _mutex_sink_and_time;
 };
 
 /**
@@ -158,6 +175,7 @@ public:
     */
     ContinuousClock(const std::string& name)
         : arya::ClockBase(name)
+        , _time_reset_in_progress{}
     {
     }
 
@@ -191,8 +209,8 @@ protected:
     {
         setNewTime(getNewTime());
 
-        std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-        return _current_time;
+        std::lock_guard<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+        return _event_sink_and_time._current_time;
     }
 
     /**
@@ -217,6 +235,18 @@ protected:
 
 private:
     /**
+    * @brief Helper struct containing the flag for the time reset and
+    *        the corresponding mutex.
+    */
+    struct TimeResetFlag
+    {
+        ///flag indicating if a clock reset is currently ongoing.
+        bool _flag = false;
+        ///flag mutex.
+        std::recursive_mutex _mutex;
+    };
+
+    /**
     * @brief Set a new time for the clock.
     * Reset the clock if 'setNewTime' has been called for the first time
     * or if @p new_time is smaller than the old time
@@ -225,8 +255,8 @@ private:
     */
     void setNewTime(fep3::arya::Timestamp new_time) const
     {
-        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-        const auto old_time = _current_time;
+        std::unique_lock<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+        const auto old_time = _event_sink_and_time._current_time;
         lock_guard.unlock();
 
         if (!_updated)
@@ -234,15 +264,10 @@ private:
             _updated = true;
             setResetTime(new_time);
         }
-        if (new_time < old_time)
-        {
-            setResetTime(new_time);
-        }
-
         _updated = true;
 
         lock_guard.lock();
-        _current_time = new_time;
+        _event_sink_and_time._current_time = new_time;
         lock_guard.unlock();
     }
 
@@ -253,10 +278,23 @@ private:
     */
     void setResetTime(const fep3::arya::Timestamp new_time) const
     {
-        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
+        // avoid recursive calls in case event_sink_pointer calls again getTime
+        // that results in a new setResetTime calls
+        {
+            std::unique_lock<std::recursive_mutex> lock_guard_reset(_time_reset_in_progress._mutex);
+            if (_time_reset_in_progress._flag)
+            {
+                return;
+            }
+            else
+            {
+                _time_reset_in_progress._flag = true;
+            }
+        }
 
-        const auto old_time = _current_time;
-        auto event_sink_pointer = _event_sink.lock();
+        std::unique_lock<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+        const auto old_time = _event_sink_and_time._current_time;
+        auto event_sink_pointer = _event_sink_and_time._event_sink.lock();
         lock_guard.unlock();
 
         if (event_sink_pointer)
@@ -267,15 +305,23 @@ private:
         _updated = true;
 
         lock_guard.lock();
-        _current_time = new_time;
+        _event_sink_and_time._current_time = new_time;
         lock_guard.unlock();
 
         if (event_sink_pointer)
         {
             event_sink_pointer->timeResetEnd(new_time);
         }
+
+        {
+            std::unique_lock<std::recursive_mutex> lock_guard_reset(_time_reset_in_progress._mutex);
+            _time_reset_in_progress._flag = false;
+        }
     }
+
+    mutable TimeResetFlag _time_reset_in_progress;
 };
+
 /**
 * @brief Base implementation for a discrete clock which will automatically
 *        call the IClock::IEventSink for you.
@@ -304,8 +350,8 @@ protected:
     */
     fep3::arya::Timestamp getTime() const override
     {
-        std::lock_guard<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
-        return _current_time;
+        std::lock_guard<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
+        return _event_sink_and_time._current_time;
     }
 
     /**
@@ -344,9 +390,9 @@ public:
     */
     void setNewTime(const fep3::arya::Timestamp new_time, const bool send_update_before_after) const
     {
-        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
+        std::unique_lock<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
 
-        const auto old_time = _current_time;
+        const auto old_time = _event_sink_and_time._current_time;
         lock_guard.unlock();
 
         if (!_updated)
@@ -361,7 +407,7 @@ public:
         else
         {
             lock_guard.lock();
-            auto event_sink_pointer = _event_sink.lock();
+            auto event_sink_pointer =_event_sink_and_time._event_sink.lock();
             lock_guard.unlock();
 
             if (event_sink_pointer && send_update_before_after)
@@ -370,7 +416,7 @@ public:
             }
 
             lock_guard.lock();
-            _current_time = new_time;
+            _event_sink_and_time._current_time = new_time;
             lock_guard.unlock();
 
             if (event_sink_pointer)
@@ -391,10 +437,10 @@ public:
     */
     void setResetTime(const fep3::arya::Timestamp new_time) const
     {
-        std::unique_lock<std::recursive_mutex> lock_guard(_mutex_sink_and_time);
+        std::unique_lock<std::recursive_mutex> lock_guard(_event_sink_and_time._mutex_sink_and_time);
 
-        const auto old_time = _current_time;
-        auto _event_sink_pointer = _event_sink.lock();
+        const auto old_time = _event_sink_and_time._current_time;
+        auto _event_sink_pointer = _event_sink_and_time._event_sink.lock();
         lock_guard.unlock();
 
         if (_event_sink_pointer)
@@ -405,7 +451,7 @@ public:
         _updated = true;
 
         lock_guard.lock();
-        _current_time = new_time;
+        _event_sink_and_time._current_time = new_time;
         lock_guard.unlock();
 
         if (_event_sink_pointer)

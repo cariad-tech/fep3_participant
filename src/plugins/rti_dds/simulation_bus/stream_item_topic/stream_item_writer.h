@@ -33,9 +33,9 @@ public:
         ,const std::shared_ptr<dds::core::QosProvider> & qos_provider);
     ~StreamItemDataWriter();
 
-    fep3::Result write(const fep3::IDataSample& data_sample);
-    fep3::Result write(const fep3::IStreamType& stream_type);
-    fep3::Result transmit();
+    fep3::Result write(const fep3::IDataSample& data_sample) override;
+    fep3::Result write(const fep3::IStreamType& stream_type) override;
+    fep3::Result transmit() override;
 
     void createWriter(const dds::pub::qos::DataWriterQos & qos);
 

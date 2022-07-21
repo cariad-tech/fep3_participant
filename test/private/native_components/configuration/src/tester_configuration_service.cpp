@@ -22,6 +22,7 @@ You may add additional accurate notices of copyright ownership.
 #include <common/gtest_asserts.h>
 #include <common/properties_test_helper.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/configuration/configuration_service.h>
 #include <fep3/rpc_services/configuration/configuration_rpc_intf_def.h>
 #include <fep3/base/properties/properties.h>
@@ -47,9 +48,9 @@ struct NativeConfigurationService : public testing::Test
     void SetUp() override
     {
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus));
+            _service_bus, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_impl));
+            _configuration_service_impl, _dummy_component_version_info));
 
         EXPECT_CALL(*_service_bus, getServer()).Times(1).WillOnce(::testing::Return(_rpc_server));
         EXPECT_CALL(*_rpc_server,
@@ -67,6 +68,8 @@ struct NativeConfigurationService : public testing::Test
     std::shared_ptr<RPCServerMock> _rpc_server{nullptr};
     std::shared_ptr<fep3::native::ConfigurationService> _configuration_service_impl{ nullptr };
     fep3::IConfigurationService* _configuration_service_intf{ nullptr };
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**

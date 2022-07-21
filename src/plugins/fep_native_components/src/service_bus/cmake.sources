@@ -1,0 +1,62 @@
+#
+# Copyright @ 2021 VW Group. All rights reserved.
+#
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+#
+# You may add additional accurate notices of copyright ownership.
+#
+#
+
+set(SERVICE_BUS_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus)
+
+########################################################
+#  native service bus
+########################################################
+
+set(SERVICE_BUS_SOURCES_PRIVATE
+    ${SERVICE_BUS_DIR}/service_bus.h
+    ${SERVICE_BUS_DIR}/service_bus.cpp
+    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.h
+    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.cpp
+)
+
+set(SERVICE_BUS_SOURCES ${SERVICE_BUS_SOURCES_PRIVATE})
+source_group(components\\service_bus FILES ${SERVICE_BUS_SOURCES})
+
+
+##################################################################
+# RPC
+##################################################################
+
+set(SERVICE_BUS_RPC_DIR ${SERVICE_BUS_DIR}/rpc)
+set(SERVICE_BUS_RPC_INCLUDE_DIR ${SERVICE_BUS_INCLUDE_DIR}/rpc)
+
+set(SERVICE_BUS_RPC_SOURCES_PRIVATE
+    ${SERVICE_BUS_RPC_DIR}/http/http_server.h
+    ${SERVICE_BUS_RPC_DIR}/http/http_server.cpp
+    ${SERVICE_BUS_RPC_DIR}/http/http_client.h
+    ${SERVICE_BUS_RPC_DIR}/http/http_client.cpp
+    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.h
+    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.cpp
+    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.h
+    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.cpp
+    ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.h
+    ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.cpp
+    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.h
+    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.cpp
+)
+
+set(SERVICE_BUS_RPC_SOURCES ${SERVICE_BUS_RPC_SOURCES_PRIVATE} )
+source_group(components\\service_bus\\rpc FILES ${SERVICE_BUS_RPC_SOURCES})
+
+######################################
+# Set up the variable
+######################################
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${SERVICE_BUS_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${SERVICE_BUS_RPC_SOURCES})

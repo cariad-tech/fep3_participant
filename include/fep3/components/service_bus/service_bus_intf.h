@@ -80,7 +80,7 @@ namespace arya
              *                    within one service bus instance this name has to be unique. Usually the implementation
              *                    should also prevent to create a server with the same name twice within the discovery_network_url
              *                    (but this depends on the used protocol if this is possible)
-             * @param[in] server_url address of the server :
+             * @param[in] server_url address of the server:
              *                   \li for http this will be http://localhost:9090 or http://0.0.0.0:9090
              *                                             to appear in all networks
              *                   \li for http this will be http://192.168.1.2:9090 to appear only in http://192.168.1.2.x networks
@@ -117,7 +117,7 @@ namespace arya
              *
              * @param[in] far_participant_name name of the far server
              * @return a requester to request messages from
-             * @retval empty std::shared_ptr<IRPCRequester>() if far_participant_name address can not be retrieved
+             * @retval empty std::shared_ptr<IRPCRequester>() if far_participant_name address cannot be retrieved
              */
             virtual std::shared_ptr<IParticipantRequester> getRequester(const std::string& far_participant_name) const = 0;
 
@@ -132,7 +132,7 @@ namespace arya
             /**
              * @brief retrieves the name of the system access (used as system_name)
              *
-             * @return returns the anme of the system access
+             * @return returns the name of the system access
              */
             virtual std::string getName() const = 0;
 
@@ -151,7 +151,7 @@ namespace arya
         };
         /**
          * @brief create a system access point to create a server (to be part of the system) or to discover and request within this system.
-         * The server itself is one access point to the service bus, where services can registered and unregistered to.
+         * The server itself is one access point to the service bus, where services can be registered and unregistered to.
          *
          * @param[in] system_name the name of the system this server is belonging to
          *                    \li leave empty if there is no system this participant belongs to
@@ -164,7 +164,7 @@ namespace arya
          * @param[in] is_default create this access point as default system access to have easy access via IServiceBus::getServer
          *                    and IServiceBus::getRequester which is used within the RPC implementation templates
          *
-         * @retval ERR_NOERROR no error occured
+         * @retval ERR_NOERROR no error occurred
          * @return depending on the service bus solution it will return with an error. see details of that error
          */
         virtual fep3::Result createSystemAccess(const std::string& system_name,
@@ -175,7 +175,7 @@ namespace arya
          *
          *
          * @param[in] system_name name of the system access
-         * @retval ERR_NOERROR no error occured
+         * @retval ERR_NOERROR no error occurred
          *
          */
         virtual fep3::Result releaseSystemAccess(const std::string& system_name) = 0;
@@ -185,7 +185,7 @@ namespace arya
          * @brief get the participants server at the default system access
          * @return the server if it does exist
          * @retval empty std::shared_ptr<IRPCServer>() if the server is not set
-         * @remark this will only return a valid value if a systemaccess  is created with
+         * @remark this will only return a valid value if a system access  is created with
          *         \c createSystemAccess(..., ..., true) and within this access the server was created
          */
         virtual std::shared_ptr<IParticipantServer> getServer() const = 0;

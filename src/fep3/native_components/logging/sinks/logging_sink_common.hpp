@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 #pragma once
 
 #include <a_util/datetime.h>
+#include <a_util/strings.h>
 #include <fep3/base/logging/logging_types.h>
 
 namespace fep3

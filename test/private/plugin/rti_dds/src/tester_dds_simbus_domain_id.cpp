@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 
 #include <helper/gmock_async_helper.h>
+#include <helper/platform_dep_name.h>
 #include <fep3/components/simulation_bus/mock/mock_simulation_bus.h>
 #include <fep3/base/sample/mock/mock_data_sample.h>
 
@@ -39,7 +40,7 @@ MATCHER_P(DataSampleSmartPtrValueMatcher, pointer_to_expected_value, "Matcher fo
  */
 TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleDomains)
 {
-    std::string topic("breadcrumb");
+    std::string topic = makePlatformDepName("breadcrumb");
 
     uint32_t sparrow_domain_id = randomDomainId();
     uint32_t sparrow_data_sample_count = 5;
@@ -57,9 +58,10 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleDomains)
     /*----------------------------------------------------------------------------
      *  create the simulation_buses for the birds
      *----------------------------------------------------------------------------*/
-    auto sparrow_simulation_bus = createSimulationBus(sparrow_domain_id, "Sheila");
-    auto sparrow_simulation_bus2 = createSimulationBus(sparrow_domain_id, "Scot");
-    auto blackbird_simulation_bus = createSimulationBus(blackbird_domain_id, "Brad");
+
+    auto sparrow_simulation_bus = createSimulationBusDep(sparrow_domain_id, "Sheila");
+    auto sparrow_simulation_bus2 = createSimulationBusDep(sparrow_domain_id, "Scot");
+    auto blackbird_simulation_bus = createSimulationBusDep(blackbird_domain_id, "Brad");
 
     {
         /*----------------------------------------------------------------------------
@@ -127,17 +129,17 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleDomains)
 
 TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleSystemNames)
 {
-    std::string topic("breadcrumb");
+    std::string topic = makePlatformDepName("breadcrumb");
 
     uint32_t sparrow_data_sample_count = 5;
-    uint32_t domain_id = 7;
+    uint32_t domain_id = randomDomainId();
 
     /*----------------------------------------------------------------------------
      *  create the simulation_buses for the birds
      *----------------------------------------------------------------------------*/
-    auto sparrow_simulation_bus = createSimulationBus(domain_id, "Sheila", "sparrow");
-    auto sparrow_simulation_bus2 = createSimulationBus(domain_id, "Scot", "sparrow");
-    auto blackbird_simulation_bus = createSimulationBus(domain_id, "Brad", "blackbird");
+    auto sparrow_simulation_bus = createSimulationBusDep(domain_id, "Sheila", "sparrow");
+    auto sparrow_simulation_bus2 = createSimulationBusDep(domain_id, "Scot", "sparrow");
+    auto blackbird_simulation_bus = createSimulationBusDep(domain_id, "Brad", "blackbird");
     {
         /*----------------------------------------------------------------------------
          *  add the birds

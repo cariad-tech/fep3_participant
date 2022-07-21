@@ -43,7 +43,7 @@ namespace arya
         clear();
     }
 
-    fep3::Result ComponentRegistry::registerComponent(const std::string& fep_iid, const std::shared_ptr<IComponent>& component)
+    fep3::Result ComponentRegistry::registerComponent(const std::string& fep_iid, const std::shared_ptr<IComponent>& component, const ComponentVersionInfo& version_info)
     {
         auto supported_interface = component->getInterface(fep_iid);
         if (supported_interface == nullptr)
@@ -54,9 +54,32 @@ namespace arya
         if (component_found == nullptr)
         {
             _components.emplace_back(fep_iid, component);
+            _comp_version_info[fep_iid] = version_info;
             return fep3::Result();
         }
         RETURN_ERROR_DESCRIPTION(fep3::ERR_INVALID_ARG, "component %s already exists", fep_iid.c_str());
+    }
+
+    std::pair<fep3::Result, ComponentVersionInfo> ComponentRegistry::getComponentVersion(const std::string& fep_iid) const
+    {
+        const auto it = _comp_version_info.find(fep_iid);
+        
+        if (it == _comp_version_info.end())
+        {
+            using namespace std::literals;
+
+            return {
+            a_util::result::Result(fep3::ERR_INVALID_ARG,
+               ("Error getting version for component "s + fep_iid + ", component not found"s).c_str(),
+                __LINE__,
+                __FILE__,
+                A_UTIL_CURRENT_FUNCTION),
+            {}};
+        }
+        else
+        {
+            return { {}, it->second };
+        }
     }
 
     IComponent* ComponentRegistry::findComponent(const std::string& fep_iid) const
@@ -92,6 +115,7 @@ namespace arya
             if (std::get<0>(*comp_iterator) == fep_iid)
             {
                 _components.erase(comp_iterator);
+                _comp_version_info.erase(fep_iid);
                 return fep3::Result();
             }
         }
@@ -309,6 +333,7 @@ namespace arya
             _components.erase(--current_comp_it);
             current_comp_it = _components.end();
         }
+        _comp_version_info.clear();
     }
 }
 }

@@ -52,7 +52,7 @@ namespace arya
         return T::getRPCDefaultName();
     }
 
-    /// Interface of a RPC Client
+    /// Interface of an RPC Client
     class IRPCServiceClient
     {
     protected:

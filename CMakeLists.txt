@@ -19,13 +19,15 @@ cmake_policy(SET CMP0011 NEW)
 # Disable extensions here and require the chosen CMAKE_CXX_STANDARD (coming from Conan)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 14)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 
 # Use shared libraries from current directory on Linux (same behavior as on Windows)
 SET(CMAKE_INSTALL_RPATH "$ORIGIN")
 
-if(CMAKE_CXX_STANDARD LESS 14)
-    message(FATAL_ERROR "The FEP Participant library requires CMAKE_CXX_STANDARD >= 14")
+if(CMAKE_CXX_STANDARD LESS 17)
+    message(WARNING "The FEP Participant library requires CMAKE_CXX_STANDARD >= 17")
 endif()
 
 file(STRINGS version
@@ -79,6 +81,12 @@ else()
     set(gtest_search_mode CONFIG)
 endif()
 
+# -Og is needed for ABI Dumper
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options("$<$<CONFIG:DEBUG>:-Og>")
+    message("Disable optimization")
+ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
 include(scripts/cmake/enable_multicore_compilation.cmake)
 include(scripts/cmake/use_integrated_debug_symbols.cmake)
 
@@ -128,8 +136,16 @@ if (fep3_participant_cmake_enable_documentation)
     add_subdirectory(doc)
 endif()
 
-#we always need to install licenses
-add_subdirectory(doc/license)
+install(FILES README.md
+        DESTINATION .
+)
+install(FILES LICENSE.md
+        DESTINATION doc/license
+)
+
+install(FILES doc/license/license_notes_from_aosd.txt
+        DESTINATION doc/license
+)
 
 if(fep3_participant_cmake_enable_tests)
     # we have private tests that are built/run during the product build

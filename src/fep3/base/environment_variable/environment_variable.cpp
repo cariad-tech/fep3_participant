@@ -25,6 +25,9 @@ You may add additional accurate notices of copyright ownership.
 #include <stdlib.h>
 #endif
 
+#include <locale>
+#include <codecvt>
+
 #include <fep3/fep3_errors.h>
 
 #include "environment_variable.h"
@@ -41,9 +44,13 @@ Optional<std::string> get(const std::string& name)
     const DWORD length = GetEnvironmentVariableW(wide_string_name.c_str(), nullptr, 0);
     if (0 < length)
     {
-        std::vector<wchar_t> value_buffer(length);
+        std::wstring value_buffer(length, '\0');
         GetEnvironmentVariableW(wide_string_name.c_str(), &value_buffer[0], static_cast<DWORD>(value_buffer.size()));
-        return std::string(value_buffer.cbegin(), value_buffer.cend());
+
+        auto size_needed = WideCharToMultiByte(CP_UTF8, 0, &value_buffer[0], (int)value_buffer.size(), NULL, 0, NULL, NULL);
+        std::string str_utf8(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, &value_buffer[0], (int)value_buffer.size(), &str_utf8[0], size_needed, NULL, NULL);
+        return str_utf8;
     }
 #else //WIN32
     char* const value = std::getenv(name.c_str());

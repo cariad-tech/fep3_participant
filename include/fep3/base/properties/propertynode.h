@@ -97,7 +97,7 @@ protected:
 public:
     /**
      * @brief Sets the child node @p property_to_add.
-     * If a child with the same name as @p property_to_add already exists, it will be overriden.
+     * If a child with the same name as @p property_to_add already exists, it will be overridden.
      *
      * @param[in] property_to_add Property to be set as child
      * @return The child that was just set
@@ -131,7 +131,7 @@ public:
     virtual void copyDeepFrom(const fep3::arya::IPropertyNode& other) = 0;
 
     /**
-     * @brief Register a observer to this node.
+     * @brief Register an observer to this node.
      * All observers are notified when the method @ref fep3::base::arya::IPropertyWithExtendedAccess::updateObservers() is called.
      *
      * @param[in] observer Observer to register
@@ -139,7 +139,7 @@ public:
     void registerObserver(std::weak_ptr<arya::IPropertyObserver> observer) override = 0;
 
      /**
-     * @brief Unregister a observer from this node.
+     * @brief Unregister an observer from this node.
      *
      * @param[in] observer Observer to unregister
      */
@@ -167,7 +167,7 @@ class PropertyValueWithObserver
 public:
     /**
      * @brief Forwarder that is used to forward calls to a reference of type @ref fep3::base::arya::IPropertyObserver
-     * Is used if a observer can not be instanciated as shared_ptr directly
+     * Is used if an observer cannot be instantiated as shared_ptr directly
      */
     class ObserverForwarder : public arya::IPropertyObserver
     {

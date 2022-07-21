@@ -94,7 +94,7 @@ namespace arya
     class IDataRegistry
     {
     public:
-        /// Definiton of the component interface identifier for the data registry
+        /// Definition of the component interface identifier for the data registry
         FEP_COMPONENT_IID("data_registry.arya.fep3.iid");
 
     protected:
@@ -105,7 +105,7 @@ namespace arya
         ~IDataRegistry() = default;
 
     public:
-        /// DataReceiver class provides an callbackentry for the @ref fep3::arya::IDataRegistry::registerDataReceiveListener function
+        /// DataReceiver class provides an callback entry for the @ref fep3::arya::IDataRegistry::registerDataReceiveListener function
         /// to receive data as a synchronous call (data triggered)
         using IDataReceiver = arya::ISimulationBus::IDataReceiver;
 
@@ -139,7 +139,7 @@ namespace arya
             * the reader queue is always empty because incoming data will immediately be passed to the "data triggered" receivers.
             *
             * @param[in] receiver The receiver object to be called back if an item is in the reader queue
-            * @return ERR_NOERROR if succeded, error code otherwise:
+            * @return ERR_NOERROR if succeeded, error code otherwise:
             * @retval ERR_NOT_INITIALISED Data registry has not been initialized
             * @retval ERR_FAILED          No item has been passed to the receiver
             */
@@ -167,7 +167,7 @@ namespace arya
             * @brief forwards the content of the @p data_sample to the simulation bus
             *
             * @param[in] data_sample The data sample to copy the content from
-            * @return ERR_NOERROR if succeded, error code otherwise:
+            * @return ERR_NOERROR if succeeded, error code otherwise:
             * @retval ERR_NOT_INITIALISED Data registry has not been initialized
             * @retval ERR_UNEXPECTED      An unexpected error occurred.
             * @retval ERR_MEMORY          The transmit buffer's memory is not suitable to hold the @p data_sample's content.
@@ -180,17 +180,17 @@ namespace arya
              * @brief forwards the content of the @p stream_type to the simulation bus
              *
              * @param[in] stream_type The stream type to copy the content from
-             * @return fep3::Result ERR_NOERROR if succeded, error code otherwise (@see fep3::IDataRegistry::IDataWriter::write(const IDataSample&))
+             * @return fep3::Result ERR_NOERROR if succeeded, error code otherwise (@see fep3::IDataRegistry::IDataWriter::write(const IDataSample&))
              */
             virtual fep3::Result write(const arya::IStreamType& stream_type) = 0;
             /**
              * @brief This method blocks until all content of the writer is forwarded.
              * Must be called after the last sample has been written by a job in a simulation cycle.
              *
-             * @return fep3::Result ERR_NOERROR if succeded, error code otherwise:
+             * @return fep3::Result ERR_NOERROR if succeeded, error code otherwise:
              * @retval ERR_NOT_INITIALISED Data registry has not been initialized
              * @retval ERR_UNEXPECTED      An unexpected error occurred.
-             * @retval ERR_NOT_CONNECTED   The data writer is not connected to a simulationbus resource.
+             * @retval ERR_NOT_CONNECTED   The data writer is not connected to a simulation bus resource.
              * @retval ERR_FAILED          The flushing failed.
              */
             virtual fep3::Result flush() = 0;
@@ -262,7 +262,7 @@ namespace arya
          *
          * @param[in] name Name of the incoming data to listen to
          * @param[in] listener A shared pointer to the listener implementation
-         * @return fep3::Result ERR_NOERROR if unregisteration succeeded, error code otherwise:
+         * @return fep3::Result ERR_NOERROR if unregistering succeeded, error code otherwise:
          * @retval ERR_NOT_FOUND No incoming data with this name found
          */
         virtual fep3::Result unregisterDataReceiveListener(const std::string& name,

@@ -71,7 +71,7 @@ public:
     DataJob(const std::string& name, fep3::arya::JobConfiguration job_config);
     /**
      * @brief CTOR. if using this CTOR you do NOT need to implement process().
-     * Put you implementation into the execute function.
+     * Put your implementation into the execute function.
      *
      * @param[in] name Name of the Job
      * @param[in] fc execute function
@@ -80,7 +80,7 @@ public:
     DataJob(const std::string& name, fep3::arya::Duration cycle_time, ExecuteCallback fc);
     /**
      * @brief CTOR. if using this CTOR you do NOT need to implement process().
-     * Put you implementation into the execute function.
+     * Put your implementation into the execute function.
      *
      * @param[in] name Name of the Job
      * @param[in] fc execute function
@@ -177,7 +177,7 @@ protected:
      * you do not need to lock something in here!
      * @param[in] time_of_execution current time of execution from the ClockService
      *                          this is the beginning time of the execution in simulation time
-     * @return fep3::Result If you return en error here the scheduler might stop execution immediatelly!
+     * @return fep3::Result If you return an error here the scheduler might stop execution immediately!
      */
     virtual fep3::Result process(fep3::arya::Timestamp time_of_execution);
 
@@ -186,7 +186,7 @@ public: //Job
      * The reset method to override.
      * implement your reset functionality here.
      * This method is called each time before the \p process method is called
-     * @return fep3::Result If you return en error here the scheduler might stop execution immediatelly!
+     * @return fep3::Result If you return an error here the scheduler might stop execution immediately!
      */
     fep3::Result reset() override;
 
@@ -205,12 +205,12 @@ private:
 
 /**
 * @brief Datajobs will be removed from the job registry of the @p component.
-* If one job can not be removed, the function will still try to remove the following ones within @p job_names.
+* If one job cannot be removed, the function will still try to remove the following ones within @p job_names.
 *
 * @param[in] jobs List of jobs to be removed
 * @param[in] components The component container in which the job registry will be looked up
 * @return fep3::Result.
-*           If it's an actual error it is the error code for the job that failed last.
+*           If it's an actual error, it is the error code for the job that failed last.
 *           If more than one remove fails, the error description contains a list of error descriptions separated by ';'.
 * @retval ERR_NOERROR Everything went fine
 * @retval ERR_NOT_FOUND A job with the given name is not registered
@@ -229,8 +229,8 @@ inline fep3::Result removeFromComponents(const std::vector<std::shared_ptr<arya:
 }
 /**
 * @brief Datajobs will be added to the job registry of the @p component.
-*        Additionally there data reader and writer will be registered at the DataRegistery
-* If one job can not be added, the function returns not adding the following ones and rolling back!
+*        Additionally, there data reader and writer will be registered at the DataRegistery
+* If one job cannot be added, the function returns not adding the following ones and rolling back!
 *
 * @param[in] jobs List of jobs to be added
 * @param[in] components The component container in which the job registry will be looked up
@@ -274,12 +274,12 @@ using arya::PropertyVariable;
 
 /**
 * @brief Datajobs will be removed from the job registry of the @p component.
-* If one job can not be removed, the function will still try to remove the following ones within @p job_names.
+* If one job cannot be removed, the function will still try to remove the following ones within @p job_names.
 *
 * @param[in] jobs List of jobs to be removed
 * @param[in] components The component container in which the job registry will be looked up
 * @return fep3::Result.
-*           If it's an actual error it is the error code for the job that failed last.
+*           If it's an actual error, it is the error code for the job that failed last.
 *           If more than one remove fails, the error description contains a list of error descriptions separated by ';'.
 * @retval ERR_NOERROR Everything went fine
 * @retval ERR_NOT_FOUND A job with the given name is not registered
@@ -293,8 +293,8 @@ inline fep3::Result removeFromComponents(const std::vector<std::shared_ptr<arya:
 
 /**
 * @brief Datajobs will be added to the job registry of the @p component.
-*        Additionally there data reader and writer will be registered at the DataRegistery
-* If one job can not be added, the function returns not adding the following ones and rolling back!
+*        Additionally, there data reader and writer will be registered at the DataRegistery
+* If one job cannot be added, the function returns not adding the following ones and rolling back!
 *
 * @param[in] jobs List of jobs to be added
 * @param[in] components The component container in which the job registry will be looked up

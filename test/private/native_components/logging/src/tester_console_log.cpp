@@ -20,6 +20,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <gtest/gtest.h>
 
+#include <fep3/fep3_participant_version.h>
 #include "fep3/components/base/component_registry.h"
 #include "fep3/components/service_bus/rpc/fep_rpc.h"
 #include "fep3/native_components/logging/logging_service.h"
@@ -42,7 +43,10 @@ struct TestLoggingServiceConsole : public ::testing::Test
     std::shared_ptr<fep3::mock::ClockService<>> _clock_service{ std::make_shared < fep3::mock::ClockService<> >() };
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{ std::make_shared<fep3::ComponentRegistry>() };
     std::unique_ptr<LoggingServiceClient> _logging_service_client;
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 
+public:
     TestLoggingServiceConsole()
     {
     }
@@ -52,9 +56,9 @@ struct TestLoggingServiceConsole : public ::testing::Test
         EXPECT_CALL(*_clock_service.get(), getTime())
             .WillRepeatedly(testing::Return(std::chrono::nanoseconds(0)));
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus), fep3::ERR_NOERROR);
-        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging), fep3::ERR_NOERROR);
-        ASSERT_EQ(_component_registry->registerComponent<fep3::IClockService>(_clock_service), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging, _dummy_component_version_info), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::IClockService>(_clock_service, _dummy_component_version_info), fep3::ERR_NOERROR);
         ASSERT_EQ(_component_registry->create(), fep3::ERR_NOERROR);
 
         _logging_service_client = std::make_unique<LoggingServiceClient>(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),

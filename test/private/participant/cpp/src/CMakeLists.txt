@@ -12,7 +12,8 @@
 # You may add additional accurate notices of copyright ownership.
 # 
 #
-
+fep3_participant_create_copy_target(private_participant_cpp)
+set_target_properties(fep_participant_file_copy_private_participant_cpp PROPERTIES FOLDER "test/private/participant/cpp")
 
 ##################################################################
 # tester_job
@@ -31,26 +32,9 @@ target_link_libraries(tester_job PRIVATE
     participant_test_utils
     fep3_participant_cpp
 )
+add_dependencies(tester_job fep_participant_file_copy_private_participant_cpp)
 set_target_properties(tester_job PROPERTIES FOLDER "test/private/participant/cpp")
-fep3_participant_deploy(tester_job)
-
-##################################################################
-# tester_data_reader_backlog
-##################################################################
-
-add_executable(tester_data_reader_backlog tester_data_reader_backlog.cpp)
-add_test(NAME tester_data_reader_backlog
-    COMMAND tester_data_reader_backlog
-    TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
-)
-target_link_libraries(tester_data_reader_backlog PRIVATE
-    GTest::gtest_main
-    GTest::gmock
-    fep3_participant_core
-)
-set_target_properties(tester_data_reader_backlog PROPERTIES FOLDER "test/private/participant/cpp")
-fep3_participant_deploy(tester_data_reader_backlog)
+set_target_properties(tester_job PROPERTIES INSTALL_RPATH "$ORIGIN")
 
 ##################################################################
 # tester_data_job_element
@@ -67,5 +51,6 @@ target_link_libraries(tester_data_job_element PRIVATE
     participant_test_utils
     fep3_participant_cpp
 )
+add_dependencies(tester_data_job_element fep_participant_file_copy_private_participant_cpp)
 set_target_properties(tester_data_job_element PROPERTIES FOLDER "test/private/participant/cpp")
-fep3_participant_deploy(tester_data_job_element)
+set_target_properties(tester_data_job_element PROPERTIES INSTALL_RPATH "$ORIGIN")

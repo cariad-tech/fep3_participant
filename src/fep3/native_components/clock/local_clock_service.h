@@ -159,7 +159,6 @@ private:
 
     std::shared_ptr<RPCClockSyncMaster>                         _rpc_impl_master{nullptr};
     std::shared_ptr<fep3::rpc::ClockMaster>                     _clock_master;
-    std::function<fep3::Result()>                               _set_participant_to_error_state;
     std::shared_ptr<RPCClockService>                            _rpc_impl_service{ nullptr };
 };
 

@@ -44,8 +44,6 @@ struct SchedulerTestEnv
 {
     SchedulerTestEnv()
         : _logger(std::make_shared<fep3::mock::Logger>())
-        , _set_participant_to_error_state(
-            [&]() -> fep3::Result {return _set_participant_to_error_state_mock.Call(); })
     {
 
     }
@@ -65,10 +63,6 @@ struct SchedulerTestEnv
     }
 
     std::shared_ptr<fep3::mock::Logger> _logger;
-
-    /// necessary because MockFunction.AsStdFunction seems not be available with our gtest
-    std::function<fep3::Result()> _set_participant_to_error_state{};
-    MockFunction<fep3::Result()> _set_participant_to_error_state_mock;
 };
 
 

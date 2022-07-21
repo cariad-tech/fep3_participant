@@ -20,11 +20,18 @@
 # which is only a static library wrapper around the fep3_participant_object_lib
 ######################################################################################
 
+# disable boost autolink, otherwise boost will look the library with the wrong name
+add_compile_definitions(BOOST_ALL_NO_LIB)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS filesystem)
+
 add_library(fep3_participant_private_lib STATIC
     $<TARGET_OBJECTS:fep3_participant_object_lib>
+    $<TARGET_OBJECTS:fep_components_plugin_object_lib>
 )
 target_link_libraries(fep3_participant_private_lib PUBLIC
     fep3_participant_object_lib
+    Boost::filesystem
+    Boost::disable_autolinking
 )
 
 target_compile_definitions(fep3_participant_private_lib PUBLIC _FEP3_PARTICIPANT_INCLUDED_STATIC)
@@ -39,6 +46,7 @@ add_subdirectory(component_factory/cpp/src)
 add_subdirectory(component_registry/src)
 add_subdirectory(component_registry_factory/src)
 add_subdirectory(component_intfs)
+add_subdirectory(participant/core/src)
 add_subdirectory(participant/cpp/src)
 add_subdirectory(shared_library/src)
 add_subdirectory(console_logger/src)
@@ -60,6 +68,7 @@ add_subdirectory(native_components/integration/scheduling/src)
 
 #participant interface
 add_subdirectory(participant/interface/state_machine/src)
+add_subdirectory(participant/interface/rpc_component_registry/src)
 add_subdirectory(participant/cli/src)
 
 #rti_dds

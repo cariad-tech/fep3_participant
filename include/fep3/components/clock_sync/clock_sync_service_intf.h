@@ -39,19 +39,18 @@ You may add additional accurate notices of copyright ownership.
 #define FEP3_CLOCKSYNC_SERVICE_CONFIG_TIMING_MASTER FEP3_CLOCKSYNC_SERVICE_CONFIG "/" FEP3_TIMING_MASTER_PROPERTY
 
  /**
- * @brief Name of the clock of the synchronization service providing as timing slave continuous clock.
+ * @brief Name of the timing client continuous clock provided by the native synchronization service.
  * The clock periodically synchronizes its time with a given timing master.
- * The period after which the synchronization occurs is configurable and defaults to 100 ms.
+ * The period after which the synchronization occurs is configurable via FEP3_CLOCKSYNC_SERVICE_CONFIG_SLAVE_SYNC_CYCLE_TIME and
+ * defaults to FEP3_SLAVE_SYNC_CYCLE_TIME_DEFAULT_VALUE.
  * The clock uses the Christian's algorithm to interpolate the time during synchronization steps.
  *
  */
 #define FEP3_CLOCK_SLAVE_MASTER_ONDEMAND     "slave_master_on_demand"
 
 /**
-* @brief Name of the clock of the synchronization service providing as timing slave discrete clock.
-* The clock receives time update events by a timing master which must be a discreate clock.
-* Otherwise it will synchronize in discrete clock steps every given FEP3_CLOCK_SLAVE_SYNC_CYCLE_TIME
-*
+* @brief Name of the timing client discrete clock provided by the native synchronization service.
+* The clock receives time update events by a timing master which must be a discrete clock.
 *
 */
 #define FEP3_CLOCK_SLAVE_MASTER_ONDEMAND_DISCRETE  "slave_master_on_demand_discrete"
@@ -93,7 +92,7 @@ class IClockSyncService
 {
 public:
     /**
-    * @brief Defintion of the local clock sync service component ID
+    * @brief Definition of the local clock sync service component ID
     */
     FEP_COMPONENT_IID("clock_sync_service.arya.fep3.iid");
 

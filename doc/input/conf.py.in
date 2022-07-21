@@ -57,8 +57,8 @@ exclude_patterns = []
 
 # HTML output options
 html_theme = 'sphinx_rtd_theme' # Used theme. The sphinx rtd theme must be installed seperately
-html_logo = '../images/Icon.png' # An image used in the top left of the documentation
-html_favicon = '../images/Favicon.png' # An image used as icon in the browser
+html_logo = '../images/fep_logo_white.png' # An image used in the top left of the documentation
+html_favicon = '../images/fep_logo_white.ico' # An image used as icon in the browser
 html_copy_source = True # DO copy the source .rst files to the output dir in order to make search work properly
 html_title = project # Title of the HTML in the browser
 html_static_path = ['_static'] # Additional css files

@@ -42,20 +42,13 @@ source_group(components\\service_bus\\generated FILES ${SERVICE_BUS_SOURCES_GENE
 #  native service bus
 ########################################################
 
-set(SERVICE_BUS_SOURCES_PRIVATE
-    ${SERVICE_BUS_DIR}/service_bus.h
-    ${SERVICE_BUS_DIR}/service_bus.cpp
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.h
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.cpp
-)
-
 set(SERVICE_BUS_SOURCES_PUBLIC
     ${SERVICE_BUS_INCLUDE_DIR}/service_bus_intf.h
     ${SERVICE_BUS_INCLUDE_DIR}/system_access_base.hpp
     ${SERVICE_BUS_INCLUDE_DIR}/service_registry_base.hpp
 )
 
-set(SERVICE_BUS_SOURCES ${SERVICE_BUS_SOURCES_PRIVATE} ${SERVICE_BUS_SOURCES_PUBLIC})
+set(SERVICE_BUS_SOURCES ${SERVICE_BUS_SOURCES_PUBLIC})
 source_group(components\\service_bus FILES ${SERVICE_BUS_SOURCES})
 
 
@@ -67,19 +60,6 @@ set(SERVICE_BUS_RPC_INCLUDE_DIR ${SERVICE_BUS_INCLUDE_DIR}/rpc)
 
 set(RPC_SERVICES_BASE_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/base)
 
-set(SERVICE_BUS_RPC_SOURCES_PRIVATE
-    ${SERVICE_BUS_RPC_DIR}/http/http_server.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_server.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/http_client.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_client.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.h
-    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.cpp
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.h
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.cpp
-)
-
 set(SERVICE_BUS_RPC_SOURCES_PUBLIC
     ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_json_rpc.h
     ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc.h
@@ -88,15 +68,7 @@ set(SERVICE_BUS_RPC_SOURCES_PUBLIC
     ${SERVICE_BUS_RPC_INCLUDE_DIR}/rpc_intf.h
 )
 
-set(SERVICE_BUS_RPC_SOURCES_PUBLIC
-    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_json_rpc.h
-    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc.h
-    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc_stubs_client.h
-    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc_stubs_service.h
-    ${SERVICE_BUS_RPC_INCLUDE_DIR}/rpc_intf.h
-)
-
-set(SERVICE_BUS_RPC_SOURCES ${SERVICE_BUS_RPC_SOURCES_PRIVATE} ${SERVICE_BUS_RPC_SOURCES_PUBLIC})
+set(SERVICE_BUS_RPC_SOURCES ${SERVICE_BUS_RPC_SOURCES_PUBLIC})
 source_group(components\\service_bus\\rpc FILES ${SERVICE_BUS_RPC_SOURCES})
 
 ##################################################################

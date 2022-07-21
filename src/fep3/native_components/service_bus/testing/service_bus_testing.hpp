@@ -30,8 +30,7 @@ static constexpr const char* participant_name_default = "test_participant_name";
 inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
     ServiceBus& service_bus,
     const std::string& test_participant_name = participant_name_default,
-    const uint32_t test_participant_port = 9090,
-    const uint32_t port_numbers_to_try = 10)
+    const uint32_t test_participant_port = 0)
 {
     const std::string participant_host = "http://localhost:";
     const std::string system_name = "test_with_service_bus_default";
@@ -49,16 +48,8 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
                << __FILE__ << ":" << __LINE__ << " getSystemAccess() failed";
     }
 
-    for (uint32_t participant_port = test_participant_port;
-         participant_port < test_participant_port + port_numbers_to_try;
-         participant_port++) {
-
-        auto participant_url = participant_host + a_util::strings::toString(participant_port);
-        res = sysaccess->createServer(test_participant_name, participant_url);
-        if (fep3::isOk(res)) {
-            break;
-        }
-    }
+    auto participant_url = participant_host + a_util::strings::toString(test_participant_port);
+    res = sysaccess->createServer(test_participant_name, participant_url);
 
     if (fep3::isFailed(res)) {
         return ::testing::AssertionFailure()
@@ -69,4 +60,4 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
 
 } // namespace testing
 } // namespace native
-} // namespace fep3
+} // namespac

@@ -99,7 +99,6 @@ TEST_F(MappingTester, testSignalMappingIn)
     SetUpSimulationBusMock("source_signal_in");
 
     ASSERT_FEP3_NOERROR(_registry->registerDataIn("target_signal_in", fep3::base::StreamTypeDDLFileRef{ "tTestStruct", TEST_FILE_DIR "test.description"}));
-    ASSERT_FEP3_NOERROR(_registry->registerDataIn("source_signal_in", fep3::base::StreamTypeDDLFileRef{ "tTestStruct", TEST_FILE_DIR "test.description"}));
     _target_reader = _registry->getReader("target_signal_in");
     ASSERT_TRUE(_target_reader);
 
@@ -115,6 +114,34 @@ TEST_F(MappingTester, testSignalMappingIn)
     ASSERT_FEP3_NOERROR(_component_registry->stop());
     ASSERT_FEP3_NOERROR(_component_registry->relax());
     ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
+}
+
+/**
+ * @brief Check whether a mapped signal may be unregistered from the native DataRegistry.
+ * A mapped signal is stored separated from the not mapped signals but shall be unregistered
+ * using the same functionality.
+ * 
+ */
+TEST_F(MappingTester, testUnregisterMappedSignal)
+{
+	ASSERT_FEP3_NOERROR(fep3::base::setPropertyValue<std::string>(
+		*_configuration_service,
+		FEP3_DATA_REGISTRY_MAPPING_CONFIGURATION_FILE_PATH,
+		TEST_FILE_DIR "test.map"));
+
+	SetUpSimulationBusMock("source_signal_in");
+
+	ASSERT_FEP3_NOERROR(_registry->registerDataIn(
+		"target_signal_in",
+		fep3::base::StreamTypeDDLFileRef{ "tTestStruct", TEST_FILE_DIR "test.description" }));
+
+	ASSERT_FEP3_NOERROR(_component_registry->initialize());
+	ASSERT_FEP3_NOERROR(_component_registry->tense());
+
+	ASSERT_FEP3_NOERROR(_component_registry->relax());
+	ASSERT_FEP3_NOERROR(_component_registry->deinitialize());
+
+	ASSERT_FEP3_NOERROR(_registry->unregisterDataIn("target_signal_in"));
 }
 
 TEST_F(MappingTester, testInvalidSignalMapping)

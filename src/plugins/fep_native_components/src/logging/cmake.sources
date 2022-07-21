@@ -1,0 +1,60 @@
+#
+# Copyright @ 2021 VW Group. All rights reserved.
+#
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+#
+# You may add additional accurate notices of copyright ownership.
+#
+#
+
+set(COMPONENTS_PLUGIN_LOGGING_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/logging)
+
+set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_common.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_console.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_rpc.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_fep.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_intf.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file_base.hpp
+)
+
+if (MSVC)
+    # Ignore warnings coming from boost date_time
+    set_source_files_properties(
+      ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.cpp
+      PROPERTIES
+      COMPILE_FLAGS "/wd4244"
+    )
+endif()
+
+set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_service.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_service.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_rpc_service.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_rpc_service.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_config.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_config.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_queue.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_queue.h
+)
+
+set(COMPONENT_PLUGIN_LOGGING_SOURCES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE}
+                               ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+
+source_group(components\\logging\\private FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE})
+source_group(components\\logging\\sinks FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+
+######################################
+# Set up the variable
+######################################
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})

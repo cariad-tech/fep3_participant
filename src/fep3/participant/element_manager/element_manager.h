@@ -62,7 +62,7 @@ public:
     /**
      * Loads the element.
      *
-     * @return Result 'NO_ERROR' if succeded, error code otherwise
+     * @return Result 'NO_ERROR' if succeeded, error code otherwise
      */
     virtual Result loadElement(const IComponents& components);
     /**
@@ -72,7 +72,7 @@ public:
     /**
      * Initializes the element.
      *
-     * @return Result 'NO_ERROR' if succeded, error code otherwise
+     * @return Result 'NO_ERROR' if succeeded, error code otherwise
      */
     virtual Result initializeElement();
     /**
@@ -82,7 +82,7 @@ public:
     /**
      * Runs the element
      *
-     * @return Result 'NO_ERROR' if succeded, error code otherwise
+     * @return Result 'NO_ERROR' if succeeded, error code otherwise
      */
     Result runElement();
     /**

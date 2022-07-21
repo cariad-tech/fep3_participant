@@ -23,6 +23,7 @@ You may add additional accurate notices of copyright ownership.
 #include <memory>
 #include <chrono>
 #include <atomic>
+#include <stdexcept>
 #include <a_util/result.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
 
@@ -138,6 +139,13 @@ public:
      */
     virtual std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout) const = 0;
 
+    /**
+     * @brief retrieves a multimap with pairs of names of the curenntley discovered server and their addresses
+     *        does not wait any discovery to be performed as in @ref fep3::base::arya::SystemAccessBase::getDiscoveredServices
+     * @return the multimap with pairs of names of the server and their addresses
+     *
+     */
+    virtual std::multimap<std::string, std::string> getCurrentlyDiscoveredServices() const = 0;
 public:
     /**
      * @copydoc fep3::arya::IServiceBus::ISystemAccess::createServer
@@ -212,7 +220,7 @@ public:
         else
         {
             // look for the requester without active discovering
-            auto found_services = discover(std::chrono::milliseconds(0));
+            auto found_services = getCurrentlyDiscoveredServices();
             for (const auto& found_service : found_services)
             {
                 if (found_service.first == far_participant_name)

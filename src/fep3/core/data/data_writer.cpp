@@ -69,20 +69,11 @@ fep3::Result DataWriter::addToDataRegistry(IDataRegistry& data_registry)
 {
     if (DATA_WRITER_QUEUE_SIZE_DYNAMIC == _queue_size)
     {
-        _connected_writer = base::addDataOut(data_registry, _name.c_str(), _stream_type);
+        return base::addDataOut(data_registry, _connected_writer, _name.c_str(), _stream_type );
     }
     else
     {
-        _connected_writer = base::addDataOut(data_registry, _name.c_str(), _stream_type, _queue_size);
-    }
-
-    if (_connected_writer)
-    {
-        return {};
-    }
-    else
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_DEVICE_NOT_READY, "could not register data writer");
+        return base::addDataOut(data_registry, _connected_writer, _name.c_str(), _stream_type, _queue_size);
     }
 }
 

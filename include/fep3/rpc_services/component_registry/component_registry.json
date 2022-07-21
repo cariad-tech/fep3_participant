@@ -1,0 +1,217 @@
+// Copyright @ 2021 VW Group. All rights reserved.
+//
+//     This Source Code Form is subject to the terms of the Mozilla
+//     Public License, v. 2.0. If a copy of the MPL was not distributed
+//     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// If it is not possible or desirable to put the notice in a particular file, then
+// You may include the notice in a location (such as a LICENSE file in a
+// relevant directory) where a recipient would be likely to look for such a notice.
+//
+// You may add additional accurate notices of copyright ownership.
+[
+    // returns a comma separated list of RPC services
+    // retrieves the version of the component, given the service iid, or an error code if the component was not found
+    {
+        "name": "getPluginVersion",
+        "params": {
+            "service_iid": "service.iid"
+        },
+      "returns": {
+        "error" : // error if component not found
+        {
+            "error_code": 0, // error code
+            "description": "error_description", // error description
+            "line": "line", // line
+            "file": "file", // file
+            "function": "function" // function
+        },
+        "version": "3.0.1" // component version if component was found
+      }
+    },
+      {
+        "name": "getFilePath",
+        "params": {
+            "service_iid": "service.iid"
+        },
+      "returns": {
+        "error" : // error if component not found
+        {
+            "error_code": 0, // error code
+            "description": "error_description", // error description
+            "line": "line", // line
+            "file": "file", // file
+            "function": "function" // function
+        },
+        "file_path": "/path/to/componentLib.so" // plugin library path if component was found
+      }
+    },
+      {
+        "name": "getParticipantLibraryVersion",
+        "params": {
+            "service_iid": "service.iid"
+        },
+      "returns": {
+        "error" : // error if component not found
+        {
+            "error_code": 0, // error code
+            "description": "error_description", // error description
+            "line": "line", // line
+            "file": "file", // file
+            "function": "function" // function
+        },
+        "participant_version": "fep3_participant @ 3.0.1 build 0" // particpant library version if component was found
+      }
+    }
+]
+\\ {
+\\  "definitions": {},
+\\  "type": "object",
+\\  "required": [
+\\      "action",
+\\      "status",
+\\      "value"
+\\  ],
+\\  "properties": {
+\\      "action": {
+\\          "type": "string",
+\\          "default": "",
+\\          "examples": [
+\\              "callRPC"
+\\          ],
+\\          "pattern": "^.*$"
+\\      },
+\\      "status": {
+\\          "type": "integer",
+\\          "examples": [
+\\              0
+\\          ],
+\\          "default": 0
+\\      },
+\\      "value": {
+\\          "type": "object",
+\\          "required": [
+\\              "id",
+\\              "jsonrpc",
+\\              "result"
+\\          ],
+\\          "properties": {
+\\              "id": {
+\\                  "type": "integer",
+\\                  "examples": [
+\\                      1
+\\                  ],
+\\                  "default": 0
+\\              },
+\\              "jsonrpc": {
+\\                  "type": "string",
+\\                  "default": "",
+\\                  "examples": [
+\\                      "2.0"
+\\                  ],
+\\                  "pattern": "^.*$"
+\\              },
+\\              "result": {
+\\                  "type": "object",
+\\                  "properties": {
+\\                      "version": {
+\\                          "type": "string",
+\\                          "default": "",
+\\                          "examples": [
+\\                              "3.0.1"
+\\                          ],
+\\                          "pattern": "^.*$"
+\\                      },
+\\                      "file_path": {
+\\                          "type": "string",
+\\                          "default": "",
+\\                          "examples": [
+\\                              "3.0.1"
+\\                          ],
+\\                          "pattern": "^.*$"
+\\                      },
+\\                     "participant_version": {
+\\                          "type": "string",
+\\                          "default": "",
+\\                          "examples": [
+\\                              "3.0.1"
+\\                          ],
+\\                          "pattern": "^.*$"
+\\                      },
+\\                      "error": {
+\\                          "type": "object",
+\\                          "required": [
+\\                              "description",
+\\                              "error_code",
+\\                              "file",
+\\                              "function",
+\\                              "line"
+\\                          ],
+\\                          "properties": {
+\\                              "description": {
+\\                                  "type": "string",
+\\                                  "default": "",
+\\                                  "examples": [
+\\                                      "Error getting version for component loggiasdasdng_service.arya.fep3.iid, component not found"
+\\                                  ],
+\\                                  "pattern": "^.*$"
+\\                              },
+\\                              "error_code": {
+\\                                  "type": "integer",
+\\                                  "examples": [
+\\                                      -5
+\\                                  ],
+\\                                  "default": 0
+\\                              },
+\\                              "file": {
+\\                                  "type": "string",
+\\                                  "default": "",
+\\                                  "examples": [
+\\                                      "C:\\Dev\\fep3_participant\\src\\fep3\\components\\base\\component_registry.cpp"
+\\                                  ],
+\\                                  "pattern": "^.*$"
+\\                              },
+\\                              "function": {
+\\                                  "type": "string",
+\\                                  "default": "",
+\\                                  "examples": [
+\\                                      "struct std::pair<class a_util::result::Result,class fep3::ComponentversionInfo> __cdecl fep3::arya::ComponentRegistry::getComponentversion(const class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > &) const"
+\\                                  ],
+\\                                  "pattern": "^.*$"
+\\                              },
+\\                              "line": {
+\\                                  "type": "integer",
+\\                                  "examples": [
+\\                                      75
+\\                                  ],
+\\                                  "default": 0
+\\                              }
+\\                          }
+\\                      }
+\\                  },
+\\                  "oneOf": [{
+\\                          "required": [
+\\                              "version"
+\\                          ]
+\\                      },
+\\                      {
+\\                          "required": [
+\\                              "error"
+\\                          ]
+\\                      },
+\\                      {
+\\                          "required": [
+\\                              "file_path"
+\\                          ]
+\\                      },
+\\                      {
+\\                          "required": [
+\\                              "participant_version"
+\\                          ]
+\\                      }
+\\                  ]
+\\              }
+\\          }
+\\      }
+\\  }
+\\ }

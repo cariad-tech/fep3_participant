@@ -35,9 +35,9 @@ namespace core
 namespace arya
 {
 
-/// Value for queue capactiy definition if dynamic queue is chosen
+/// Value for queue capacity definition if dynamic queue is chosen
 constexpr size_t DATA_WRITER_QUEUE_SIZE_DYNAMIC = 0;
-/// Value for queue capacity defintion if static queue size is chosen
+/// Value for queue capacity definition if static queue size is chosen
 constexpr size_t DATA_WRITER_QUEUE_SIZE_DEFAULT = 1;
 
 /**
@@ -101,7 +101,7 @@ public:
 
     /**
      * @brief copy construct a new Data Writer
-     * @remark this will not copy the content of the writer queue !!
+     * @remark this will not copy the content of the writer queue!!
      *
      * @param[in] other
      */
@@ -149,7 +149,7 @@ public:
 
     /**
      * @deprecated
-     * @brief remove the writers reference to the data registry without removing the corresponding writer from the data registry
+     * @brief remove the writer's reference to the data registry without removing the corresponding writer from the data registry
      *
      * @return fep3::Result
      * @see fep3::DataWriter::removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry)
@@ -158,7 +158,7 @@ public:
     fep3::Result removeFromDataRegistry();
 
     /**
-     * @brief remove the writers reference to the data registry and removes the corresponding writer from the registry
+     * @brief remove the writer's reference to the data registry and removes the corresponding writer from the registry
      *
      * @param[in] data_registry the data registry to register to
      * @return fep3::Result
@@ -174,6 +174,8 @@ public:
 
     /**
      * @brief writes a data sample to the writer
+     * If a clock was set before via @ref addClock and the timestamp of @p data_sample is zero, 
+     * the timestamp is set to the current time of the clock. 
      *
      * @param[in] data_sample the sample to write
      * @return fep3::Result
@@ -213,7 +215,7 @@ public:
 
     /**
      * @brief will flush the writers queue
-     *        usually this is called while the executeDataOut call of the scheduler !
+     *        usually this is called while the executeDataOut call of the scheduler!
      *
      *
      *

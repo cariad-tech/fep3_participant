@@ -161,7 +161,7 @@ public:
          * @brief Copies the content of the \p data_sample into the transmit buffer
          *
          * @param[in] data_sample The data sample to copy the content from
-         * @return ERR_NOERROR if succeded, error code otherwise:
+         * @return ERR_NOERROR if succeeded, error code otherwise:
          * @retval ERR_UNEXPECTED An unexpected error occurred.
          * @retval ERR_MEMORY The transmit buffer's memory is not suitable to hold the \p data_sample's content.
          * @retval ERR_NOT_IMPL There is no functioning implementation of this method.
@@ -173,14 +173,14 @@ public:
          * @brief This is an overloaded member function that copies the content of the \p stream_type into the transmit buffer
          *
          * @param[in] stream_type T stream type to copy the content from
-         * @return fep3::Result ERR_NOERROR if succeded, error code otherwise (see above)
+         * @return fep3::Result ERR_NOERROR if succeeded, error code otherwise (see above)
          */
         virtual fep3::Result write(const arya::IStreamType& stream_type) = 0;
         /**
          * @brief Transmits the content of the transmit buffer. This method blocks until all content
          * of the transmit buffer has been transmitted.
          *
-         * @return fep3::Result ERR_NOERROR if succeded, error code otherwise:
+         * @return fep3::Result ERR_NOERROR if succeeded, error code otherwise:
          * @retval ERR_UNEXPECTED An unexpected error occurred.
          * @retval ERR_NOT_IMPL There is no functioning implementation of this method.
          * @retval ERR_NOT_CONNECTED The data writer is not connected to a transmission resource.
@@ -192,6 +192,14 @@ public:
     /**
      * @brief Gets a reader for data on an input signal of the given static \p stream_type with the
      * given signal \p name whose queue capacity is 1.
+     * @note The reader pre-allocates a sample pool of size 1 for storing incoming samples.
+     *       Holding strong references to the samples as delivered to the receiver of 
+     *       @ref fep3::arya::ISimulationBus::IDataReader::pop 
+     *       or @ref fep3::arya::ISimulationBus::IDataReader::reset 
+     *       causes the pool items to be unavailable for further incoming samples. If 
+     *       pool items are still unavailable when samples come in, additional storage will 
+     *       be allocated on the heap, which might lead to system calls and therefore renders the
+     *       FEP Participant unsuitable for real time environments.
      *
      * @param[in] name The name of the input signal (must be unique)
      * @param[in] stream_type The stream type of the input signal (see @ref fep3::arya::IStreamType)
@@ -208,6 +216,14 @@ public:
      * signal with the given signal \p name whose queue capacity is \p queue_capacity. The queue
      * behaves like a FIFO: If the queue is full the oldest sample (according to the samples' timestamp)
      * will be discarded upon arrival of a new sample.
+     * @note The reader pre-allocates a sample pool of \p queue_capacity for storing incoming samples.
+     *       Holding strong references to the samples as delivered to the receiver of 
+     *       @ref fep3::arya::ISimulationBus::IDataReader::pop 
+     *       or @ref fep3::arya::ISimulationBus::IDataReader::reset 
+     *       causes the pool items to be unavailable for further incoming samples. If 
+     *       pool items are still unavailable when samples come in, additional storage will 
+     *       be allocated on the heap, which might lead to system calls and therefore renders the
+     *       FEP Participant unsuitable for real time environments.
      *
      * @param[in] name The name of the input signal (must be unique)
      * @param[in] stream_type The stream type of the input signal (see @ref fep3::arya::IStreamType)
@@ -225,6 +241,9 @@ public:
     /**
      * @brief This is an overloaded member function that gets a reader for data on an input
      * signal of dynamic stream type with the given signal \p name.
+     * @note Calling this member function renders the FEP Participant unsuitable for real time 
+     *       environments, because a dynamic change of the stream type may require dynamic memory 
+     *       allocation. 
      *
      * @param[in] name The name of the input signal (must be unique)
      * @return Data reader if succeeded, nullptr otherwise (e. g. if this method has already been
@@ -237,6 +256,9 @@ public:
      * signal of dynamic stream type with the given signal \p name whose queue capacity is \p
      * queue_capacity. The queue behaves like a FIFO: If the queue is full the oldest sample
      * (according to the samples' timestamp) will be discarded upon arrival of a new sample.
+     * @note Calling this member function renders the FEP Participant unsuitable for real time 
+     *       environments, because a dynamic change of the stream type may require dynamic memory 
+     *       allocation. 
      *
      * @param[in] name The name of the input signal (must be unique)
      * @param[in] queue_capacity The capacity of the queue.

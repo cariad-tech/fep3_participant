@@ -261,7 +261,7 @@ inline fep3_plugin_c_InterfaceError createSchedulerService
  * Creates a scheduler service object of type \p scheduler_service_type
  * @tparam scheduler_service_type The type of the scheduler service object to be created
  * @param[in,out] access_result Pointer to the access structure to the created scheduler service object
- * @param[in] shared_binary_access Access strcuture to the shared binary the scheduler service object resides in
+ * @param[in] shared_binary_access Access structure to the shared binary the scheduler service object resides in
  * @param[in] iid The interface ID of the scheduler service interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred

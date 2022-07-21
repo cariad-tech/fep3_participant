@@ -44,6 +44,7 @@ class DDSSystemAccess : public fep3::base::arya::SystemAccessBase
             const std::string& far_server_name,
             const std::string& far_server_url) const override;
         std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout) const override;
+        std::multimap<std::string, std::string> getCurrentlyDiscoveredServices() const override;
 
 };
 

@@ -165,6 +165,7 @@ LoggingService::LoggingService() : base::Configuration(FEP3_LOGGING_SERVICE_CONF
     //init the default sinks
     registerSink("console", std::make_shared<LoggingSinkConsole>());
     registerSink("file", std::make_shared<LoggingSinkFile>());
+    registerSink("file_json", std::make_shared<LoggingSinkFileJson>());
 
     std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
     setInternalFilter("",

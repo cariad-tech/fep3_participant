@@ -115,7 +115,7 @@ namespace arya
             *
             * @param[in] log The log message with description, severity level, timestamp, logger/domain name and participant name
             *
-            * @return A standard result code to tell the logging service if the logging was succesful
+            * @return A standard result code to tell the logging service if the logging was successful
             */
             virtual fep3::Result log(arya::LogMessage log) const = 0;
         };
