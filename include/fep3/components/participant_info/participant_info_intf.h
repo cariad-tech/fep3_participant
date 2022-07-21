@@ -51,14 +51,14 @@ namespace arya
     public:
         /**
          * @brief get the current participant name
-         * @return the participant name
+         * @return name of the participant
          * @retval the current set participant name
          */
         virtual std::string getName() const = 0;
 
         /**
-         * @brief the system name which the participant participate
-         * @return the system name
+         * @brief the system name which the participant participates
+         * @return name of the system
          * @retval the participate system name
          */
         virtual std::string getSystemName() const = 0;

@@ -27,6 +27,7 @@ You may add additional accurate notices of copyright ownership.
 #include <chrono>
 #include <fep3/cpp/participant.h>
 #include "../../src/fep3/core/mock/mock_core.h"
+#include "../helper/platform_dep_name.h"
 
 namespace fep3
 {
@@ -154,7 +155,7 @@ struct NParticipantSystem
         _system->Initialized();
     }
 public:
-    std::string _system_name = "test_system";
+    std::string _system_name = makePlatformDepName("test_system");
     std::string _system_version = "test_version";
 
 private:

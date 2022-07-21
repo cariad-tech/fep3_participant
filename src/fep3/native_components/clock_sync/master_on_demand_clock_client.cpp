@@ -430,7 +430,7 @@ Timestamp MasterOnDemandClockDiscrete::masterTimeEvent(
     else if (event_id == IRPCClockSyncMasterDef::EventID::time_update_before)
     {
         std::lock_guard<std::mutex> guard(_update_mutex);
-        auto sink_ptr = _event_sink.lock();
+        auto sink_ptr = _event_sink_and_time._event_sink.lock();
         if (sink_ptr)
         {
             sink_ptr->timeUpdateBegin(old_time, new_time);
@@ -443,7 +443,7 @@ Timestamp MasterOnDemandClockDiscrete::masterTimeEvent(
     else if (event_id == IRPCClockSyncMasterDef::EventID::time_update_after)
     {
         std::lock_guard<std::mutex> guard(_update_mutex);
-        auto sink_ptr = _event_sink.lock();
+        auto sink_ptr = _event_sink_and_time._event_sink.lock();
         if (sink_ptr)
         {
             sink_ptr->timeUpdateEnd(new_time);

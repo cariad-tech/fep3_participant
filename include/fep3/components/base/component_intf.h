@@ -81,7 +81,7 @@ namespace arya
          */
         virtual fep3::Result tense() = 0;
         /**
-         * @brief Makes the component falling back to a simple intialized state
+         * @brief Makes the component falling back to a simple initialized state
          * Relax is the antonym of @ref tense.
          *
          * @return fep3::Result
@@ -116,8 +116,8 @@ namespace arya
          * @brief Get the interface requested by the \p iid and return a void pointer to it
          *
          * @param[in] iid
-         * @return Pointer to the interface of the this component if this component has the passed @p idd
-         *         , nullptr otherwise
+         * @return Pointer to the interface of the component if this component has the requested @p idd,
+         *         nullptr otherwise
          */
         virtual void* getInterface(const std::string& iid) = 0;
     };

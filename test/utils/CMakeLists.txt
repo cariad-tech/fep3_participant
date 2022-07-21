@@ -13,13 +13,19 @@
 # 
 #
 
+find_package(Boost 1.73.0 REQUIRED COMPONENTS)
+find_package(dev_essential REQUIRED COMPONENTS process)
 
-add_library(participant_test_utils INTERFACE)
+add_library(participant_test_utils STATIC helper/platform_dep_name.cpp)
+set_target_properties(participant_test_utils PROPERTIES FOLDER "test/function/scenarios")
 
-target_include_directories(participant_test_utils INTERFACE
+target_include_directories(participant_test_utils PUBLIC
     .
     $<TARGET_PROPERTY:fep3_participant,INTERFACE_INCLUDE_DIRECTORIES
     ../private/utils/common
+    PRIVATE
+    ${Boost_INCLUDE_DIR}
 )
 
-target_link_libraries(participant_test_utils INTERFACE GTest::gmock)
+target_link_libraries(participant_test_utils PUBLIC GTest::gmock PRIVATE dev_essential::process )
+add_subdirectory(helper)

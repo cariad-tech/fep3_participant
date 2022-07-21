@@ -42,7 +42,7 @@ protected:
     ~IRPCJobRegistryDef() = default;
 
 public:
-    ///definiton of the FEP rpc service iid for the job registry
+    ///definition of the FEP rpc service iid for the job registry
     FEP_RPC_IID("job_registry.arya.fep3.iid", "job_registry");
 };
 

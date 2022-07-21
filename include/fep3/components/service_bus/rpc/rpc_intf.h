@@ -29,13 +29,13 @@ namespace fep3
 namespace arya
 {
 /**
- * @brief Instance of one requester to send a client request to the a server.
+ * @brief Instance of one requester to send a client request to a server.
  *
  */
 class IRPCRequester
 {
 public:
-    /// Interface of a RPC response
+    /// Interface of an RPC response
     class IRPCResponse
     {
     protected:
@@ -65,7 +65,7 @@ public:
      * @param[in] response_callback the response callback interface to set the response to
      * @return returns an error code
      * @retval ERR_TIMEOUT Timeout reached with no answer
-     * @retval ERR_IO_ERROR server address not reachabl or connection closed
+     * @retval ERR_IO_ERROR server address not reachable or connection closed
      * @retval ERR_NOERROR response_callback will contain a valid response message
      *
      * @remark the \p request_message content must be serialized already (usually i.e. a json-string)
@@ -94,7 +94,7 @@ public:
 
     public:
         /**
-         * get the serivce id
+         * get the service id
          * @retval service ID.
          */
         virtual std::string getRPCServiceIIDs() const = 0;
@@ -146,7 +146,7 @@ public:
     virtual void setName(const std::string& name) = 0;
 
     /**
-     * \c Registers a RPC server with a unique \c service_name
+     * \c Registers an RPC server with a unique \c service_name
      *
      * @param[in] service_name The name of the server. \c oRPCObjectServerInstance name is updated.
      * @param[in,out] service The server that is registered.
@@ -162,7 +162,7 @@ public:
      * \c Unregisters a server by its \c service_name.
      *
      * @param[in] service_name The name of the server.
-     * \note Only after the server is uregistered it may be deleted.
+     * \note Only after the server is unregistered it may be deleted.
      *
      * @retval ERR_NOT_FOUND If the server is not registered.
      * @retval ERR_NOERROR Everything went as expected.
@@ -170,7 +170,7 @@ public:
     virtual fep3::Result unregisterService(const std::string& service_name) = 0;
 
     /**
-     * Definition that is used within implemenations of IRPCService to identifiy
+     * Definition that is used within implementations of IRPCService to identify
      * that the default url can be used.
      */
     static constexpr const char* const _use_default_url = "use_default_url";

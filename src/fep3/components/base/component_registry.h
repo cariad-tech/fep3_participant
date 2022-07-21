@@ -23,9 +23,11 @@ You may add additional accurate notices of copyright ownership.
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include <fep3/fep3_result_decl.h>
 #include <fep3/components/base/components_intf.h>
+#include <fep3/components/base/component_version_info.h>
 #include <a_util/result/error_def.h>
 
 
@@ -87,10 +89,10 @@ namespace arya
          * @return fep3::Result
          */
         template<class component_type>
-        fep3::Result registerComponent(const std::shared_ptr<arya::IComponent>& component)
+        fep3::Result registerComponent(const std::shared_ptr<arya::IComponent>& component, const ComponentVersionInfo& version_info)
         {
             const std::string fep_iid = getComponentIID<component_type>();
-            return registerComponent(fep_iid, component);
+            return registerComponent(fep_iid, component, version_info);
         }
         /**
          * @brief unregister the component with the interface id of T
@@ -199,7 +201,8 @@ namespace arya
           * @return fep3::Result
           */
         fep3::Result registerComponent(const std::string& fep_iid,
-                                       const std::shared_ptr<arya::IComponent>& component);
+                                       const std::shared_ptr<arya::IComponent>& component , 
+                                       const ComponentVersionInfo& version_info);
         /**
           * @brief unregister the component with the interface id of (see @ref FEP3_COMPONENT_IID)
           *
@@ -209,7 +212,8 @@ namespace arya
           * @return fep3::Result
           */
         fep3::Result unregisterComponent(const std::string& fep_iid);
-
+    
+        std::pair<fep3::Result, ComponentVersionInfo> getComponentVersion(const std::string& fep_iid) const;
     private:
         arya::IComponent* findComponent(const std::string& fep_iid) const override;
 
@@ -223,6 +227,7 @@ namespace arya
 
         /// the components container
         std::vector<std::pair<std::string, std::shared_ptr<arya::IComponent>>> _components;
+        std::map<std::string, ComponentVersionInfo> _comp_version_info;
     };
 }
 using arya::ComponentRegistry;

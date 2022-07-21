@@ -15,6 +15,7 @@
 
 
 find_package(dev_essential REQUIRED COMPONENTS pkg_rpc process)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS thread)
 
 jsonrpc_generate_client_stub(${CMAKE_CURRENT_SOURCE_DIR}/testinterface.json
                              test::rpc_stubs::TestInterfaceClient
@@ -33,8 +34,10 @@ add_executable(test_service_bus tester_service_bus.cpp
 set_target_properties(test_service_bus PROPERTIES FOLDER "test/private/native_components")
 target_link_libraries(test_service_bus PRIVATE GTest::gtest_main
                                                fep3_participant_private_lib
-                                               dev_essential::process)
+                                               dev_essential::process
+                                               Boost::thread
+                                               Boost::disable_autolinking)
 
-target_include_directories(test_service_bus PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(test_service_bus PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIRS})
 add_test(NAME test_service_bus COMMAND test_service_bus WORKING_DIRECTORY "..")
 set_target_properties(test_service_bus PROPERTIES TIMEOUT 10)

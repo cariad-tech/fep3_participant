@@ -30,7 +30,7 @@ namespace fep3
 namespace arya
 {
 /**
- * @brief Class for resource managment of a pooled pointer reference.
+ * @brief Class for resource management of a pooled pointer reference.
  *
  * @tparam T The object pointer type to manage
  */
@@ -94,7 +94,7 @@ public:
         */
     virtual void setCounter(uint32_t counter) = 0;
     /**
-        * @brief Changes and copies the given memory to the samples internal memory.
+        * @brief Changes and copies the given memory to the sample's internal memory.
         *
         * @param[in] readable_memory The memory to copy (uses @ref fep3::IRawMemory::cdata and @ref fep3::IRawMemory::size to obtain)
         * @return size_t Returns the size in bytes that were copied

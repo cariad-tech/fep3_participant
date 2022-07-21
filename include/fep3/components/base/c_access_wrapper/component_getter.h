@@ -50,7 +50,7 @@ public:
      * @param[in] component_getter_function The function to be used to get a component
      * @param[in] iid The interface ID of the component to get
      * @param[in] handle_to_component Handle to the component to get
-     * @return Pointer to the component, nullptr if the component cannot be get
+     * @return Pointer to the component, nullptr if the component is not available
      */
     virtual fep3::arya::IComponent* operator()
         (void* component_getter_function

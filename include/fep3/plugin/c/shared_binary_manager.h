@@ -44,7 +44,7 @@ public:
      */
     virtual ~SharedBinaryManager() = default;
     /**
-     * resets the mananged shared binary
+     * resets the managed shared binary
      * @param[in] shared_binary the shared binary to manage
      */
     virtual void setSharedBinary(const std::shared_ptr<arya::ISharedBinary>& shared_binary) final
@@ -52,7 +52,7 @@ public:
         _shared_binary = shared_binary;
     }
     /**
-     * gets the mananged shared binary
+     * gets the managed shared binary
      * @return the shared binary currently managing
      */
     virtual std::shared_ptr<arya::ISharedBinary> getSharedBinary() const final

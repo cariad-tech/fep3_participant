@@ -101,5 +101,10 @@ std::unique_ptr<fep3::arya::IComponent> ComponentFactoryCPlugin::createComponent
     return component;
 }
 
+ComponentVersionInfo ComponentFactoryCPlugin::getPluginInfo() const
+{
+    return ComponentVersionInfo(_impl->_plugin->getPluginVersion(), _impl->_plugin->getFilePath(), _impl->_plugin->getParticipantLibraryVersion().toString());
+}
+
 }
 }

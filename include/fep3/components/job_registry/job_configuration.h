@@ -39,7 +39,7 @@ namespace arya
 class JobConfiguration
 {
 public:
-    /// Strategy enum configuring behaviour in case of an operational time violation
+    /// Strategy enum configuring behavior in case of an operational time violation
     enum class TimeViolationStrategy
     {
         /// dummy value
@@ -59,7 +59,7 @@ public:
     * @param[in] cycle_sim_time The cycle time to be used for the job (simulation time)
     * @param[in] first_delay_sim_time The cycle delay time to the 0 point of the time base (simulation time)
     * @param[in] max_runtime_real_time The maximum duration that a single job execution is expected to need for computation (real time).
-    *                                   Provide no value if you have no expectations on the jobs runtime.
+    *                                   Provide no value if you have no expectations on the job's runtime.
     * @param[in] runtime_violation_strategy The violation strategy
     */
     JobConfiguration(arya::Duration cycle_sim_time,

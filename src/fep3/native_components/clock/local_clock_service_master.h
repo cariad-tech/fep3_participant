@@ -112,7 +112,6 @@ class ClockMaster : public IClock::IEventSink
 public:
     ClockMaster(const std::shared_ptr<const ILogger>& logger
     , std::chrono::nanoseconds rpc_timeout
-    , const std::function<Result()>& set_participant_to_error_state
     , std::function<const std::shared_ptr<IRPCRequester>(const
         std::string& service_participant_name)> get_rpc_requester_by_name);
 
@@ -189,7 +188,6 @@ private:
     std::chrono::nanoseconds _rpc_timeout;
     MultipleSlavesSynchronizer _slaves_synchronizer;
     std::mutex _slaves_mutex;
-    std::function<Result()> _set_participant_to_error_state;
     const std::function<const std::shared_ptr<IRPCRequester>(
         const std::string& service_participant_name)> _get_rpc_requester_by_name;
 

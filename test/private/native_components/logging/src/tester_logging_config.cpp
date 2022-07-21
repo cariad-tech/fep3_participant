@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gtest/gtest.h>
 #include "common/gtest_asserts.h"
 
+#include <fep3/fep3_participant_version.h>
 #include "fep3/components/base/component_registry.h"
 #include "fep3/components/service_bus/rpc/fep_rpc.h"
 #include "fep3/native_components/configuration/configuration_service.h"
@@ -39,7 +40,10 @@ struct TestLoggingService : public ::testing::Test
     std::shared_ptr<fep3::native::ConfigurationService> _configuration_service{ std::make_shared<fep3::native::ConfigurationService>() };
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{ std::make_shared<fep3::ComponentRegistry>() };
     std::unique_ptr<LoggingServiceClient> _logging_service_client;
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 
+public:
     TestLoggingService()
     {
     }
@@ -47,9 +51,9 @@ struct TestLoggingService : public ::testing::Test
     void SetUp()
     {
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(_logging));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(_configuration_service));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(_logging, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(_configuration_service, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->create());
 
         _logging_service_client = std::make_unique<LoggingServiceClient>(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),

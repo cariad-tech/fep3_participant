@@ -31,6 +31,8 @@ namespace fep3
 namespace native
 {
 
+class JSONClientConnectorCache;
+
 class HttpClientConnector : public arya::IRPCRequester
 {
     public:
@@ -40,7 +42,9 @@ class HttpClientConnector : public arya::IRPCRequester
                                  const std::string& request_message,
                                  IRPCRequester::IRPCResponse& response_callback) const override;
     private:
+        void setServerAddress(const std::string& server_address);
         std::string _server_address;
+        std::unique_ptr<JSONClientConnectorCache> _json_connector_cache;
 };
 
 }

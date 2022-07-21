@@ -13,7 +13,7 @@
 # 
 #
 
-if(fep3_particpant_core_FOUND)
+if(fep3_participant_core_FOUND)
     return()
 endif()
 
@@ -23,4 +23,4 @@ find_package(fep3_participant REQUIRED)
 # Add imported library target for the participant cpp interface
 include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_participant_core_targets.cmake)
 
-set(fep3_particpant_core_FOUND true)
+set(fep3_participant_core_FOUND true)

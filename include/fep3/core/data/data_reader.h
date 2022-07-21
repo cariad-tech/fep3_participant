@@ -102,7 +102,7 @@ public:
     DataReader& operator=(const DataReader& other);
 
     /**
-     * @brief move cnstruct a new Data Reader
+     * @brief move construct a new Data Reader
      *
      * @param[in] other
      */
@@ -146,11 +146,11 @@ public:
     /**
      * @brief will handle and receive all items from the reader queue until the given time is reached (excluding given time)
      *
-     * This method implements the behaviour known from FEP SDK greater than or equal to version 2.3.0.
+     * This method implements the behavior known from FEP SDK greater than or equal to version 2.3.0.
      * Samples having a timestamp lower than the current simulation time are considered valid for the
      * current simulation step.
      *
-     * @param[in] time_of_update samples with a timestamp lower than the time_of_update are received
+     * @param[in] time_of_update samples with a timestamp lower than the time_of_update is received
      */
     virtual void receiveNow(fep3::arya::Timestamp time_of_update);
 

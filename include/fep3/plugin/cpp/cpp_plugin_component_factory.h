@@ -35,7 +35,7 @@ namespace arya
 {
 
 /**
- * @brief CPP plugin Compoennt factroy helper template to create one instance of the implementation \p component_impl_type.
+ * @brief CPP plugin Component factory helper template to create one instance of the implementation \p component_impl_type.
  *
  * @tparam component_impl_type the implementation type
  */

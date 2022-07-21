@@ -29,6 +29,7 @@ You may add additional accurate notices of copyright ownership.
 #include <a_util/concurrency.h>
 
 #include "../../service_bus_logger.hpp"
+#include <fep3/base/environment_variable/environment_variable.h>
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -37,6 +38,8 @@ namespace fep3
 {
 namespace native
 {
+
+constexpr const char* fep3_network_interface_env = "FEP3_NETWORK_INTERFACE";
 
 struct ServiceVec
 {
@@ -70,11 +73,13 @@ public:
             if (update_event._event_id == update_event.notify_alive
                 || update_event._event_id == update_event.response)
             {
+                std::unique_lock<std::recursive_mutex> lo(_my_mutex);
                 _services[received_service_name]
                     = { system_clock::now(), update_event._service_description };
             }
             else if (update_event._event_id == update_event.notify_byebye)
             {
+                std::unique_lock<std::recursive_mutex> lo(_my_mutex);
                 _services.erase(received_service_name);
             }
         }
@@ -85,6 +90,7 @@ public:
     }
     void removeOldDevices()
     {
+        std::unique_lock<std::recursive_mutex> lo(_my_mutex);
         decltype(_services)::const_iterator current = _services.cbegin();
         while (current != _services.cend())
         {
@@ -103,9 +109,13 @@ public:
     std::multimap<std::string, std::string> getDiscoveredServices() const
     {
         std::multimap<std::string, std::string> result_map = {};
-        for (const auto& current : _services)
+
         {
-            result_map.emplace(current.first, current.second.second.getLocationURL());
+            std::unique_lock<std::recursive_mutex> lo(_my_mutex);
+            for (const auto& current : _services)
+            {
+                result_map.emplace(current.first, current.second.second.getLocationURL());
+            }
         }
         return result_map;
     }
@@ -115,6 +125,7 @@ private:
     std::map<std::string,
         std::pair<system_clock::time_point,
         lssdp::ServiceDescription>> _services;
+    mutable std::recursive_mutex _my_mutex;
 };
 
 struct HttpSystemAccess::Impl
@@ -142,12 +153,18 @@ struct HttpSystemAccess::Impl
         _wait_for_at_least_one_msearch_call.notify();
         if (_service_finder)
         {
+            _service_finder->disableDiscovery();
             _stop_loop = true;
             if (_loop.joinable())
             {
                 _loop.join();
             }
         }
+    }
+
+    std::multimap<std::string, std::string> getCurrentlyDiscoveredServices()
+    {
+        return _services.getDiscoveredServices();
     }
 
     std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout)
@@ -162,10 +179,7 @@ struct HttpSystemAccess::Impl
             //we do not care if we have a timeout or not we return the discovered
             _wait_for_at_least_one_msearch_call.wait_for(timeout);
         }
-        {
-            std::unique_lock<std::recursive_mutex> lo(_my_mutex);
-            return _services.getDiscoveredServices();
-        }
+        return getCurrentlyDiscoveredServices();
     }
 
     void startDiscovering()
@@ -174,6 +188,7 @@ struct HttpSystemAccess::Impl
         {
             _service_finder =
                 std::make_unique<lssdp::ServiceFinder>(_system_url,
+                    HttpSystemAccess::getNetworkInterface(),
                     FEP3_PARTICIPANT_LIBRARY_VERSION_ID,
                     FEP3_PARTICIPANT_LIBRARY_VERSION_STR,
                     HttpServer::_discovery_search_target);
@@ -226,7 +241,6 @@ private:
     }
     void checkForServices(std::chrono::seconds how_long)
     {
-        std::unique_lock<std::recursive_mutex> lo(_my_mutex);
         _service_finder->checkForServices(
             [this](const lssdp::ServiceFinder::ServiceUpdateEvent& update_event)
         {
@@ -235,7 +249,6 @@ private:
     }
     void removeOldDevices()
     {
-        std::unique_lock<std::recursive_mutex> lo(_my_mutex);
         _services.removeOldDevices();
     }
 
@@ -247,11 +260,8 @@ private:
     std::string _system_url;
     std::chrono::seconds _interval;
     std::thread         _loop;
-    std::recursive_mutex _my_mutex;
     a_util::concurrency::semaphore  _wait_for_at_least_one_msearch_call;
 };
-
-
 
 HttpSystemAccess::HttpSystemAccess(const std::string& system_name,
     const std::string& system_url,
@@ -354,6 +364,20 @@ std::shared_ptr<IServiceBus::IParticipantRequester> HttpSystemAccess::createAReq
 std::multimap<std::string, std::string> HttpSystemAccess::getDiscoveredServices(std::chrono::milliseconds millisec) const
 {
     return _impl->getDiscoveredServices(millisec);
+}
+
+std::multimap<std::string, std::string> HttpSystemAccess::getCurrentlyDiscoveredServices() const
+{
+    return _impl->getCurrentlyDiscoveredServices();
+}
+
+const std::string HttpSystemAccess::getNetworkInterface() {
+    const auto& interface_env = environment_variable::get(fep3_network_interface_env);
+    if (interface_env.has_value()) {
+        return interface_env.value();
+    } else {
+        return "";
+    }
 }
 
 }

@@ -44,15 +44,15 @@ public:
         , const std::shared_ptr<dds::core::QosProvider> & qos_provider
         , const std::shared_ptr<fep3::ILogger> logger);
 
-    std::string GetTopic();
+    std::string GetTopic() override;
 
     std::string findQosProfile(const fep3::IStreamType& stream_type);
 
     std::unique_ptr<fep3::ISimulationBus::IDataReader> createDataReader
         (size_t queue_capacity
         , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& data_access_collection
-        );
-    std::unique_ptr<fep3::ISimulationBus::IDataWriter> createDataWriter(size_t queue_capacity);
+        ) override;
+    std::unique_ptr<fep3::ISimulationBus::IDataWriter> createDataWriter(size_t queue_capacity) override;
 
     dds::domain::DomainParticipant & getDomainParticipant();
     dds::topic::Topic<dds::core::BytesTopicType> getSampleTopic();

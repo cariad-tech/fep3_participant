@@ -40,6 +40,8 @@ namespace native
     {
     }
 
+    ParticipantInfo::~ParticipantInfo() = default;
+
     fep3::Result ParticipantInfo::create()
     {
         const auto components = _components.lock();

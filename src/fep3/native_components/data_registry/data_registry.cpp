@@ -734,7 +734,17 @@ DataRegistry::DataSignalOut* DataRegistry::getDataOutByAlias(const std::string& 
 
 bool DataRegistry::removeDataIn(const std::string& name)
 {
-    return (_ins.erase(name) > 0);
+    if (_ins.erase(name) > 0)
+    {
+        return true;
+    }
+
+    if (_mapped_ins.erase(name) > 0)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 bool DataRegistry::removeDataOut(const std::string& name)

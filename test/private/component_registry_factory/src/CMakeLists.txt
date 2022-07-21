@@ -47,6 +47,19 @@ add_custom_command(TARGET copy_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:test_cpp_plugin_2> ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_NAME:test_cpp_plugin_2>
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:test_component_intfs_sim_bus_c_plugin> ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_NAME:test_component_intfs_sim_bus_c_plugin>
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../files ${CMAKE_CURRENT_BINARY_DIR}/files/
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:fep_components_plugin> ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:fep3_participant> ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+
+file(RELATIVE_PATH COMPONENT_TEST_REL_PATH ${CMAKE_CURRENT_BINARY_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../files_in/test_rel_path.fep_components.in ${CMAKE_CURRENT_BINARY_DIR}/files/test_rel_path.fep_components)
+
+if (MSVC)
+add_custom_command(TARGET copy_files
+    COMMAND ${CMAKE_COMMAND} -E $<IF:$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>,copy_if_different,true> $<TARGET_PDB_FILE:fep3_participant> ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E $<IF:$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>,copy_if_different,true> $<TARGET_PDB_FILE:fep_components_plugin> ${CMAKE_CURRENT_BINARY_DIR}
+)
+endif()
 
 set_target_properties(copy_files PROPERTIES FOLDER "test/private/component_registry_factory")

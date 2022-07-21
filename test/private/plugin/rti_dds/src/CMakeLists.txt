@@ -16,6 +16,9 @@
 set(CMAKE_BUILD_TYPE ${CONAN_SETTINGS_BUILD_TYPE})  #
 #####################################################
 
+fep3_participant_create_copy_target(rti_dds)
+set_target_properties(fep_participant_file_copy_rti_dds PROPERTIES FOLDER "test/private/plugins")
+
 include(../../../../../src/plugins/rti_dds/rti-macros.cmake)
 
 changeHostSystemIfArm()
@@ -33,12 +36,13 @@ target_link_libraries(test_connext_dds_plugin PRIVATE
     GTest::gtest_main
     GTest::gmock
     fep3_participant
+    participant_test_utils
 )
 set_target_properties(test_connext_dds_plugin PROPERTIES FOLDER "test/private/plugins")
 
-target_link_libraries(test_connext_dds_plugin PRIVATE fep3_participant)
-fep3_participant_deploy(test_connext_dds_plugin)
-
+target_link_libraries(test_connext_dds_plugin PRIVATE fep3_participant participant_test_utils)
+add_dependencies(test_connext_dds_plugin fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_plugin PROPERTIES INSTALL_RPATH "$ORIGIN")
 
 
 add_executable(test_connext_dds_simulation_bus
@@ -63,7 +67,9 @@ target_link_libraries(test_connext_dds_simulation_bus PRIVATE
 set_target_properties(test_connext_dds_simulation_bus PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
-fep3_participant_deploy(test_connext_dds_simulation_bus)
+add_dependencies(test_connext_dds_simulation_bus fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_simulation_bus PROPERTIES INSTALL_RPATH "$ORIGIN")
+
 
 
 
@@ -89,7 +95,8 @@ target_link_libraries(test_connext_dds_simulation_bus_domain_id PRIVATE
 set_target_properties(test_connext_dds_simulation_bus_domain_id PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_domain_id PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
-fep3_participant_deploy(test_connext_dds_simulation_bus_domain_id)
+add_dependencies(test_connext_dds_simulation_bus_domain_id fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_simulation_bus_domain_id PROPERTIES INSTALL_RPATH "$ORIGIN")
 
 
 
@@ -114,7 +121,8 @@ target_link_libraries(test_connext_dds_simulation_bus_late_joiner PRIVATE
 set_target_properties(test_connext_dds_simulation_bus_late_joiner PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_late_joiner PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
-fep3_participant_deploy(test_connext_dds_simulation_bus_late_joiner)
+add_dependencies(test_connext_dds_simulation_bus_late_joiner fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_simulation_bus_late_joiner PROPERTIES INSTALL_RPATH "$ORIGIN")
 
 
 
@@ -130,11 +138,12 @@ add_test(NAME test_connext_dds_simulation_bus_version
     TIMEOUT 30
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
-target_link_libraries(test_connext_dds_simulation_bus_version PRIVATE GTest::gtest_main GTest::gmock fep3_participant dev_essential::memory fep3_participant_private_lib)
+target_link_libraries(test_connext_dds_simulation_bus_version PRIVATE GTest::gtest_main GTest::gmock fep3_participant dev_essential::memory fep3_participant_private_lib participant_test_utils)
 set_target_properties(test_connext_dds_simulation_bus_version PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_version PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
-fep3_participant_deploy(test_connext_dds_simulation_bus_version)
+add_dependencies(test_connext_dds_simulation_bus_version fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_simulation_bus_version PROPERTIES INSTALL_RPATH "$ORIGIN")
 
 
 
@@ -163,4 +172,5 @@ target_link_libraries(test_connext_dds_simulation_bus_performance PRIVATE
 set_target_properties(test_connext_dds_simulation_bus_performance PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus_performance PRIVATE FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB="$<TARGET_FILE:fep3_connext_dds_plugin>")
 
-fep3_participant_deploy(test_connext_dds_simulation_bus_performance)
+add_dependencies(test_connext_dds_simulation_bus_performance fep_participant_file_copy_rti_dds)
+set_target_properties(test_connext_dds_simulation_bus_performance PROPERTIES INSTALL_RPATH "$ORIGIN")

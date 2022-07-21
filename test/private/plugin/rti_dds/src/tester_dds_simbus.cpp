@@ -381,7 +381,7 @@ TEST_F(ReaderWriterTestClass, TestMetaTypeToQOSProfile)
     EXPECT_CALL((*logger_mock.get()), isDebugEnabled()).WillRepeatedly(::testing::Return(true));
     EXPECT_CALL((*logger_mock.get()), isWarningEnabled()).WillRepeatedly(::testing::Return(true));
 
-    std::shared_ptr<Components> components = std::make_shared<Components>("test_meta_type_tp_qos_profile", "default_test_system", logger_mock);
+    std::shared_ptr<Components> components = std::make_shared<Components>("test_meta_type_tp_qos_profile", _sim_test_system_name, logger_mock);
 
     auto simulation_bus = createSimulationBus(getDomainId(), components);
 
@@ -434,8 +434,8 @@ TEST_F(ReaderWriterTestClass, TestOverSizedPlainArray)
     EXPECT_CALL((*logger_mock.get()), isDebugEnabled()).WillRepeatedly(::testing::Return(true));
     EXPECT_CALL((*logger_mock.get()), isWarningEnabled()).WillRepeatedly(::testing::Return(true));
 
-    auto simulation_bus = createSimulationBus(getDomainId(), std::make_shared<Components>("participant_1", "default_test_system", logger_mock));
-    auto simulation_bus2 = createSimulationBus(getDomainId(), std::make_shared<Components>("participant_2", "default_test_system", logger_mock));
+    auto simulation_bus = createSimulationBus(getDomainId(), std::make_shared<Components>("participant_1", _sim_test_system_name, logger_mock));
+    auto simulation_bus2 = createSimulationBus(getDomainId(), std::make_shared<Components>("participant_2", _sim_test_system_name, logger_mock));
     {
         auto plain_array_type = base::StreamType(fep3::base::arya::meta_type_plain_array);
         plain_array_type.setProperty("max_array_size", "1000000", "uint32_t");
@@ -544,7 +544,7 @@ TEST_F(ReaderWriterTestClass, TestLogging)
     EXPECT_CALL((*logger_mock.get()), isDebugEnabled()).WillRepeatedly(::testing::Return(true));
     EXPECT_CALL((*logger_mock.get()), isWarningEnabled()).WillRepeatedly(::testing::Return(false));
 
-    std::shared_ptr<Components> components = std::make_shared<Components>("test_meta_type_tp_qos_profile", "default_test_system", logger_mock);
+    std::shared_ptr<Components> components = std::make_shared<Components>("test_meta_type_tp_qos_profile", _sim_test_system_name, logger_mock);
     EXPECT_CALL((*logger_mock.get()), logDebug(fep3::mock::LogStringRegexMatcher("Using qos profile 'fep3::anonymous' for topic 'my_topic'."))).WillOnce(::testing::Return(fep3::Result{}));
 
     auto simulation_bus = createSimulationBus(getDomainId(), components);
@@ -613,14 +613,16 @@ TEST_F(ReaderWriterTestClass, TestChangeFromBigToSmallToBigQOS)
     // Now check that the write also can change his qos settings
     // By default we can not send big data over a signal with small qos settings. RTI would tell us:
     // "Reliable fragmented data requires asynchronous writer"
-    
+
     const data_read_ptr<const IDataSample> image_sample1 = std::make_shared<RandomSample>(24883200);
     const data_read_ptr<const IDataSample> image_sample2 = std::make_shared<RandomSample>(24883200);
     const data_read_ptr<const IDataSample> image_sample3 = std::make_shared<RandomSample>(24883200);
 
     { // setting of expectations
+        ::testing::InSequence sequence;
         EXPECT_CALL(*mock_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IStreamType>&>
             (::testing::_))).WillRepeatedly(::testing::Return());
+
         EXPECT_CALL(*mock_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>
             (fep3::mock::DataSampleSmartPtrValueMatcher(image_sample1))))
             .WillOnce(::testing::Return())
@@ -642,14 +644,16 @@ TEST_F(ReaderWriterTestClass, TestChangeFromBigToSmallToBigQOS)
     video_type.setProperty("max_size", "24883200", "uint32_t");
 
     writer->write(video_type);
-   
+    // this is bad, however we cannot do better until we have a function in IDataWriter to block until a reader is available
+    // so we sleep and hope that the reader is reset to the new stream type.
+    // see FEPSDK-3174
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     writer->write(*image_sample1.get());
     writer->write(*image_sample2.get());
     writer->write(*image_sample3.get());
     writer->transmit();
     // For ARMv8 with limited resource, 1 Core and 1 GB RAM, the running time can exceed 13s.
     EXPECT_TRUE(all_items_received.waitForNotificationWithTimeout(std::chrono::seconds(15)));
-
     stopReception(getSimulationBus2());
 }
 

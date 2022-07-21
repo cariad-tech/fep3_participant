@@ -22,6 +22,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 #include <common/gtest_asserts.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/cpp.h>
 #include <fep3/core/job.h>
 #include <fep3/components/base/component_registry.h>
@@ -62,19 +63,21 @@ struct DataJobWithMocks : Test
         ASSERT_FEP3_NOERROR(_component_registry->create());
 
         _clock_service_mock = std::make_unique<ClockMockComponent>();
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(_clock_service_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IClockService>(_clock_service_mock, _dummy_component_version_info));
 
         _job_registry_mock = std::make_unique<JobRegistryComponent>();
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(_job_registry_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(_job_registry_mock, _dummy_component_version_info));
 
         _data_registry_mock = std::make_unique<DataRegistryComponent>();
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IDataRegistry>(_data_registry_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IDataRegistry>(_data_registry_mock, _dummy_component_version_info));
     }
 
     std::shared_ptr<fep3::ComponentRegistry> _component_registry;
     std::shared_ptr<ClockMockComponent> _clock_service_mock{};
     std::shared_ptr<JobRegistryComponent> _job_registry_mock{};
     std::shared_ptr<DataRegistryComponent> _data_registry_mock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 struct DataJobWithLoggingService : DataJobWithMocks
@@ -86,11 +89,13 @@ struct DataJobWithLoggingService : DataJobWithMocks
         _logger_mock = std::make_shared<Logger>();
 
         _logging_service_mock = std::make_shared<LoggingServiceComponent>(_logger_mock);
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(_logging_service_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(_logging_service_mock, _dummy_component_version_info));
     }
 
     std::shared_ptr<LoggingServiceComponent> _logging_service_mock{};
     std::shared_ptr<Logger> _logger_mock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 class MySimpleJob : public DataJob
@@ -393,8 +398,7 @@ TEST_F(DataJobWithLoggingService, addDataToComponentsFails)
 		.WillOnce(Return(fep3::Result{}));
 
     ASSERT_FEP3_RESULT_WITH_MESSAGE(job.addDataToComponents(*_component_registry),
-                                    fep3::Result{fep3::ERR_DEVICE_NOT_READY},
-                                    "could not register data writer");
+                                    fep3::Result{fep3::ERR_DEVICE_NOT_READY}, "");
 }
 
 /**

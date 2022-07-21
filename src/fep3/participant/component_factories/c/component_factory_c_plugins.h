@@ -52,7 +52,7 @@ public:
      * @return Unique pointer to the created component (if any)
      */
     std::unique_ptr<fep3::IComponent> createComponent(const std::string& iid, const ILogger* logger) const override;
-
+    ComponentVersionInfo getPluginInfo() const override;
 private:
     class Implementation;
     std::unique_ptr<Implementation> _impl;

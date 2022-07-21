@@ -16,10 +16,12 @@ You may add additional accurate notices of copyright ownership.
 @endverbatim
  */
 #include "http_server.h"
+#include "http_systemaccess.h"
 #include "find_free_port.h"
 #include <../3rdparty/lssdp-cpp/src/url/cxx_url.h>
 #include "../../service_bus_logger.hpp"
 #include <a_util/strings/strings_convert.h>
+#include <fep3/base/environment_variable/environment_variable.h>
 
 using namespace fep3::arya;
 
@@ -73,31 +75,6 @@ std::shared_ptr<arya::IRPCServer::IRPCService> HttpServer::RPCObjectToRPCServerW
     return _service;
 }
 
-class HttpRestarter
-{
-public:
-    explicit HttpRestarter(::rpc::http::cJSONRPCServer& server,
-                           std::string& url,
-                           bool is_started) : _server(server), _url(url), _is_started(is_started)
-    {
-        if (_is_started)
-        {
-            _server.StopListening();
-        }
-    }
-    ~HttpRestarter()
-    {
-        if (_is_started)
-        {
-            _server.StartListening(_url.c_str());
-        }
-    }
-private:
-    ::rpc::http::cJSONRPCServer& _server;
-    std::string& _url;
-    bool _is_started;
-};
-
 /*******************************************************************************************
  *
  *******************************************************************************************/
@@ -115,16 +92,17 @@ HttpServer::HttpServer(const std::string& name,
     fep3::helper::Url url_to_parse = _url;
     int port_number = a_util::strings::toInt32(url_to_parse.port());
     a_util::result::Result res;
-    int begin_port = 9090, count = 1000;
+
+	// If port is given as non-zero, we only try to allocate the given port.
     if (port_number != 0)
     {
-        begin_port = port_number;
-        count = 1;
+        _port_begin = port_number;
+        _port_end = _port_begin;
     }
 
-    for (port_number = begin_port; port_number < begin_port + count; ++port_number)
+    for (int port = _port_begin; port <= _port_end; ++port)
     {
-        _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" + a_util::strings::toString(port_number);
+        _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" + a_util::strings::toString(port);
         res = _http_server.StartListening(_url.c_str(), 0);
         if (fep3::isOk(res))
         {
@@ -150,7 +128,9 @@ HttpServer::HttpServer(const std::string& name,
 
 void HttpServer::startDiscovery(std::chrono::seconds interval)
 {
-    _lssdp_service = std::make_unique<lssdp::Service>(_system_url,
+    _lssdp_service = std::make_unique<lssdp::Service>(
+         _system_url,
+        HttpSystemAccess::getNetworkInterface(),
         std::chrono::seconds(60),
         _url,
         //TODO: create a Type for this discovery service name
@@ -216,10 +196,15 @@ HttpServer::~HttpServer()
     _is_started = false;
     _http_server.StopListening();
 
-    while (!_service_wrappers.empty())
+    if (!_service_wrappers.empty())
     {
-        const auto& it = _service_wrappers.begin();
-        unregisterService(it->first);
+        std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
+        for (const auto& service_key_value : _service_wrappers)
+        {
+            _http_server.UnregisterRPCObject(service_key_value.first.c_str());
+        }
+        
+        _service_wrappers.clear();
     }
 
     stopDiscovery();
@@ -229,8 +214,6 @@ fep3::Result HttpServer::registerService(const std::string& service_name,
     const std::shared_ptr<IRPCService>& service)
 {
     std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
-
-    HttpRestarter restarter(_http_server, _url, _is_started);
 
     const auto& service_found = _service_wrappers.find(service_name);
     if (service_found != _service_wrappers.cend())
@@ -256,22 +239,21 @@ fep3::Result HttpServer::registerService(const std::string& service_name,
 }
 
 
-fep3::Result HttpServer::unregisterService(const std::string& servcie_name)
+fep3::Result HttpServer::unregisterService(const std::string& service_name)
 {
     std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
-    HttpRestarter restarter(_http_server, _url, _is_started);
 
-    const auto& service_found = _service_wrappers.find(servcie_name);
+    const auto& service_found = _service_wrappers.find(service_name);
     if (service_found == _service_wrappers.end())
     {
         RETURN_ERROR_DESCRIPTION(ERR_INVALID_ARG,
             "Service with the name %s does not exists",
-            servcie_name.c_str());
+            service_name.c_str());
     }
     else
     {
-        _http_server.UnregisterRPCObject(servcie_name.c_str());
-        _service_wrappers.erase(servcie_name);
+        _http_server.UnregisterRPCObject(service_name.c_str());
+        _service_wrappers.erase(service_name);
         return {};
     }
 }

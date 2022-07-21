@@ -24,6 +24,8 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/fep3_participant_types.h>
 #include <fep3/participant/component_source_type.h>
 
+#include <boost/filesystem.hpp>
+
 namespace fep3
 {
 namespace arya
@@ -46,7 +48,9 @@ namespace arya
 
         private:
             std::vector<ComponentConfiguration> load(const std::string& file_path);
-
+            boost::filesystem::path getAbsoluteComponentLibPath(
+                const boost::filesystem::path& component_lib_rel_path,
+                const std::string& fep_component_file_path) const;
         private:
             // Note: The order of entries in the container of items defines the order of component creation,
             // so we use a container of pairs rather than a map.

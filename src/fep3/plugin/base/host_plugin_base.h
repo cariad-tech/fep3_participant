@@ -23,6 +23,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <fep3/plugin/base/shared_library.h>
 #include <fep3/plugin/base/plugin_base_intf.h>
+#include <fep3/components/base/component_version_info.h>
 
 namespace fep3
 {
@@ -73,6 +74,8 @@ public:
 
     virtual std::string getPluginVersion() const;
     virtual ParticipantLibraryVersion getParticipantLibraryVersion() const;
+
+    ComponentVersionInfo getPluginInfo() const;
 
 protected:
     std::string _plugin_version{"unknown"};

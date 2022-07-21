@@ -305,6 +305,7 @@ public:
      * @param discover_url well-formed URL with the multicast address and port.
      *                     Unfortunately, it is not yet checked wether you give a valid
      *                     multicast address or not. So beware of that!
+     * @param network_interface well-formed ip address of the network interface
      * @param max_age The UPnP specification recommends a value greater than or equal to 1800 seconds.
      * @param location_url  Address of the service as well-formed URL where the service is located
      * @param unique_service_name Unique name of that service
@@ -318,6 +319,7 @@ public:
      *                    This service will only response to search requests containing this device type.
      */
     Service(std::string discover_url,
+            std::string network_interface,
             std::chrono::seconds max_age,
             std::string location_url,
             std::string unique_service_name,
@@ -484,6 +486,7 @@ public:
      * @param discover_url well-formed URL with the multicast address and port.
      *                     Unfortunately, it is not yet checked wether you give a
      *                     valid multicast address or not. So beware of that!
+     * @param network_interface well-formed ip address of the network interface.
      * @param product_name Product name of the device (usually some vendor device name)
      * @param product_version Product version of the device (usually some vendor version)
      * @param search_target Define the search target you are looking for. The ServiceFinder
@@ -495,6 +498,7 @@ public:
      *                           only react to responses and notififactions containing this device type.
      */
     ServiceFinder(const std::string& discover_url,
+        const std::string& network_interface,
         const std::string& product_name,
         const std::string& product_version,
         const std::string& search_target = std::string(),
@@ -575,6 +579,11 @@ public:
      */
     std::string getLastSendErrors() const;
 
+    /**
+     * @brief Stops the service discovery in case @ref lssdp::ServiceFinder::checkForServices was called
+     *
+     */
+    void disableDiscovery();
 private:
     class Impl;
     std::unique_ptr<Impl> _impl;

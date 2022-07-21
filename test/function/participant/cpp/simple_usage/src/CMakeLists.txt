@@ -23,5 +23,5 @@ add_test(NAME test_simple_usage_cpp
 target_link_libraries(test_simple_usage_cpp PRIVATE GTest::gtest_main)
 set_target_properties(test_simple_usage_cpp PROPERTIES FOLDER "test/function/participant/cpp")
 
-target_link_libraries(test_simple_usage_cpp PRIVATE fep3_participant_cpp)
+target_link_libraries(test_simple_usage_cpp PRIVATE fep3_participant_cpp fep_test_helper)
 fep3_participant_deploy(test_simple_usage_cpp)

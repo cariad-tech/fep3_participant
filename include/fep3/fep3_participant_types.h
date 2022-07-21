@@ -184,15 +184,20 @@ namespace arya
 /**
  * FEP 3 SDK Participant Library version namespace for functionality introduced in version 3.0.
  */
-namespace arya
-{
+namespace arya {
 } // namespace arya
 
 /**
- * FEP 3 SDK Participant Library namespace for experimental functionality which is not final yet and may likely change
+ * FEP 3 SDK Participant Library version namespace for functionality introduced in version 3.1.
  */
-namespace experimental
-{
+namespace bronn {
+} // namespace bronn
+
+/**
+ * FEP 3 SDK Participant Library namespace for experimental functionality which is not final yet and
+ * may likely change
+ */
+namespace experimental {
 
 } // namespace experimental
 } // namespace fep3

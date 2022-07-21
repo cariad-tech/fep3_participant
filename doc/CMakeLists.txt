@@ -65,5 +65,6 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output/sphinx_html/
         DESTINATION doc/html
 )
 
+install(FILES changelog.md DESTINATION doc)
 
 set_target_properties(DOC_DEV_${PROJECT_NAME} PROPERTIES FOLDER process/doc)

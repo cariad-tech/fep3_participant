@@ -113,7 +113,7 @@ protected:
      * @brief Actual processing of the job.
      *
      * Typically here the data of input samples is processed and output data is created.
-     * The execute method can either be overriden or a callback of type @ref fep3::core::arya::Job::ExecuteCallback
+     * The execute method can either be overridden or a callback of type @ref fep3::core::arya::Job::ExecuteCallback
      * can be passed using one of the constructors.
      *
      * @param[in] time_of_execution The current simulation time
@@ -183,7 +183,7 @@ public:
 
 /**
 * @brief Jobs will be added to the @p job_registry.
-* If one job can not be added, the function returns not adding the following ones.
+* If one job cannot be added, the function returns not adding the following ones.
 *
 * @param[in] jobs List of jobs to be added
 * @param[in] job_registry The job registry to add to
@@ -203,7 +203,7 @@ inline fep3::Result addJobsToJobRegistry(const std::vector<std::shared_ptr<arya:
 
 /**
 * @brief Jobs will be added to the job registry of the @p component.
-* If one job can not be added, the function returns not adding the following ones.
+* If one job cannot be added, the function returns not adding the following ones.
 *
 * @param[in] jobs List of jobs to be added
 * @param[in] components The component container in which the job registry will be looked up
@@ -227,12 +227,12 @@ inline fep3::Result addToComponents(const std::vector<std::shared_ptr<arya::Job>
 
 /**
 * @brief Jobs will be removed from the @p job_registry.
-* If one job can not be removed, the function will still try to remove the following ones within @p job_names.
+* If one job cannot be removed, the function will still try to remove the following ones within @p job_names.
 *
 * @param[in] job_names List of jobs to be removed
 * @param[in] job_registry The job registry to remove from
 * @return fep3::Result.
-*           If it's an actual error it is the error code for the job that failed last.
+*           If it's an actual error, it is the error code for the job that failed last.
 *           If more than one remove fails, the error description contains a list of error descriptions separated by ';'.
 * @retval ERR_NOERROR Everything went fine
 * @retval ERR_NOT_FOUND A job with the given name is not registered
@@ -262,12 +262,12 @@ inline fep3::Result removeJobsFromJobRegistry(const std::vector<std::string>& jo
 
 /**
 * @brief Jobs will be removed from the job registry of the @p component.
-* If one job can not be removed, the function will still try to remove the following ones within @p job_names.
+* If one job cannot be removed, the function will still try to remove the following ones within @p job_names.
 *
 * @param[in] job_names List of jobs to be removed
 * @param[in] components The component container in which the job registry will be looked up
 * @return fep3::Result.
-*           If it's an actual error it is the error code for the job that failed last.
+*           If it's an actual error, it is the error code for the job that failed last.
 *           If more than one remove fails, the error description contains a list of error descriptions separated by ';'.
 * @retval ERR_NOERROR Everything went fine
 * @retval ERR_NOT_FOUND A job with the given name is not registered
@@ -346,7 +346,7 @@ inline fep3::Result addToComponents(
  * @param[in] job_name The name of the job to remove
  * @param[in] components The component container in which the job registry will be looked up
  * @return fep3::Result.
- *           If it's an actual error it is the error code for the job that failed last.
+ *           If it's an actual error, it is the error code for the job that failed last.
  * @retval ERR_NOERROR Everything went fine
  * @retval ERR_NOT_FOUND The job with the given name is not registered
  * @retval ERR_NO_INTERFACE The @ref fep3::arya::IJobRegistry was not found within @p components
@@ -360,7 +360,7 @@ inline fep3::Result removeFromComponents(
 
 /**
  * @brief Jobs will be added to the job registry of the @p component.
- * If one job can not be added, the function returns not adding the following ones.
+ * If one job cannot be added, the function returns not adding the following ones.
  *
  * @param[in] jobs List of jobs to be added
  * @param[in] components The component container in which the job registry will be looked up
@@ -378,12 +378,12 @@ inline fep3::Result addToComponents(
 
 /**
 * @brief Jobs will be removed from the job registry of the @p component.
-* If one job can not be removed, the function will still try to remove the following ones within @p job_names.
+* If one job cannot be removed, the function will still try to remove the following ones within @p job_names.
 *
 * @param[in] job_names List of jobs to be removed
 * @param[in] components The component container in which the job registry will be looked up
 * @return fep3::Result.
-*           If it's an actual error it is the error code for the job that failed last.
+*           If it's an actual error, it is the error code for the job that failed last.
 *           If more than one remove fails, the error description contains a list of error descriptions separated by ';'.
 * @retval ERR_NOERROR Everything went fine
 * @retval ERR_NOT_FOUND A job with the given name is not registered

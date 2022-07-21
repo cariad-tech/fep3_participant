@@ -259,7 +259,7 @@ TEST_F(ConfigurationServiceLoaderFixture, testIPropertyNode)
     }
     fep3::arya::IConfigurationService* configuration_service = getComponent();
     ASSERT_NE(nullptr, configuration_service);
-    // note: we want to test the IPropertyNode interface here, so we can just use any method of the IConfigurationSerivce
+    // note: we want to test the IPropertyNode interface here, so we can just use any method of the IConfigurationService
     // that transfers a property node through the C interface
     EXPECT_EQ(fep3::Result{}, configuration_service->registerNode(mock_property_node));
 

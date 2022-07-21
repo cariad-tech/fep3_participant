@@ -60,7 +60,7 @@ public:
         virtual void timeUpdateBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;
 
         /**
-         * @brief This event is emitted while the time is beeing updated.
+         * @brief This event is emitted while the time is being updated.
          * @remark This event is only emitted by discrete clocks (@ref ClockType::discrete)
          *
          * @param[in] new_time The future time after updating
@@ -81,7 +81,7 @@ public:
          * It is used to inform about time jumps to the future or the past!
          * The IClock::getTime value is still @p old_time.
          *
-         * @param[in] old_time The time before reseting
+         * @param[in] old_time The time before resetting
          * @param[in] new_time The future time after resetting
          */
         virtual void timeResetBegin(arya::Timestamp old_time, arya::Timestamp new_time) = 0;

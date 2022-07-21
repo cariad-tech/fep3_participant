@@ -35,8 +35,8 @@ namespace arya
 {
 /**
  * This template makes sure to execute an instance of a participant in a separate thread.
- * It will call the the exec function asynchronously, so it is possible to continue testing.
- * Additionally you can send state machine change requests.
+ * It will call the exec function asynchronously, so it is possible to continue testing.
+ * Additionally, you can send state machine change requests.
  */
 class ParticipantExecutor : public arya::ParticipantStateChanger
 {

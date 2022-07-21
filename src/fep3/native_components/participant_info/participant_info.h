@@ -31,7 +31,7 @@ namespace native
     {
     public:
         ParticipantInfo();
-        ~ParticipantInfo() override = default;
+        ~ParticipantInfo();
         ParticipantInfo(const ParticipantInfo&) = delete;
         ParticipantInfo(ParticipantInfo&&) = delete;
         ParticipantInfo& operator=(const ParticipantInfo&) = delete;

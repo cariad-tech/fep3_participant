@@ -32,6 +32,13 @@ jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachin
                              fep3::rpc_stubs::RPCParticipantStateMachineServiceStub
                              ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h)
 
+file(MAKE_DIRECTORY ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry)
+jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
+                             fep3::rpc_stubs::RPCParticipantComponentRegistryClientStub
+                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h)
+jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
+                             fep3::rpc_stubs::RPCParticipantComponentRegistryServiceStub
+                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h)
 
 ########################################################
 #  participant implementation
@@ -48,8 +55,6 @@ set(PARTICIPANT_SOURCES_PRIVATE
     ${PARTICIPANT_DIR}/console_logger.cpp
     # sub directory "component_factories"
     ${PARTICIPANT_DIR}/component_factories/component_factory_base.h
-    ${PARTICIPANT_DIR}/component_factories/built_in/component_factory_built_in.h
-    ${PARTICIPANT_DIR}/component_factories/built_in/component_factory_built_in.cpp
     ${PARTICIPANT_DIR}/component_factories/cpp/component_factory_cpp_plugins.h
     ${PARTICIPANT_DIR}/component_factories/cpp/component_factory_cpp_plugins.cpp
     ${PARTICIPANT_DIR}/component_factories/c/component_creator_c_plugin.h
@@ -63,6 +68,9 @@ set(PARTICIPANT_SOURCES_PRIVATE
     # sub directory "state_machine"
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.cpp
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.h
+    # sub directory "component_registry_rpc"
+    ${PARTICIPANT_DIR}/component_registry_rpc/component_registry_rpc.cpp
+    ${PARTICIPANT_DIR}/component_registry_rpc/component_registry_rpc.h
 
 )
 
@@ -76,6 +84,9 @@ set(PARTICIPANT_SOURCES_GERNERATED
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h
     ${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
+	${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h
+    ${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
 )
 
 set(PARTICIPANT_SOURCES ${PARTICIPANT_SOURCES_PRIVATE} ${PARTICIPANT_SOURCES_PUBLIC} ${PARTICIPANT_SOURCES_GERNERATED})
@@ -97,3 +108,9 @@ install(FILES
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h
     DESTINATION
     include/fep3/rpc_services/participant_statemachine)
+	
+install(FILES
+	${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h
+    DESTINATION
+    include/fep3/rpc_services/component_registry)

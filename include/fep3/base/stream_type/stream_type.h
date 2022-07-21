@@ -177,7 +177,7 @@ public:
     /**
      * @brief Construct a new Stream Type object
      *
-     * @param[in] meta_type the metatype the stream type is instanciating
+     * @param[in] meta_type the metatype the stream type is instantiating
      *
      */
     StreamType(arya::StreamMetaType meta_type) : _meta_type_name(std::move(meta_type))
@@ -240,5 +240,24 @@ using arya::StreamMetaType;
 using arya::StreamType;
 } // namespace base
 } // namespace fep3
+
+/**
+ * @brief Bool operator to compare stream types.
+ * Streamtypes are equal if the name of the stream metatypes and the set properties are equal.
+ * @param[in] lhs Left stream type
+ * @param[in] rhs Right stream type
+ * @return @c true if equal, @c false otherweise
+ */
+inline bool operator==(const fep3::arya::IStreamType& lhs, const fep3::arya::IStreamType& rhs)
+{
+    if (std::string(lhs.getMetaTypeName()) != rhs.getMetaTypeName())
+    {
+        return false;
+    }
+    else
+    {
+        return lhs.isEqual(rhs);
+    }
+}
 
 #endif //_FEP3_BASE_STREAM_TYPE_H_

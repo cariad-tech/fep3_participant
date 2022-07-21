@@ -112,8 +112,8 @@ public:
     virtual fep3::Result removeJob(const std::string& name) = 0;
 
     /**
-    * Return the job infos of all registered jobs.
-    * @return List containing job infos of all registered jobs
+    * Return the job info of all registered jobs.
+    * @return List containing job info of all registered jobs
     */
     virtual std::list<arya::JobInfo> getJobInfos() const = 0;
 

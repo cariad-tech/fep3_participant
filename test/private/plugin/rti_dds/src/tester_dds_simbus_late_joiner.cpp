@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 #include <gmock/gmock.h>
 
 #include <helper/gmock_async_helper.h>
+#include <helper/platform_dep_name.h>
 #include <fep3/components/simulation_bus/mock/mock_simulation_bus.h>
 #include <fep3/base/sample/mock/mock_data_sample.h>
 #include <fep3/base/stream_type/mock/mock_stream_type.h>
@@ -35,15 +36,15 @@ You may add additional accurate notices of copyright ownership.
  */
 TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesLateJoiner)
 {
-    std::string topic("breadcrumb");
+    std::string topic = makePlatformDepName("breadcrumb");
 
     uint32_t sparrow_domain_id = randomDomainId();
 
     /*----------------------------------------------------------------------------
      *  create the simulation_buses for the birds
      *----------------------------------------------------------------------------*/
-    auto sparrow_simulation_bus_sheila = createSimulationBus(sparrow_domain_id, "Sheila");
-    auto sparrow_simulation_bus_scot = createSimulationBus(sparrow_domain_id, "Scot");
+    auto sparrow_simulation_bus_sheila = createSimulationBusDep(sparrow_domain_id, "Sheila");
+    auto sparrow_simulation_bus_scot = createSimulationBusDep(sparrow_domain_id, "Scot");
 
     {
         std::vector<uint32_t> data_sample_value_numbers{0, 1, 2};
@@ -135,7 +136,7 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesLateJoiner)
         /*----------------------------------------------------------------------------
          *  Simon arrives
          *----------------------------------------------------------------------------*/
-        auto sparrow_simulation_bus_simon = createSimulationBus(sparrow_domain_id, "Simon");
+        auto sparrow_simulation_bus_simon = createSimulationBusDep(sparrow_domain_id, "Simon");
 
         {
             auto sparrow_reader_simon = dynamic_cast<ISimulationBus*>(sparrow_simulation_bus_simon.get())

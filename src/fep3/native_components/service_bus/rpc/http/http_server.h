@@ -79,6 +79,8 @@ class HttpServer : public fep3::base::arya::ServiceRegistryBase
 
         std::string _url;
         std::string _system_url;
+		int _port_begin = 9090;
+		int _port_end = 10090;
         std::unique_ptr<lssdp::Service> _lssdp_service;
         void startDiscovery(std::chrono::seconds interval);
         void stopDiscovery();

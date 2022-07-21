@@ -42,7 +42,7 @@ protected:
     ~IRPCClockServiceDef() = default;
 
 public:
-    ///definiton of the FEP rpc service iid for the clock service
+    ///definition of the FEP rpc service iid for the clock service
     FEP_RPC_IID("clock_service.arya.fep3.iid", "clock_service");
 };
 

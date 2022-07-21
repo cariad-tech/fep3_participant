@@ -25,6 +25,13 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/components/data_registry/data_registry_intf.h>
 #include <helper/gmock_destruction_helper.h>
 
+// action popping an item
+ACTION_P(Pop, shared_pointer_to_item)
+{
+    arg0.operator()(shared_pointer_to_item);
+    return true; // receiver was invoked, so return true
+}
+
 namespace fep3
 {
 namespace mock
@@ -69,7 +76,7 @@ struct DataRegistryComponent : public base::Component<IDataRegistry>
         MOCK_CONST_METHOD0(size, size_t());
         MOCK_CONST_METHOD0(capacity, size_t());
         MOCK_METHOD1(pop, a_util::result::Result(IDataRegistry::IDataReceiver&));
-        MOCK_CONST_METHOD0(getFrontTime, fep3::arya::Optional<fep3::arya::Duration>());
+        MOCK_CONST_METHOD0(getFrontTime, fep3::arya::Optional<fep3::arya::Timestamp>());
     };
 
     struct DataWriter

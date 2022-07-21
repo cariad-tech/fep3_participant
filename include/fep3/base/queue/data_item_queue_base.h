@@ -244,7 +244,7 @@ public:
     *
     * @param sample the sample data read pointer to push
     * @param time_of_receiving the timestamp at which the sample was received
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual void pushSample(const data_read_ptr<SAMPLE_TYPE>& sample, fep3::arya::Timestamp time_of_receiving) = 0;
 
@@ -253,7 +253,7 @@ public:
     *
     * @param type the type data read pointer to push
     * @param time_of_receiving the timestamp at which the stream type was received
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual void pushType(const data_read_ptr<STREAM_TYPE>& type, fep3::arya::Timestamp time_of_receiving) = 0;
 
@@ -262,7 +262,7 @@ public:
      *
      * @return Optional containing the Timestamp of the queue front item
      * @return Empty Optional if the queue is empty
-     * @remark this is threadsafe against push, read and pop calls
+     * @remark this is thread safe against push, read and pop calls
      */
     virtual fep3::arya::Optional<fep3::arya::Timestamp> nextTime() = 0;
 
@@ -271,17 +271,17 @@ public:
     *
     * @return true if item is popped
     * @return false if the queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual bool pop() = 0;
 
     /**
     * @brief pops the item from the front of the queue (the oldest item available) after putting the item to the given \p receiver
     *
-    * @param receiver receiver reference where to callback and put the item before the item is popped.
+    * @param receiver receiver reference where to call back and put the item before the item is popped.
     * @return true if item is popped
     * @return false if the queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual bool popFront(IDataItemReceiver& receiver) = 0;
 
@@ -291,17 +291,17 @@ public:
     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
     * @return {nullptr, nullptr} if queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> popFront() = 0;
 
     /**
     * @brief pops the item from the back of the queue (the latest item available) after putting the item to the given \p receiver
     *
-    * @param receiver receiver reference where to callback and put the item before the item is popped.
+    * @param receiver receiver reference where to call back and put the item before the item is popped.
     * @return true if item is popped
     * @return false if the queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual bool popBack(IDataItemReceiver& receiver) = 0;
 
@@ -311,7 +311,7 @@ public:
     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
     * @return {nullptr, nullptr} if queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> popBack() = 0;
 
@@ -322,7 +322,7 @@ public:
     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
     * @return {nullptr, nullptr} if queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> read(size_t index) const = 0;
 
@@ -332,7 +332,7 @@ public:
     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
     * @return {nullptr, nullptr} if queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> readFront() = 0;
 
@@ -342,7 +342,7 @@ public:
     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
     * @return {nullptr, nullptr} if queue is empty
-    * @remark this is threadsafe against push, read and pop calls
+    * @remark this is thread safe against push, read and pop calls
     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> readBack() const = 0;
 

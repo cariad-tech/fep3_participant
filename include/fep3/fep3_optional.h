@@ -38,7 +38,7 @@ class BadOptionalAccess : public std::exception
 /**
  * Optional class
  * @tparam type The type of the (optional) value
- * @remark The interface is partly compatible with std::optional as indroduced in C++17.
+ * @remark The interface is partly compatible with std::optional as introduced in C++17.
  *         The functionality significantly differs from std::optional, e. g. an object of type \p type
  *         exists as long as the instance of this class exists, even if the instance of this class
  *         has no value
@@ -68,7 +68,7 @@ public:
     }
     /**
      * CTOR constructing an optional by copying from \p other optional
-     * @tparam other_type The type of the other optional's value
+     * @tparam other_type The type of the other optional value
      * @param[in] other The other value to take the value from
      */
     template<typename other_type>
@@ -95,7 +95,7 @@ public:
     }
     /**
      * CTOR constructing an optional by moving from \p other optional
-     * @tparam other_type The type of the other optional's value
+     * @tparam other_type The type of the other optional value
      * @param[in] other The other value to take the value from
      */
     template<typename other_type>
@@ -378,11 +378,11 @@ private:
 
   /**
   * Comparison for equality of \ref fep3::arya::Optional
-  * @tparam lhs_type The type of the left hand side optional
-  * @tparam rhs_type The type of the right hand side optional
-  * @param[in] lhs The left hand side optional
-  * @param[in] rhs The right hand side optional
-  * @return @c true if left and right hand side optionals are equal, @c false otherwise
+  * @tparam lhs_type The type of the left-hand side optional
+  * @tparam rhs_type The type of the right-hand side optional
+  * @param[in] lhs The left-hand side optional
+  * @param[in] rhs The right-hand side optional
+  * @return @c true if left- and right-hand side optional are equal, @c false otherwise
   */
 template<class lhs_type, class rhs_type>
 constexpr bool operator==(const fep3::arya::Optional<lhs_type>& lhs, const fep3::arya::Optional<rhs_type>& rhs)
@@ -393,11 +393,11 @@ constexpr bool operator==(const fep3::arya::Optional<lhs_type>& lhs, const fep3:
 }
 /**
 * Comparison for inequality of \ref fep3::arya::Optional
-* @tparam lhs_type The type of the left hand side optional
-* @tparam rhs_type The type of the right hand side optional
-* @param[in] lhs The left hand side optional
-* @param[in] rhs The right hand side optional
-* @return @c true if left and right hand side optionals are not equal, @c false otherwise
+* @tparam lhs_type The type of the left-hand side optional
+* @tparam rhs_type The type of the right-hand side optional
+* @param[in] lhs The left-hand side optional
+* @param[in] rhs The right-hand side optional
+* @return @c true if left- and right-hand side optional are not equal, @c false otherwise
 */
 template<class lhs_type, class rhs_type>
 constexpr bool operator!=(const fep3::arya::Optional<lhs_type>& lhs, const fep3::arya::Optional<rhs_type>& rhs)

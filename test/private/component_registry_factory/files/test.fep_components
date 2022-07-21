@@ -15,11 +15,15 @@ You may add additional accurate notices of copyright ownership.
 <components xmlns="http://fep.vwgroup.com/fep_sdk/3.0/components">
     <schema_version>1.0.0</schema_version>
     <component>
-        <source type="built-in"/>
+      <source type="cpp-plugin">
+        ./fep_components_plugin
+      </source>
         <iid>data_registry.arya.fep3.iid</iid>
     </component>
     <component>
-        <source type="built-in"/>
+      <source type="cpp-plugin">
+        ./fep_components_plugin
+      </source>
         <iid>service_bus.arya.fep3.iid</iid>
     </component>
     <component>

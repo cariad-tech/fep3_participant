@@ -1,0 +1,39 @@
+#
+# Copyright @ 2021 VW Group. All rights reserved.
+#
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+#
+# You may add additional accurate notices of copyright ownership.
+#
+#
+
+
+set(COMPONENTS_PLUGIN_SCHEDULER_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/scheduler)
+
+set(COMPONENTS_PLUGIN_SCHEDULER_SOURCES_PRIVATE
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/local_scheduler_service.h
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/local_scheduler_service.cpp
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/local_scheduler_registry.h
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/local_scheduler_registry.cpp
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/job_runner.cpp
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/job_runner.h
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/local_clock_based_scheduler.cpp
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/local_clock_based_scheduler.h
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/timer_scheduler_impl.cpp
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/timer_scheduler_impl.h
+)
+
+set(COMPONENTS_PLUGIN_SCHEDULER_SOURCES ${COMPONENTS_PLUGIN_SCHEDULER_SOURCES_PRIVATE})
+source_group(components\\scheduler FILES ${COMPONENTS_PLUGIN_SCHEDULER_SOURCES})
+
+######################################
+# Set up the variable
+######################################
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${COMPONENTS_PLUGIN_SCHEDULER_SOURCES})
+

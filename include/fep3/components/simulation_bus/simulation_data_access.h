@@ -71,6 +71,7 @@ public:
     {
         return this->insert(cend(), {receiver, item_queue});
     }
+
     /**
      * @brief Removes an entry from the data access collection
      * @param data_receiver_iterator The iterator to the entry to be removed
@@ -79,6 +80,16 @@ public:
     {
         this->erase(data_receiver_iterator);
     }
+
+    /**
+     * @brief Clears the data access collection
+     * 
+     */
+    void clear()
+    {
+        this->std::deque<arya::SimulationDataAccess<item_queue_type>>::clear();
+    }
+
     using std::deque<SimulationDataAccess<item_queue_type>>::cbegin;
     using std::deque<SimulationDataAccess<item_queue_type>>::cend;
     using std::deque<SimulationDataAccess<item_queue_type>>::size;

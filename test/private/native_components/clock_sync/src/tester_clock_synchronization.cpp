@@ -98,15 +98,17 @@ struct ClockSynchronizationBase : public ::testing::Test
     void SetUp() override
     {
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IServiceBus>(_service_bus));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<ILoggingService>(std::make_shared<LoggingService>(_logger)));
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IConfigurationService>(_configuration_service_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IServiceBus>(_service_bus, _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<ILoggingService>(std::make_shared<LoggingService>(_logger), _dummy_component_version_info));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IConfigurationService>(_configuration_service_mock, _dummy_component_version_info));
     }
 
     std::shared_ptr<ServiceBus> _service_bus{};
     std::shared_ptr<WarningLoggerMock> _logger{};
     std::shared_ptr<ComponentRegistry> _component_registry{};
     std::shared_ptr<ConfigurationServiceComponentMock> _configuration_service_mock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**
@@ -125,12 +127,14 @@ struct ClockSyncMasterService : public ClockSynchronizationBase
 
         EXPECT_CALL(*_configuration_service_mock, registerNode(_)).Times(1).WillOnce(Return(Result()));
 
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IClockService>(std::make_shared<LocalClockService>()));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IClockService>(std::make_shared<LocalClockService>(), _dummy_component_version_info));
 
         ASSERT_FEP3_NOERROR(_component_registry->create());
         ASSERT_FEP3_NOERROR(_component_registry->initialize());
         ASSERT_FEP3_NOERROR(_component_registry->tense());
     }
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**
@@ -151,10 +155,10 @@ struct ClockSyncSlaveServiceBase : public ClockSynchronizationBase
     {
         ClockSynchronizationBase::SetUp();
 
-        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IClockService>(_clock_service_mock));
+        ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IClockService>(_clock_service_mock, _dummy_component_version_info));
         _sync_service_impl = std::make_shared<ClockSynchronizationService>();
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<IClockSyncService>(
-            _sync_service_impl));
+            _sync_service_impl, _dummy_component_version_info));
 
         EXPECT_CALL(*_configuration_service_mock, registerNode(_)).Times(1).WillOnce(
             DoAll(
@@ -203,6 +207,8 @@ struct ClockSyncSlaveServiceBase : public ClockSynchronizationBase
     std::shared_ptr<ClockSynchronizationService> _sync_service_impl;
     std::shared_ptr<IPropertyNode> _clock_sync_service_property_node;
     std::shared_ptr<IClock> _synchronization_clock{};
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**

@@ -24,6 +24,8 @@ You may add additional accurate notices of copyright ownership.
 #include <dlfcn.h>
 #endif
 
+#include <locale> 
+#include <codecvt>
 #include "binary_info.h"
 
 namespace fep3
@@ -42,7 +44,7 @@ a_util::filesystem::Path getFilePath()
         , &hModule
         ))
     {
-        std::vector<wchar_t> file_path_buffer;
+        std::wstring file_path_buffer;
         DWORD number_of_copied_characters = 0;
         // note: to support paths with length > MAX_PATH we have do trial-and-error
         // because GetModuleFileName does not indicate if the path was truncated
@@ -52,7 +54,11 @@ a_util::filesystem::Path getFilePath()
             number_of_copied_characters = GetModuleFileNameW(hModule, &file_path_buffer[0], static_cast<DWORD>(file_path_buffer.size()));
         }
         file_path_buffer.resize(number_of_copied_characters);
-        current_binary_file_path = std::string(file_path_buffer.cbegin(), file_path_buffer.cend());
+
+        auto size_needed = WideCharToMultiByte(CP_UTF8, 0, &file_path_buffer[0], (int)file_path_buffer.size(), NULL, 0, NULL, NULL);
+        std::string str_utf8(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, &file_path_buffer[0], (int)file_path_buffer.size(), &str_utf8[0], size_needed, NULL, NULL);
+        current_binary_file_path = str_utf8;
     }
 #else   // WIN32
     Dl_info dl_info;

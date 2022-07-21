@@ -92,7 +92,7 @@ protected:
      *         and will be used only for information at the moment!
      *         There is no further functionality or checks on that!
      *
-     * @return std::string the version as string (this is vendor dedendent, and only for information!)
+     * @return std::string the version as string (this is vendor dependent, and only for information!)
      */
     std::string getVersion() override
     {
@@ -104,7 +104,7 @@ protected:
      * @param[in] components reference to the components. this pointer is valid until unload was called.
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     Result loadElement(const fep3::arya::IComponents& components) override
     {
@@ -151,14 +151,14 @@ public:
      * Callback to load the element.
      *
      * @return Result error code
-     * @retval NO_ERROR if succeded
+     * @retval NO_ERROR if succeeded
      */
     virtual Result load()
     {
         return {};
     };
     /**
-     * Callback to cleanup the element before unloading.
+     * Callback to clean up the element before unloading.
      *
      */
     virtual void unload()
@@ -195,7 +195,7 @@ public:
      * Does nothing.
      *
      * @return NO_ERROR
-     * @remark To put your element into run state
+     * @remark To put your element into run state,
      *  override this method in your ElementBase's child class.
      */
     Result run() override

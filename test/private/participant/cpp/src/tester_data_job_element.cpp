@@ -296,7 +296,7 @@ TEST_P(TestDataJobElement, jobReset)
     ::testing::Mock::VerifyAndClearExpectations(mock_data_job.get());
 }
 
-INSTANTIATE_TEST_CASE_P
+INSTANTIATE_TEST_SUITE_P
     (WaysOfConstruction
     , TestDataJobElement
     , ::testing::Values

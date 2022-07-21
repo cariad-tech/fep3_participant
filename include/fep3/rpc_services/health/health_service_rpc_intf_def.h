@@ -40,7 +40,7 @@ namespace experimental
             ~IRPCHealthServiceDef() = default;
 
         public:
-            ///definiton of the FEP rpc service iid for the health service interface
+            ///definition of the FEP rpc service iid for the health service interface
             FEP_RPC_IID("health_service.experimental.fep3.iid", "health_service");
     };
 //using arya::IRPCHealthServiceDef;

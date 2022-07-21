@@ -49,7 +49,7 @@ Participant createParticipant(int argc,
 
 /**
 * @brief Creates a participant and parses command line arguments
-* @tparam element_factory type of the fatory which is able to create the element
+* @tparam element_factory type of the factory which is able to create the element
 * @param[in] argc Command line argument count
 * @param[in] argv Command line argument values
 * @param[in] parser The parser that will be used to parse the command line arguments
@@ -71,7 +71,7 @@ Participant createParticipant(int argc,
 * @param[in] argv Command line argument values
 * @param[in] version_info Version information of the participant to be created
 * @param[in] factory factory instance which is able to create the element during load command
-* @param[in] default_values Name of the participant,name of the server the participant belongs to
+* @param[in] default_values Name of the participant, name of the server the participant belongs to
 *        and the server address url if not specified by @p argv
 * @return Participant The created participant
 */
@@ -87,7 +87,7 @@ Participant createParticipant(int argc,
 * @param[in] argc Command line argument count
 * @param[in] argv Command line argument values
 * @param[in] version_info Version information of the participant to be created
-* @param[in] default_values Name of the participant,name of the server the participant belongs to
+* @param[in] default_values Name of the participant, name of the server the participant belongs to
 *        and the server address url if not specified by @p argv
 * @return Participant The created participant
 */

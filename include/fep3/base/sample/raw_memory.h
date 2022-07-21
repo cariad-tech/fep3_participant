@@ -141,7 +141,7 @@ struct RawMemoryStandardType<T,
     typename std::enable_if<std::is_const<T>::value>::type>
     : public fep3::arya::IRawMemory
 {
-    ///the value reference
+    ///the reference of value
     T& _value;
     /**
     * CTOR
@@ -270,12 +270,12 @@ struct RawMemoryClassType<T,
     }
 };
 /**
- * specialized raw memory type for the non standard layout type std::string
+ * specialized raw memory type for the non-standard layout type std::string
  */
 template<>
 struct RawMemoryClassType<std::string, void> : public fep3::arya::IRawMemory
 {
-    /// type to use fro string
+    /// type to use for string
     typedef std::string T;
     /// reference to the representing value
     T& _value;
@@ -355,14 +355,14 @@ struct RawMemoryClassType<const std::string, const std::string> : public fep3::a
 
 
 /**
- * specialized raw memory type for the non standard layout type std::string
+ * specialized raw memory type for the non-standard layout type std::string
  */
 template<>
 struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory
 {
-    ///the value type
+    ///the type of value
     typedef std::string T;
-    ///the value reference
+    ///the reference of value
     T& _value;
     /**
      * CTOR
@@ -397,7 +397,7 @@ struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory
 };
 
 /**
- * specialized raw memory type for the non standard layout type const std::string
+ * specialized raw memory type for the non-standard layout type const std::string
  */
 template<>
 struct RawMemoryStandardType<const std::string, const std::string> : public fep3::arya::IRawMemory
@@ -439,7 +439,7 @@ struct RawMemoryStandardType<const std::string, const std::string> : public fep3
 };
 
 /**
- * Specialized raw memory type for the non standard layout type std::vector
+ * Specialized raw memory type for the non-standard layout type std::vector
  */
 template<typename T>
 struct RawMemoryClassType<std::vector<T>, void> : public fep3::arya::IRawMemory

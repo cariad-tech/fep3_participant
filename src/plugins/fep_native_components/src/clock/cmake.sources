@@ -1,0 +1,37 @@
+#
+# Copyright @ 2021 VW Group. All rights reserved.
+#
+#     This Source Code Form is subject to the terms of the Mozilla
+#     Public License, v. 2.0. If a copy of the MPL was not distributed
+#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# If it is not possible or desirable to put the notice in a particular file, then
+# You may include the notice in a location (such as a LICENSE file in a
+# relevant directory) where a recipient would be likely to look for such a notice.
+#
+# You may add additional accurate notices of copyright ownership.
+#
+#
+
+set(COMPONENTS_PLUGIN_CLOCK_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/clock)
+set(COMPONENTS_PLUGIN_CLOCK_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/clock)
+
+set(COMPONENTS_PLUGIN_CLOCK_SOURCES_PRIVATE
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_service.h
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_service.cpp
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_service_master.h
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_service_master.cpp
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_registry.h
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_clock_registry.cpp
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_system_clock.h
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_system_clock.cpp
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_system_clock_discrete.h
+    ${COMPONENTS_PLUGIN_CLOCK_DIR}/local_system_clock_discrete.cpp
+)
+
+source_group(components\\clock FILES ${COMPONENTS_PLUGIN_CLOCK_SOURCES_PRIVATE})
+
+######################################
+# Set up the variable
+######################################
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENTS_PLUGIN_CLOCK_SOURCES_PRIVATE})

@@ -76,15 +76,7 @@ DataReader& DataReader::operator=(const DataReader& other)
 
 fep3::Result DataReader::addToDataRegistry(IDataRegistry& data_registry)
 {
-    _connected_reader = base::addDataIn(data_registry, _name, _stream_type, getSampleQueueCapacity());
-    if (_connected_reader)
-    {
-        return {};
-    }
-    else
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_DEVICE_NOT_READY, "could not register Data Reader");
-    }
+     return base::addDataIn(data_registry, _connected_reader, _name, _stream_type, getSampleQueueCapacity());
 }
 
 fep3::Result DataReader::removeFromDataRegistry()

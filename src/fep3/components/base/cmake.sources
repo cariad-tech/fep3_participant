@@ -20,6 +20,7 @@ set(COMPONENTS_BASE_SOURCES_PRIVATE
     ${COMPONENTS_BASE_DIR}/component_registry.h
     ${COMPONENTS_BASE_DIR}/component_registry.cpp
     ${COMPONENTS_BASE_DIR}/c_access_wrapper/component_getter_function_getter.h
+    ${COMPONENTS_BASE_DIR}/component_version_info.h
 )
 
 set(COMPONENTS_BASE_SOURCES_PUBLIC

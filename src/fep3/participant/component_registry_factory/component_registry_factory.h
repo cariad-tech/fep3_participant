@@ -63,7 +63,6 @@ private:
         (const a_util::filesystem::Path& file_path
         , const ILogger* logger
         );
-    static std::shared_ptr<ComponentRegistry> createRegistryDefault(const ILogger* logger);
 };
 
 }

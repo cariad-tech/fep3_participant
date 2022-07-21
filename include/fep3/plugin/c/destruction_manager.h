@@ -46,22 +46,22 @@ public:
     DestructionManager() = default;
     /**
      * Copy CTOR
-     * @note Does not copy the queue of destructors of the object to copy from
-     *       , because it is strictly bound to the latter
+     * @note Does not copy the queue of destructors of the object to copy from,
+     *       because it is strictly bound to the latter
      */
     DestructionManager(const DestructionManager&)
     {}
     /**
      * Move CTOR
-     * @note Does not move the queue of destructors of the object to copy from
-     *       , because it is strictly bound to the latter
+     * @note Does not move the queue of destructors of the object to copy from,
+     *       because it is strictly bound to the latter
      */
     DestructionManager(DestructionManager&&)
     {}
     /**
      * Copy assignment
-     * @note Does not copy the queue of destructors of the object to copy from
-     *       , because it is strictly bound to the latter
+     * @note Does not copy the queue of destructors of the object to copy from,
+     *       because it is strictly bound to the latter
      * @return Reference to this
      */
     DestructionManager& operator=(const DestructionManager&)
@@ -70,8 +70,8 @@ public:
     }
     /**
      * Move assignment
-     * @note Does not copy the queue of destructors of the object to copy from
-     *       , because it is strictly bound to the latter
+     * @note Does not copy the queue of destructors of the object to copy from,
+     *       because it is strictly bound to the latter
      * @return Reference to this
      */
     DestructionManager& operator=(DestructionManager&&)

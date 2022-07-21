@@ -178,6 +178,16 @@ public:
         }
     }
 
+    fep3::Result reset()
+    {
+        _registered_readers.clear();
+        _registered_writers.clear();
+        _data_access_collection->clear();
+        getTransmitters().clear();
+
+        return {};
+    }
+
 private:
     bool registerAndCheckIfExists(std::set<std::string>& registry, const std::string& name)
     {
@@ -205,6 +215,16 @@ SimulationBus::SimulationBus() :
 
 SimulationBus::~SimulationBus()
 {
+}
+
+fep3::Result SimulationBus::initialize()
+{
+    return _impl->reset();
+}
+
+fep3::Result SimulationBus::deinitialize()
+{
+    return _impl->reset();
 }
 
 bool SimulationBus::isSupported(const IStreamType& stream_type) const

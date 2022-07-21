@@ -16,23 +16,11 @@
 set(DATA_REGISTRY_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/data_registry)
 set(DATA_REGISTRY_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/data_registry)
 
-set(DATA_REGISTRY_SOURCES_PRIVATE
-    ${DATA_REGISTRY_DIR}/data_registry.cpp
-    ${DATA_REGISTRY_DIR}/data_registry.h
-    ${DATA_REGISTRY_DIR}/data_signal.cpp
-    ${DATA_REGISTRY_DIR}/data_signal.h
-    ${DATA_REGISTRY_DIR}/data_io.cpp
-    ${DATA_REGISTRY_DIR}/data_io.h
-    ${DATA_REGISTRY_DIR}/data_reader_queue.hpp
-    ${DATA_REGISTRY_DIR}/data_signal_renaming.h
-    ${DATA_REGISTRY_DIR}/data_signal_renaming.cpp
-)
-
 set(DATA_REGISTRY_SOURCES_PUBLIC
     ${DATA_REGISTRY_INCLUDE_DIR}/data_registry_intf.h
 )
 
-set(DATA_REGISTRY_SOURCES ${DATA_REGISTRY_SOURCES_PRIVATE} ${DATA_REGISTRY_SOURCES_PUBLIC})
+set(DATA_REGISTRY_SOURCES ${DATA_REGISTRY_SOURCES_PUBLIC})
 source_group(components\\data_registry FILES ${DATA_REGISTRY_SOURCES})
 
 ##################################################################
@@ -66,38 +54,8 @@ install(FILES
     DESTINATION
     include/fep3/rpc_services/data_registry)
 
-##################################################################
-# Mapping
-##################################################################
-
-set(MAPPING_DIR ${DATA_REGISTRY_DIR})
-
-set(MAPPING_SOURCES_PRIVATE
-    ${MAPPING_DIR}/mapping.cpp
-    ${MAPPING_DIR}/mapping.h
-)
-
-set(MAPPING_SOURCES ${MAPPING_SOURCES_PRIVATE})
-source_group(components\\data_registry\\mapping FILES ${MAPPING_SOURCES})
-
-##################################################################
-# DDL Manager
-##################################################################
-
-set(DDL_MANAGER_DIR ${DATA_REGISTRY_DIR})
-
-set(DDL_MANAGER_SOURCES_PRIVATE
-    ${DDL_MANAGER_DIR}/ddl_manager.h
-    ${DDL_MANAGER_DIR}/ddl_manager.cpp
-)
-
-set(DDL_MANAGER_SOURCES ${DDL_MANAGER_SOURCES_PRIVATE})
-source_group(components\\data_registry\\ddl FILES ${DDL_MANAGER_SOURCES})
-
 ######################################
 # Set up the variable
 ######################################
 set(FEP3_SOURCES ${FEP3_SOURCES} ${DATA_REGISTRY_SOURCES})
 set(FEP3_SOURCES ${FEP3_SOURCES} ${DATA_REGISTRY_RPC_SOURCES})
-set(FEP3_SOURCES ${FEP3_SOURCES} ${MAPPING_SOURCES})
-set(FEP3_SOURCES ${FEP3_SOURCES} ${DDL_MANAGER_SOURCES})

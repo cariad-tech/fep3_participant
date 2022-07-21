@@ -13,15 +13,7 @@
 # 
 #
 
-# remove this once arm gcc5 build is removed
-# this is needed for boost 1.69
-if (CONAN_BOOST_FILESYSTEM_ROOT)
-    set(TESTER_LOGGING_SERVICE_BOOST_FILESYSTEM "CONAN_PKG::boost_filesystem")
-else()
-    find_package(Boost REQUIRED COMPONENTS filesystem)
-    set(TESTER_LOGGING_SERVICE_BOOST_FILESYSTEM "Boost::filesystem")
-endif()
-
+find_package(Boost 1.73.0 REQUIRED COMPONENTS filesystem regex)
 find_package(dev_essential REQUIRED COMPONENTS system)
 
 # disable boost autolink, otherwise boost will look the library with the wrong name
@@ -32,7 +24,17 @@ add_executable(tester_logging_service
     tester_console_log.cpp
     tester_file_log.cpp
     tester_logging_config.cpp
+    tester_logging_sink_base.cpp
+    tester_logging_sink_file_json.cpp
+    tester_logging_sink_folder_setup
 )
+
+get_filename_component(test_log_files_dir "./../files"
+                       REALPATH  BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+target_compile_definitions(tester_logging_service
+            PRIVATE TEST_LOGFILES_DIR="${test_log_files_dir}"
+        )
 
 add_test(NAME tester_logging_service
     COMMAND tester_logging_service
@@ -43,7 +45,8 @@ add_test(NAME tester_logging_service
 target_link_libraries(tester_logging_service PRIVATE
     GTest::gtest_main
     dev_essential::system
-    ${TESTER_LOGGING_SERVICE_BOOST_FILESYSTEM}
+    Boost::filesystem
+    Boost::regex
     participant_private_test_utils
     fep3_participant_private_lib
 )

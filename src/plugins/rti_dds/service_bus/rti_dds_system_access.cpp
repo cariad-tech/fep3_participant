@@ -81,6 +81,12 @@ std::multimap<std::string, std::string> DDSSystemAccess::getDiscoveredServices(s
 {
     return {};
 }
+
+std::multimap<std::string, std::string> DDSSystemAccess::getCurrentlyDiscoveredServices() const
+{
+    return {};
+}
+
 }
 }
 

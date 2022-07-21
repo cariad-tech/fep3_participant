@@ -23,6 +23,7 @@ You may add additional accurate notices of copyright ownership.
 #include "test_connext_dds_simulation_bus.hpp"
 #include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/components/logging/mock/mock_logging_service.h>
+#include "helper/platform_dep_name.h"
 
 class ReaderWriterTestClass : public TestConnextDDSSimulationBus
 {
@@ -71,9 +72,13 @@ protected:
         TestConnextDDSSimulationBus::SetUp();
 
         _domain_id = randomDomainId();
+        _sim_participant_name_1 = makePlatformDepName("simbus_participant_1");
+        _sim_participant_name_2 = makePlatformDepName("simbus_participant_2");
+        _sim_participant_name_3 = makePlatformDepName("simbus_participant_3");
+        _sim_test_system_name = makePlatformDepName("default_test_system");
 
-        _simulation_bus = createSimulationBus(_domain_id, "simbus_participant_1");
-        _simulation_bus_2 = createSimulationBus(_domain_id, "simbus_participant_2");
+        _simulation_bus = createSimulationBus(_domain_id, _sim_participant_name_1, _sim_test_system_name);
+        _simulation_bus_2 = createSimulationBus(_domain_id, _sim_participant_name_2, _sim_test_system_name);
 
         std::string topic = findFreeTopic();
         _writer = getSimulationBus2()->getWriter(topic, fep3::base::StreamTypePlain<uint32_t>());
@@ -123,9 +128,9 @@ protected:
     {
         std::random_device rd;
         std::mt19937 mt(rd());
-        std::uniform_real_distribution<float> dist(1.0, 200.0);
-
-        return static_cast<unsigned int>(dist(mt)) % 200;
+        // the actual property is int32, so we cannot set the full value span of uint32
+        std::uniform_int_distribution<uint32_t> dist(1, 200u);
+        return dist(mt);
     }
 
     void TearDownComponent(IComponent & component)
@@ -168,7 +173,7 @@ protected:
 
     std::string findFreeTopic()
     {
-        return std::string("test_") + std::to_string(1);
+        return makePlatformDepName("test");
     }
 
     uint32_t getDomainId() const
@@ -182,6 +187,10 @@ protected:
 
     std::unique_ptr<IComponent> _simulation_bus;
     std::unique_ptr<IComponent> _simulation_bus_2;
+    std::string _sim_participant_name_1;
+    std::string _sim_participant_name_2;
+    std::string _sim_participant_name_3;
+    std::string _sim_test_system_name;
 
 private:
     uint32_t _domain_id;

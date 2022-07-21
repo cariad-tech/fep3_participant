@@ -40,7 +40,7 @@ struct ParserDefaultValues
 /**
 * @brief Class for a command line parser that can be passed to a createParticipant function
 *
-* The following natively supported commandline arguments are already defined:
+* The following natively supported command line arguments are already defined:
 *   -?, -h, --help           display usage information
 *   -v, --version            Print FEP SDK version.
 *   -n, --name \<string\>      Set participant name.

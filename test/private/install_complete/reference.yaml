@@ -12,8 +12,9 @@
 
 common:
     files:
-        - doc/license/mpl.md
-        - LICENSE
+        - README.md
+        - doc/license/LICENSE.md
+        - doc/license/license_notes_from_aosd.txt
         - doc/license/used_licenses/.+
         - fep3_participant-config-version.cmake
         - fep3_participant-config.cmake
@@ -193,6 +194,10 @@ common:
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine_client_stub.h
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine_rpc_intf_def.h
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine_service_stub.h
+        - include/fep3/rpc_services/component_registry/component_registry.json
+        - include/fep3/rpc_services/component_registry/component_registry_client_stub.h
+        - include/fep3/rpc_services/component_registry/component_registry_rpc_intf_def.h
+        - include/fep3/rpc_services/component_registry/component_registry_service_stub.h
         - lib/cmake/fep3_connext_dds_plugin_targets.cmake
         - include/fep3/rpc_services/logging/logging_client_stub.h
         - include/fep3/rpc_services/logging/logging_rpc_sink_client.json
@@ -217,6 +222,7 @@ common:
         - lib/cmake/fep3_participant_targets.cmake
         - lib/cmake/fep3_participant_core_targets.cmake
         - lib/cmake/fep3_participant_cpp_targets.cmake
+        - lib/cmake/fep_components_plugin_targets.cmake
         - lib/rti/USER_QOS_PROFILES.xml
         - lib/fep3_participant.fep_components
         - include/fep3/components/configuration/configuration_service_intf.h
@@ -283,6 +289,7 @@ common:
         - test/results/function/tester_scheduling.xml
         - test/results/function/tester_shared_library.xml
         - test/results/function/tester_timer_scheduler.xml
+        - test/results/function/test_rpc_component_registry.xml
 
 linux_shared_debug:
     conditions:
@@ -296,8 +303,9 @@ linux_shared_debug:
         - lib/cmake/fep3_participant_targets-debug.cmake
         - lib/cmake/fep3_participant_core_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_targets-debug.cmake
-        - lib/libfep3_participant_cpp_plugind3.0.a
-        - lib/libfep3_participantd3.0.so
+        - lib/cmake/fep_components_plugin_targets-debug.cmake
+        - lib/libfep3_participant_cpp_plugind3.1.a
+        - lib/libfep3_participantd3.1.so
         - lib/rti/libfep3_connext_dds_plugin.so
         - lib/rti/libnddscd.so
         - lib/rti/libnddscored.so
@@ -306,10 +314,10 @@ linux_shared_debug:
         - lib/rti/libnddsmetpd.so
         - lib/rti/librticonnextmsgcppd.so
         - lib/rti/librtimonitoringd.so
-        - lib/libfep3_participant_cored3.0.a
-        - lib/libfep3_participant_cppd3.0.a
+        - lib/libfep3_participant_cored3.1.a
+        - lib/libfep3_participant_cppd3.1.a
 
-linux_shared_relWithdebInfo:
+linux_shared_rel_with_deb_info:
     conditions:
         my_conds:
             os: Linux
@@ -321,8 +329,9 @@ linux_shared_relWithdebInfo:
         - lib/cmake/fep3_participant_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_core_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_cpp_targets-relwithdebinfo.cmake
-        - lib/libfep3_participant_cpp_plugin3.0.a
-        - lib/libfep3_participant3.0.so
+        - lib/cmake/fep_components_plugin_targets-relwithdebinfo.cmake
+        - lib/libfep3_participant_cpp_plugin3.1.a
+        - lib/libfep3_participant3.1.so
         - lib/rti/libfep3_connext_dds_plugin.so
         - lib/rti/libnddsc.so
         - lib/rti/libnddscore.so
@@ -331,8 +340,8 @@ linux_shared_relWithdebInfo:
         - lib/rti/libnddsmetp.so
         - lib/rti/librticonnextmsgcpp.so
         - lib/rti/librtimonitoring.so
-        - lib/libfep3_participant_core3.0.a
-        - lib/libfep3_participant_cpp3.0.a
+        - lib/libfep3_participant_core3.1.a
+        - lib/libfep3_participant_cpp3.1.a
         
 linux_shared_release:
     conditions:
@@ -346,8 +355,9 @@ linux_shared_release:
         - lib/cmake/fep3_participant_targets-release.cmake
         - lib/cmake/fep3_participant_core_targets-release.cmake
         - lib/cmake/fep3_participant_cpp_targets-release.cmake
-        - lib/libfep3_participant3.0.so
-        - lib/libfep3_participant_cpp_plugin3.0.a
+        - lib/cmake/fep_components_plugin_targets-release.cmake
+        - lib/libfep3_participant3.1.so
+        - lib/libfep3_participant_cpp_plugin3.1.a
         - lib/rti/libnddsc.so
         - lib/rti/libnddscore.so
         - lib/rti/libnddscpp.so
@@ -355,8 +365,8 @@ linux_shared_release:
         - lib/rti/libnddsmetp.so
         - lib/rti/librticonnextmsgcpp.so
         - lib/rti/librtimonitoring.so
-        - lib/libfep3_participant_core3.0.a
-        - lib/libfep3_participant_cpp3.0.a
+        - lib/libfep3_participant_core3.1.a
+        - lib/libfep3_participant_cpp3.1.a
 
 linux_shared:
     conditions:
@@ -365,6 +375,7 @@ linux_shared:
     files:
         - lib/http/libfep3_http_service_bus.so
         - lib/rti/libfep3_connext_dds_plugin.so
+        - lib/libfep_components_plugin.so
 
 windows_shared_debug:
     conditions:
@@ -378,12 +389,14 @@ windows_shared_debug:
         - lib/cmake/fep3_participant_targets-debug.cmake
         - lib/cmake/fep3_participant_core_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_targets-debug.cmake
-        - lib/fep3_participant_cpp_plugind3.0.lib
-        - lib/fep3_participantd3.0.dll
-        - lib/fep3_participantd3.0.lib
-        - lib/fep3_participantd3.0.pdb
+        - lib/cmake/fep_components_plugin_targets-debug.cmake
+        - lib/fep3_participant_cpp_plugind3.1.lib
+        - lib/fep3_participantd3.1.dll
+        - lib/fep3_participantd3.1.lib
+        - lib/fep3_participantd3.1.pdb
         - lib/http/fep3_http_service_bus.pdb
         - lib/rti/fep3_connext_dds_plugin.pdb
+        - lib/fep_components_plugin.pdb
         - lib/rti/nddscd.dll
         - lib/rti/nddscd.pdb
         - lib/rti/nddscored.dll
@@ -398,8 +411,8 @@ windows_shared_debug:
         - lib/rti/rticonnextmsgcppd.pdb
         - lib/rti/rtimonitoringd.dll
         - lib/rti/rtimonitoringd.pdb
-        - lib/fep3_participant_cored3.0.lib
-        - lib/fep3_participant_cppd3.0.lib
+        - lib/fep3_participant_cored3.1.lib
+        - lib/fep3_participant_cppd3.1.lib
 
 windows_shared_release:
     conditions:
@@ -414,9 +427,10 @@ windows_shared_release:
         - lib/cmake/fep3_participant_targets-release.cmake
         - lib/cmake/fep3_participant_core_targets-release.cmake
         - lib/cmake/fep3_participant_cpp_targets-release.cmake
-        - lib/fep3_participant3.0.dll
-        - lib/fep3_participant3.0.lib
-        - lib/fep3_participant_cpp_plugin3.0.lib
+        - lib/cmake/fep_components_plugin_targets-release.cmake
+        - lib/fep3_participant3.1.dll
+        - lib/fep3_participant3.1.lib
+        - lib/fep3_participant_cpp_plugin3.1.lib
         - lib/rti/nddsc.dll
         - lib/rti/nddscore.dll
         - lib/rti/nddscpp.dll
@@ -424,8 +438,39 @@ windows_shared_release:
         - lib/rti/nddsmetp.dll
         - lib/rti/rticonnextmsgcpp.dll
         - lib/rti/rtimonitoring.dll
-        - lib/fep3_participant_core3.0.lib
-        - lib/fep3_participant_cpp3.0.lib
+        - lib/fep3_participant_core3.1.lib
+        - lib/fep3_participant_cpp3.1.lib
+
+windows_shared_rel_with_deb_info:
+    conditions:
+        my_conds:
+            os: Windows
+            build_type: RelWithDebInfo
+
+    files:
+        - lib/cmake/fep3_connext_dds_plugin_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_http_service_bus_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_participant_core_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_participant_cpp_plugin_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_participant_cpp_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_participant_targets-relwithdebinfo.cmake
+        - lib/cmake/fep_components_plugin_targets-relwithdebinfo.cmake
+        - lib/fep_components_plugin.pdb
+        - lib/fep3_participant3.1.dll
+        - lib/fep3_participant3.1.lib
+        - lib/fep3_participant3.1.pdb
+        - lib/fep3_participant_core3.1.lib
+        - lib/fep3_participant_cpp3.1.lib
+        - lib/fep3_participant_cpp_plugin3.1.lib
+        - lib/http/fep3_http_service_bus.pdb
+        - lib/rti/fep3_connext_dds_plugin.pdb
+        - lib/rti/nddsc.dll
+        - lib/rti/nddscore.dll
+        - lib/rti/nddscpp.dll
+        - lib/rti/nddscpp2.dll
+        - lib/rti/nddsmetp.dll
+        - lib/rti/rticonnextmsgcpp.dll
+        - lib/rti/rtimonitoring.dll
 
 windows_shared:
     conditions:
@@ -434,6 +479,8 @@ windows_shared:
     files:
         - lib/http/fep3_http_service_bus.dll
         - lib/rti/fep3_connext_dds_plugin.dll
+        - lib/fep_components_plugin.dll
+        - lib/fep_components_plugin.lib
 
 documentation:
     conditions:

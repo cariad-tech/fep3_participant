@@ -52,9 +52,6 @@ struct NativeClockSyncMasterTest : public Test
         : _logger_mock(std::make_shared<Logger>())
         , _rpc_requester_mock(std::make_shared<RPCRequester>())
     {
-        _set_participant_to_error_state = [this]() -> fep3::Result {
-            return _set_participant_to_error_state_mock.Call();
-        };
         _get_rpc_requester_by_name = [this](const std::string& service_participant_name) {
             return _get_rpc_requester_by_name_mock.Call(service_participant_name);
         };
@@ -62,8 +59,6 @@ struct NativeClockSyncMasterTest : public Test
 
     std::shared_ptr<Logger> _logger_mock;
     std::shared_ptr<RPCRequester> _rpc_requester_mock;
-    std::function<fep3::Result()> _set_participant_to_error_state{};
-    MockFunction<fep3::Result()> _set_participant_to_error_state_mock{};
     std::function<const std::shared_ptr<IRPCRequester>(const
         std::string& service_participant_name)> _get_rpc_requester_by_name{};
     MockFunction<const std::shared_ptr<IRPCRequester>(const
@@ -110,7 +105,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
     ClockMaster clock_master(
         _logger_mock,
         _rpc_timeout,
-        _set_participant_to_error_state,
         _get_rpc_requester_by_name);
 
     const auto reply = R"({"id" : 1,"jsonrpc" : "2.0","result" : "100"})";
@@ -149,7 +143,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
     for (const auto& slave : slaves)
      {
@@ -192,7 +185,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
     ClockMaster clock_master(
         _logger_mock,
         _rpc_timeout,
-        _set_participant_to_error_state,
         _get_rpc_requester_by_name);
 
      const auto reply = R"({"id" : 1,"jsonrpc" : "2.0","result" : "100"})";
@@ -229,7 +221,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
 
      {
@@ -263,7 +254,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
 
      {
@@ -277,8 +267,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
                      throw std::runtime_error("some error");
                  })),
                  Return(ERR_NOERROR)));
-         /// participant should be brought to FS_ERROR
-         EXPECT_CALL(_set_participant_to_error_state_mock, Call()).WillOnce(Return(ERR_NOERROR));
 
          ASSERT_FEP3_NOERROR(clock_master.registerSlave(slave_one_name, static_cast<int>(EventIDFlag::register_for_time_updating)));
          clock_master.timeUpdating(Timestamp{ 1 });
@@ -298,7 +286,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
 
     {
@@ -324,7 +311,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
 
      const auto reply = R"({"id" : 1,"jsonrpc" : "2.0","result" : "100"})";
@@ -356,7 +342,6 @@ TEST_F(NativeClockSyncMasterTest, synchronizationSuccess)
      ClockMaster clock_master(
          _logger_mock,
          _rpc_timeout,
-         _set_participant_to_error_state,
          _get_rpc_requester_by_name);
      /// we only test for no error
      ASSERT_FEP3_NOERROR(clock_master.updateTimeout(milliseconds(3000)));

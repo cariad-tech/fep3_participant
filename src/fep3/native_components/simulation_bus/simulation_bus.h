@@ -41,6 +41,10 @@ public:
     SimulationBus& operator=(const SimulationBus&) = delete;
     SimulationBus& operator=(SimulationBus&&) = delete;
 
+public: // inherited via base::Component
+    fep3::Result initialize() override;
+    fep3::Result deinitialize() override;
+
 public:
     bool isSupported(const IStreamType& stream_type) const override;
 

@@ -13,7 +13,7 @@
 # 
 #
 
-if(fep3_particpant_FOUND)
+if(fep3_participant_FOUND)
     return()
 endif()
 
@@ -34,9 +34,12 @@ include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_participant_cpp_plugin_targets.
 # include the target for http to install it on client side
 include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_http_service_bus_targets.cmake)
 
+# include the target for the fep components plugin
+include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep_components_plugin_targets.cmake)
+
 # include the target for rti to install it on client side
 if(fep3_participant_use_rtidds)
     include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_connext_dds_plugin_targets.cmake)
 endif()
 
-set(fep3_particpant_FOUND true)
+set(fep3_participant_FOUND true)

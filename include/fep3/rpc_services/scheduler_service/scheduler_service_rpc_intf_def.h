@@ -42,7 +42,7 @@ protected:
     ~IRPCSchedulerServiceDef() = default;
 
 public:
-    ///definiton of the FEP rpc service iid for the scheduler service
+    ///definition of the FEP rpc service iid for the scheduler service
     FEP_RPC_IID("scheduler_service.arya.fep3.iid", "scheduler_service");
 };
 

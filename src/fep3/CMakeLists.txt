@@ -39,7 +39,9 @@ install(
 )
 
 find_package(dev_essential REQUIRED COMPONENTS pkg_rpc ddl)
-find_package(Boost 1.69.0 COMPONENTS REQUIRED)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS filesystem date_time)
+# disable boost autolink, otherwise boost will look the library with the wrong name
+add_compile_definitions(BOOST_ALL_NO_LIB)
 
 set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_export.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_errors.h
@@ -116,9 +118,14 @@ target_include_directories(fep3_participant_object_lib PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     PRIVATE ${Boost_INCLUDE_DIRS}
 )
+
 target_link_libraries(fep3_participant_object_lib PUBLIC
     dev_essential::ddl
     dev_essential::pkg_rpc
+    PRIVATE
+    Boost::date_time
+    Boost::filesystem
+    Boost::disable_autolinking
 )
 if(MSVC)
     target_link_libraries(fep3_participant_object_lib PUBLIC "Iphlpapi.lib")
@@ -129,9 +136,10 @@ else ()
 target_link_libraries(fep3_participant_object_lib PUBLIC
      pthread
      ${CMAKE_DL_LIBS})
+
 endif()
 
-target_compile_features(fep3_participant_object_lib PUBLIC cxx_std_14)
+target_compile_features(fep3_participant_object_lib PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
 target_compile_definitions(fep3_participant_object_lib PRIVATE _FEP3_PARTICIPANT_DO_EXPORT)
 
@@ -143,7 +151,7 @@ target_link_libraries(fep3_participant PRIVATE fep3_participant_object_lib
                                        PUBLIC dev_essential::result
                                               dev_essential::memory)
 
-target_compile_features(fep3_participant PUBLIC cxx_std_14)
+target_compile_features(fep3_participant PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 if(MSVC)
     # TODO /WD4100 should be removed when ODAUTIL-167 is fixed
     # 4251 is currently deactivated because some dll exported classes use std types within their interface (e.g. ComponentRegistry)
@@ -271,12 +279,24 @@ install(FILES fep3_participant_core-config.cmake DESTINATION .)
 install(FILES fep3_participant_cpp-config.cmake DESTINATION .)
 
 if(fep3_participant_use_rtidds)
-    #we copy this to the bin dir because the macros files must wurk for the tests too
-    add_custom_command(TARGET fep3_participant POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/fep3_participant.fep_components "$<TARGET_FILE_DIR:fep3_participant>"
-        )
-    install(FILES fep3_participant.fep_components DESTINATION lib)
+    # if we use rtidds plugin we have to add it in the components file
+    SET(RTI_DDS_XML_TAG "<component>
+        <source type=\"cpp-plugin\">
+        rti/fep3_connext_dds_plugin
+        </source>
+        <iid>simulation_bus.arya.fep3.iid</iid>
+    </component>")
+
 endif()
+# we patch the components file depending if rti dds plugin is used
+configure_file(${CMAKE_CURRENT_LIST_DIR}/fep3_participant.fep_components.in fep3_participant.fep_components)
+
+#we copy this to the bin dir because the macros files must work for the tests too
+#always a components file is needed since the components are delivered as plugins
+add_custom_command(TARGET fep3_participant POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/fep3_participant.fep_components "$<TARGET_FILE_DIR:fep3_participant>"
+    )
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/fep3_participant.fep_components DESTINATION lib)
 
 install(
     TARGETS fep3_participant

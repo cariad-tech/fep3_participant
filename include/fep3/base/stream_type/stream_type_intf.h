@@ -57,24 +57,6 @@ public:
 }
 using arya::IStreamType;
 }
-/**
- * @brief Bool operator to compare stream types.
- * Streamtypes are equal if the name of the stream metatypes and the set properties are equal.
- * @param[in] lhs Left stream type
- * @param[in] rhs Right stream type
- * @return @c true if equal, @c false otherweise
- */
-inline bool operator==(const fep3::arya::IStreamType& lhs, const fep3::arya::IStreamType& rhs)
-{
-    if (std::string(lhs.getMetaTypeName()) != rhs.getMetaTypeName())
-    {
-        return false;
-    }
-    else
-    {
-        return lhs.isEqual(rhs);
-    }
-}
 
 #endif //_FEP3_BASE_STREAM_TYPE_INTF_H_
 

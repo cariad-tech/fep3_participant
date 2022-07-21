@@ -288,7 +288,7 @@ inline fep3_plugin_c_InterfaceError createConfigurationService
  * Creates a Configuration Service object of type \p configuration_service_type
  * @tparam configuration_service_type The type of the Configuration Service object to be created
  * @param[in,out] access_result Pointer to the access structure to the created Configuration Service object
- * @param[in] shared_binary_access Access strcuture to the shared binary the Configuration Service object resides in
+ * @param[in] shared_binary_access Access structure to the shared binary the Configuration Service object resides in
  * @param[in] iid The interface ID of the Configuration Service interface of the created object
  * @return Interface error code
  * @retval fep3_plugin_c_interface_error_none No error occurred

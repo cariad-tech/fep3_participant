@@ -68,5 +68,10 @@ namespace arya
 
         return component;
     }
+
+    ComponentVersionInfo ComponentFactoryCPPPlugin::getPluginInfo() const
+    {
+        return _impl->_plugin.getPluginInfo();
+    }
 }
 }

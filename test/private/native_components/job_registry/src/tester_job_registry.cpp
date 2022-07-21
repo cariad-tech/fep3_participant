@@ -24,6 +24,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <a_util/filesystem/path.h>
 
+#include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/job_registry/local_job_registry.h>
 #include <fep3/components/logging/mock/mock_logging_service.h>
 #include <fep3/components/base/component_registry.h>
@@ -88,13 +89,13 @@ struct JobRegistryWithComponentRegistry : Test
 
         auto job_registry = std::make_unique<JobRegistry>();
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IConfigurationService>(
-            _configuration_service_mock));
+            _configuration_service_mock, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IServiceBus>(
-            _service_bus_mock));
+            _service_bus_mock, _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::IJobRegistry>(
-            std::move(job_registry)));
+            std::move(job_registry), _dummy_component_version_info));
         ASSERT_FEP3_NOERROR(_component_registry->registerComponent<fep3::ILoggingService>(
-            std::make_shared<LoggingService>(_logger)));
+            std::make_shared<LoggingService>(_logger), _dummy_component_version_info));
     }
 
     void setComponents()
@@ -111,6 +112,8 @@ struct JobRegistryWithComponentRegistry : Test
     std::shared_ptr<ServiceBusComponent> _service_bus_mock{ nullptr };
     std::shared_ptr<RPCServerMock> _rpc_server_mock{};
     std::shared_ptr<fep3::IPropertyNode> _job_registry_property_node;
+private:
+    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**

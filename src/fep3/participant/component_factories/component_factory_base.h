@@ -21,6 +21,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <fep3/fep3_participant_types.h>
 #include <fep3/components/base/component_intf.h>
+#include <fep3/components/base/component_version_info.h>
 #include <fep3/components/logging/logger_intf.h>
 #include <string>
 
@@ -28,6 +29,8 @@ namespace fep3
 {
 namespace arya
 {
+
+
     class ComponentFactoryBase
     {
         public:
@@ -45,6 +48,8 @@ namespace arya
             {
                 return {};
             }
+
+            virtual ComponentVersionInfo getPluginInfo() const = 0;
     };
 }
 }

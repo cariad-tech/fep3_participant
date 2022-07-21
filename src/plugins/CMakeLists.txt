@@ -18,3 +18,5 @@ if (fep3_participant_use_rtidds)
 endif()
 
 add_subdirectory(http)
+add_subdirectory(fep_native_components)
+

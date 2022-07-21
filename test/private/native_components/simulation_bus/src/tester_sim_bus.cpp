@@ -31,6 +31,7 @@ You may add additional accurate notices of copyright ownership.
 #include <fep3/base/sample/data_sample.h>
 
 #include "helper/gmock_async_helper.h"
+#include <gtest_asserts.h>
 
 #include <thread>
 #include <array>
@@ -223,6 +224,33 @@ TEST(NativeSimulationBus, testTransmissionOfStreamType)
     }
 
     while(reader->pop(receiver));
+}
+
+/**
+* @detail Test whether a data reader may be retrieved multiple times from the simulation bus
+* if the simulation bus has been deinitialized between requests.
+* @req_id FEPSDK-SimulationBus
+*
+*/
+TEST(NativeSimulationBus, testRegisterDataReaderWriterTwice)
+{
+    const std::string signal_name = "signal_name";
+
+    fep3::native::SimulationBus sim_bus;
+
+    ASSERT_FEP3_NOERROR(sim_bus.initialize());
+
+    EXPECT_TRUE(sim_bus.getReader(signal_name));
+    EXPECT_TRUE(sim_bus.getWriter(signal_name));
+    // a second request of data readers/writers shall not succeed
+    EXPECT_TRUE(nullptr == sim_bus.getReader(signal_name));
+    EXPECT_TRUE(nullptr == sim_bus.getWriter(signal_name));
+
+    ASSERT_FEP3_NOERROR(sim_bus.deinitialize());
+
+    // after deinitialization, data readers/writers may be requested again
+    EXPECT_TRUE(sim_bus.getReader(signal_name));
+    EXPECT_TRUE(sim_bus.getWriter(signal_name));
 }
 
 namespace {
