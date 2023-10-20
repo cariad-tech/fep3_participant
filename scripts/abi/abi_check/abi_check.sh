@@ -23,7 +23,7 @@ chmod +x $complianceCheckCommand
 set -e
 set -o pipefail
 
-$dumpCommand $partLibrary -public-headers $headersFile -o $outputDumpFile 
+$dumpCommand $partLibrary -public-headers $headersFile -o $outputDumpFile
 $dumpCommand $pluginLibrary -public-headers $headersFile -o $pluginOutputDumpFile
 
 $complianceCheckCommand -l $libName -old $refAbiDump -new $outputDumpFile -report-path $complReportPath/report_participant.html

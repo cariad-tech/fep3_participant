@@ -1,5 +1,5 @@
 import os
-from pathlib import Path 
+from pathlib import Path
 
 class ResultWriter:
     def __init__(self, build_dir, abi_dump = True, abi_check = False):
@@ -34,7 +34,7 @@ class ResultWriter:
         result_error += system_out
         result_error += "    </testcase>\n</testsuite>"
         self.__write_to_file(result_error)
-    
+
     def __write_to_file(self, file_content):
         directory = os.path.dirname(self.result_file_path)
         if not os.path.exists(directory):

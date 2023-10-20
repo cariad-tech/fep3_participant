@@ -1,0 +1,197 @@
+# Copyright @ 2023 VW Group. All rights reserved.
+#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Created using clang-format from llvm 13, using '--dump-config --style=Microsoft'
+# Adjusted to project specific guidelines
+---
+Language:        Cpp
+#BasedOnStyle:  Microsoft
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: None
+AlignConsecutiveMacros: None
+AlignConsecutiveAssignments: None
+AlignConsecutiveBitFields: None
+AlignConsecutiveDeclarations: None
+AlignEscapedNewlines: Right
+AlignOperands:   true
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: true
+AllowAllConstructorInitializersOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+# commented, because deprecated
+#AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+# currently not in use
+#AttributeMacros:
+#  - __capability
+BinPackArguments: false
+BinPackParameters: false
+# Not in use, due to 'BreakBeforeBraces: Stroustrup'
+#BraceWrapping:
+#  AfterCaseLabel:  false
+#  AfterClass:      true
+#  AfterControlStatement: Always
+#  AfterEnum:       true
+#  AfterFunction:   true
+#  AfterNamespace:  true
+#  AfterObjCDeclaration: true
+#  AfterStruct:     true
+#  AfterUnion:      false
+#  AfterExternBlock: true
+#  BeforeCatch:     true
+#  BeforeElse:      true
+#  BeforeLambdaBody: false
+#  BeforeWhile:     false
+#  IndentBraces:    false
+#  SplitEmptyFunction: true
+#  SplitEmptyRecord: true
+#  SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: None
+BreakBeforeConceptDeclarations: false # probably interesting if c++20
+BreakBeforeBraces: Stroustrup # conforming to CppCoreGuidelines NL.17
+# No mention of this in the clang-format documentation, probably deprecated in favor of BreakInheritanceList
+#BreakBeforeInheritanceComma: false
+BreakInheritanceList: BeforeColon
+BreakBeforeTernaryOperators: false
+# No mention of this in the clang-format documentation, probably deprecated in favor of BreakInheritanceList
+#BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeColon
+#BreakAfterJavaFieldAnnotations: false
+BreakStringLiterals: true
+ColumnLimit:     100
+CommentPragmas:  '^ IWYU pragma:'
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DeriveLineEnding: true
+DerivePointerAlignment: false
+DisableFormat:   false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+ExperimentalAutoDetectBinPacking: false
+FixNamespaceComments: true
+ForEachMacros:
+  - BOOST_FOREACH
+#  - foreach
+#  - Q_FOREACH
+IncludeBlocks:   Regroup
+IncludeCategories:
+# relative includes go first
+  - Regex:           '^".*'
+    Priority:        1
+    CaseSensitive:   false
+# product includes
+  - Regex:           '^<(fep3)/'
+    Priority:        2
+    CaseSensitive:   false
+# project includes
+  - Regex:           '^<(a_util|rpc|ddl)/'
+    Priority:        3
+    CaseSensitive:   false
+# 3rdparty includes
+  - Regex:           '^<(boost|clipp|cxx_url|dds|dds_c|gmock|gtest|jsonrpccpp|lssdpcpp|rti)/'
+    Priority:        4
+    CaseSensitive:   false
+# system or standard library includes
+  - Regex:           '^<.*'
+    Priority:        5
+    CaseSensitive:   false
+#IncludeIsMainRegex: '(Test)?$'
+IncludeIsMainSourceRegex: ''
+IndentAccessModifiers: false
+IndentCaseLabels: false # conforming to CppCoreGuidelines examples
+IndentCaseBlocks: false
+IndentGotoLabels: true
+IndentPPDirectives: BeforeHash
+IndentExternBlock: AfterExternBlock
+IndentRequires:  false # probably interesting for c++20
+IndentWidth:     4
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
+#JavaScriptQuotes: Double
+#JavaScriptWrapImports: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+#ObjCBinPackProtocolList: Auto
+#ObjCBlockIndentWidth: 2
+#ObjCBreakBeforeNestedBlockParam: true
+#ObjCSpaceAfterProperty: false
+#ObjCSpaceBeforeProtocolList: true
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyBreakTemplateDeclaration: 10
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 1000
+PenaltyIndentedWhitespace: 0
+PointerAlignment: Left
+PPIndentWidth:   -1 # Use 'IndentWidth'
+ReferenceAlignment: Pointer
+ReflowComments:  true
+ShortNamespaceLines: 0
+SortIncludes:    CaseSensitive # Can be disabled via clang-format cli option --sort-includes=Never
+#SortJavaStaticImport: Before
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements # conforming to CppCoreGuidelines NL.15 and NL.17
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeRangeBasedForLoopColon: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles:  Never
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInCStyleCastParentheses: false
+SpacesInLineCommentPrefix:
+  Minimum:         1
+  Maximum:         1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeSquareBrackets: false
+BitFieldColonSpacing: Both
+Standard:        c++17
+#StatementAttributeLikeMacros:
+#  - Q_EMIT
+#StatementMacros:
+#  - Q_UNUSED
+#  - QT_REQUIRE_VERSION
+TabWidth:        4
+UseCRLF:         false
+UseTab:          Never
+WhitespaceSensitiveMacros:
+  - STRINGIZE
+  - PP_STRINGIZE
+#  - BOOST_PP_STRINGIZE
+#  - NS_SWIFT_NAME
+#  - CF_SWIFT_NAME
+...
+

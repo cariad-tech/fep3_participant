@@ -4,22 +4,11 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
-
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 #include <fep3/base/sample/mock/mock_data_sample.h>
 #include <fep3/base/stream_type/mock/mock_stream_type.h>
@@ -32,7 +21,7 @@ using StreamTypeMock = NiceMock<mock::StreamType>;
 using DataSampleMock = NiceMock<mock::DataSample>;
 
 void pushDataSampleToBacklog(core::DataReaderBacklog& data_reader_backlog,
-    Timestamp sample_timestamp)
+                             Timestamp sample_timestamp)
 {
     const auto data_sample_mock = std::make_shared<DataSampleMock>();
     EXPECT_CALL(*data_sample_mock.get(), getTime()).WillRepeatedly(Return(sample_timestamp));
@@ -40,17 +29,17 @@ void pushDataSampleToBacklog(core::DataReaderBacklog& data_reader_backlog,
 }
 
 void pushStreamTypeToBacklog(core::DataReaderBacklog& data_reader_backlog,
-    const std::string& stream_type_name)
+                             const std::string& stream_type_name)
 {
     const auto stream_type_mock = std::make_shared<StreamTypeMock>();
-    EXPECT_CALL(*stream_type_mock.get(), getMetaTypeName()).Times(AtLeast(0)).WillRepeatedly(Return(stream_type_name));
+    EXPECT_CALL(*stream_type_mock.get(), getMetaTypeName())
+        .Times(AtLeast(0))
+        .WillRepeatedly(Return(stream_type_name));
     data_reader_backlog(stream_type_mock);
 }
 
-struct TestDataReaderBacklogSetup : Test
-{
-    TestDataReaderBacklogSetup()
-        : _data_reader_backlog(1, _stream_type_mock)
+struct TestDataReaderBacklogSetup : Test {
+    TestDataReaderBacklogSetup() : _data_reader_backlog(1, _stream_type_mock)
     {
     }
 
@@ -58,9 +47,8 @@ struct TestDataReaderBacklogSetup : Test
     {
         _data_reader_backlog.setCapacity(data_reader_capacity);
 
-        for (int i = 0, j = sample_count; i < j; i++)
-        {
-            pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+        for (int i = 0, j = sample_count; i < j; i++) {
+            pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
         }
 
         pushStreamTypeToBacklog(_data_reader_backlog, "stream_type_mock");
@@ -88,7 +76,7 @@ TEST(TestDataReaderBacklog, CTOR)
  */
 TEST(TestDataReaderBacklog, pushStreamType)
 {
-    core::DataReaderBacklog data_reader_backlog{ 10, StreamTypeMock{} };
+    core::DataReaderBacklog data_reader_backlog{10, StreamTypeMock{}};
 
     pushStreamTypeToBacklog(data_reader_backlog, "stream_type_mock_1");
 
@@ -118,8 +106,7 @@ TEST_F(TestDataReaderBacklogSetup, pushSamplesUntilCapacityReached)
     ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 10);
     ASSERT_EQ(_data_reader_backlog.readSampleOldest()->getTime().count(), 0);
 
-    for (int i = 9, j = 0; i >= j; i--)
-    {
+    for (int i = 9, j = 0; i >= j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
         ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), i);
     }
@@ -143,8 +130,7 @@ TEST_F(TestDataReaderBacklogSetup, pushSamplesExceedingCapacity)
     ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 10);
     ASSERT_EQ(_data_reader_backlog.readSampleOldest()->getTime().count(), 11);
 
-    for (int i = 20, j = 11; i >= j; i--)
-    {
+    for (int i = 20, j = 11; i >= j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
         ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), i - j);
     }
@@ -208,8 +194,7 @@ TEST_F(TestDataReaderBacklogSetup, popLatestDataSample)
     ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), 0);
 
     SetUp(5, 5);
-    for (int i = 4, j = 0; i >= j; i--)
-    {
+    for (int i = 4, j = 0; i >= j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
     }
 
@@ -218,14 +203,14 @@ TEST_F(TestDataReaderBacklogSetup, popLatestDataSample)
 }
 
 /**
- * Test whether the latest data samples may be popped from a backlog which has overflown and dropped samples.
+ * Test whether the latest data samples may be popped from a backlog which has overflown and dropped
+ * samples.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, popLatestDataSampleOverflow)
 {
     SetUp(5, 12);
-    for (int i = 11, j = 7; i >= j; i--)
-    {
+    for (int i = 11, j = 7; i >= j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
     }
 
@@ -242,8 +227,7 @@ TEST_F(TestDataReaderBacklogSetup, popOldestDataSample)
     ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), 0);
 
     SetUp(5, 5);
-    for (int i = 0, j = 5; i < j; i++)
-    {
+    for (int i = 0, j = 5; i < j; i++) {
         EXPECT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 
@@ -251,14 +235,14 @@ TEST_F(TestDataReaderBacklogSetup, popOldestDataSample)
 }
 
 /**
- * Test whether the oldest data samples may be popped from a backlog which has overflown and dropped samples.
+ * Test whether the oldest data samples may be popped from a backlog which has overflown and dropped
+ * samples.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, popOldestDataSampleOverflow)
 {
     SetUp(5, 12);
-    for (int i = 7, j = 11; i <= j; i++)
-    {
+    for (int i = 7, j = 11; i <= j; i++) {
         ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 
@@ -281,7 +265,8 @@ TEST_F(TestDataReaderBacklogSetup, readDataSamples)
 }
 
 /**
- * Test whether the oldest data samples may be read from a backlog which has overflown and dropped samples.
+ * Test whether the oldest data samples may be read from a backlog which has overflown and dropped
+ * samples.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, readDataSamplesOverflow)
@@ -298,37 +283,36 @@ TEST_F(TestDataReaderBacklogSetup, readDataSamplesOverflow)
 TEST_F(TestDataReaderBacklogSetup, readDataSampleBeforeTimestamp)
 {
     SetUp(1, 1);
-    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{ 1 })->getTime().count(), 0);
+    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{1})->getTime().count(), 0);
 
     SetUp(5, 5);
-    for (int i = 4, j = 0; i > j; i--)
-    {
-        ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{ i })->getTime().count(), i - 1);
+    for (int i = 4, j = 0; i > j; i--) {
+        ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{i})->getTime().count(), i - 1);
     }
 }
 
 /**
- * Test whether data samples before a given timestamp may be read from a backlog which has overflown and dropped samples.
+ * Test whether data samples before a given timestamp may be read from a backlog which has overflown
+ * and dropped samples.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, readDataSampleBeforeTimestampOverflow)
 {
     SetUp(5, 12);
-    for (int i = 11, j = 7; i > j; i--)
-    {
-        ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{ i })->getTime().count(), i - 1);
+    for (int i = 11, j = 7; i > j; i--) {
+        ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{i})->getTime().count(), i - 1);
     }
 }
 
 /**
- * Test whether an empty data sample is returned if reading a sample before a given upper bound which is not available
- * in a backlog.
+ * Test whether an empty data sample is returned if reading a sample before a given upper bound
+ * which is not available in a backlog.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, readDataSampleBeforeTimestampUnavailable)
 {
     SetUp(5, 5);
-    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{ 0 }), data_read_ptr<IDataSample>{});
+    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{0}), data_read_ptr<IDataSample>{});
 }
 
 /**
@@ -341,7 +325,8 @@ TEST_F(TestDataReaderBacklogSetup, readPopDataSampleFromEmptyBacklog)
     ASSERT_EQ(_data_reader_backlog.popSampleOldest(), data_read_ptr<const IDataSample>{});
     ASSERT_EQ(_data_reader_backlog.readSampleLatest(), data_read_ptr<const IDataSample>{});
     ASSERT_EQ(_data_reader_backlog.readSampleOldest(), data_read_ptr<const IDataSample>{});
-    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{}), data_read_ptr<const IDataSample>{});
+    ASSERT_EQ(_data_reader_backlog.readSampleBefore(Timestamp{}),
+              data_read_ptr<const IDataSample>{});
 }
 
 /**
@@ -355,44 +340,107 @@ TEST_F(TestDataReaderBacklogSetup, readStreamType)
 }
 
 /**
+ * Test whether samples before timestamp will be removed and next younger will be popped.
+ * @req_id FEPSDK-3107
+ */
+TEST_F(TestDataReaderBacklogSetup, purgeAndPopSampleBefore)
+{
+    using namespace std::chrono_literals;
+
+    // Scenario 1 (One tnow-tc sample)
+    // Take tnow-tc sample, no purge
+    SetUp(1, 1);
+    auto sample = _data_reader_backlog.purgeAndPopSampleBefore(1ns);
+    ASSERT_EQ(sample->getTime(), 0ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 0);
+
+    // Scenario 2 (One tnow-2tc and one tnow-tc sample)
+    // Take tnow-tc sample, purge tnow-2tc
+    SetUp(2, 2);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(2ns);
+    ASSERT_EQ(sample->getTime(), 1ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 0);
+
+    // Scenario 3 (One tnow-tc and one tnow sample)
+    // Take tnow-tc sample, no purge
+    SetUp(2, 2);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(1ns);
+    ASSERT_EQ(sample->getTime(), 0ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 1);
+
+    // Scenario 4 (One tnow-2tc, One tnow-tc and one tnow sample)
+    // Take tnow-tc sample, purge tnow-2tc, leave tnow
+    SetUp(3, 3);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(2ns);
+    ASSERT_EQ(sample->getTime(), 1ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 1);
+
+    // Scenario 5 (One tnow sample)
+    // Don't take the sample, leave it in queue
+    SetUp(1, 1);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(0ns);
+    ASSERT_EQ(sample, data_read_ptr<IDataSample>{});
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 1);
+
+    // Scenario 6 (No sample)
+    // There is nothing to take
+    SetUp(0, 0);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(0ns);
+    ASSERT_EQ(sample, data_read_ptr<IDataSample>{});
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 0);
+
+    // Longer queue, similar to scenario 4
+    SetUp(5, 5);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(3ns);
+    ASSERT_EQ(sample->getTime(), 2ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 2);
+
+    // Picking from the middle of the queue
+    SetUp(5, 5);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(2ns);
+    ASSERT_EQ(sample->getTime(), 1ns);
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 3);
+
+    // Only newer samples than we are looking for, similar to scenario 5
+    // Setup is "overloading" the buffer, the first two samples are lost
+    SetUp(3, 5);
+    sample = _data_reader_backlog.purgeAndPopSampleBefore(1ns);
+    ASSERT_EQ(sample, data_read_ptr<IDataSample>{});
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 3);
+}
+
+/**
  * Test whether popOldest and write of samples works in combination.
  * @req_id TODO
  */
 TEST_F(TestDataReaderBacklogSetup, popOldestWriteDataSample)
 {
     SetUp(5, 8);
-    for (int i = 3, j = 6; i < j; i++)
-    {
+    for (int i = 3, j = 6; i < j; i++) {
         ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 
     // refill backlog
-    for (int i = 8, j = 10; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 8, j = 10; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
-    for (int i = 6, j = 10; i < j; i++)
-    {
+    for (int i = 6, j = 10; i < j; i++) {
         ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 
     // overfill backlog and overwrite 2 samples
-    for (int i = 10, j = 17; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 10, j = 17; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
-    for (int i = 12, j = 17; i < j; i++)
-    {
+    for (int i = 12, j = 17; i < j; i++) {
         ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 
     // override front item twice to test whether front item index is updated correctly
-    for (int i = 17, j = 28; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 17, j = 28; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
-    for (int i = 23, j = 28; i < j; i++)
-    {
+    for (int i = 23, j = 28; i < j; i++) {
         ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), i);
     }
 }
@@ -405,30 +453,25 @@ TEST_F(TestDataReaderBacklogSetup, popLatestWriteDataSample)
 {
     SetUp(5, 8);
 
-    for (int i = 7, j = 4; i > j; i--)
-    {
+    for (int i = 7, j = 4; i > j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
     }
 
     // overwrite existing samples
-    for (int i = 8, j = 10; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 8, j = 10; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
 
-    for (int i = 9, j = 7; i > j; i--)
-    {
+    for (int i = 9, j = 7; i > j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
     }
 
     // overfill backlog and overwrite 2 samples
-    for (int i = 10, j = 17; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 10, j = 17; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
 
-    for (int i = 16, j = 11; i > j; i--)
-    {
+    for (int i = 16, j = 11; i > j; i--) {
         ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), i);
     }
 }
@@ -449,9 +492,8 @@ TEST_F(TestDataReaderBacklogSetup, popLatestOldestWriteDataSample)
     ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), 5);
 
     // overfill backlog and overwrite 2 samples
-    for (int i = 10, j = 17; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 10, j = 17; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
 
     // empty backlog using popOldest and popLatest in combination
@@ -462,9 +504,8 @@ TEST_F(TestDataReaderBacklogSetup, popLatestOldestWriteDataSample)
     ASSERT_EQ(_data_reader_backlog.popSampleLatest()->getTime().count(), 14);
 
     // overfill backlog and overwrite 4 samples
-    for (int i = 17, j = 26; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 17, j = 26; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
 
     // empty backlog using popOldest and popLatest in combination
@@ -475,9 +516,8 @@ TEST_F(TestDataReaderBacklogSetup, popLatestOldestWriteDataSample)
     ASSERT_EQ(_data_reader_backlog.popSampleOldest()->getTime().count(), 24);
 
     // overfill backlog and overwrite 2 samples
-    for (int i = 26, j = 33; i < j; i++)
-    {
-        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{ i });
+    for (int i = 26, j = 33; i < j; i++) {
+        pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
     }
 
     // empty backlog using popOldest and popLatest in combination

@@ -4,24 +4,20 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
+#include <fep3/base/sample/raw_memory_intf.h>
+
+#include <a_util/memory/memory.h>
+
 #include <string>
 #include <vector>
-#include "raw_memory_intf.h"
 
 namespace fep3 {
 namespace base {
@@ -29,43 +25,47 @@ namespace arya {
 
 /**
  * @brief Helper class to wrap up a const void* pointer as IRawMemory interface
- *
  */
-struct RawMemoryRef : public fep3::arya::IRawMemory
-{
+struct RawMemoryRef : public fep3::arya::IRawMemory {
     /**
      * @brief Construct a new Raw Memory Ref object
      *
      * @param[in] data the pointer to wrap up
-     * @param[in] data_size size in bytes stored in \p data
+     * @param[in] data_size size in bytes stored in @p data
      */
     explicit RawMemoryRef(const void* data, size_t data_size) : _data(data), _data_size(data_size)
     {
     }
+
     size_t capacity() const override
     {
         return _data_size;
     }
+
     const void* cdata() const override
     {
         return _data;
     }
+
     size_t size() const override
     {
         return _data_size;
     }
+
     size_t set(const void* /*data*/, size_t /*data_size*/) override
     {
         return 0;
     }
+
     size_t resize(size_t /*data_size*/) override
     {
         return size();
     }
+
 private:
-    ///the data pointer
+    /// the data pointer
     const void* _data;
-    ///the size in bytes stored in _data
+    /// the size in bytes stored in _data
     size_t _data_size;
 };
 
@@ -75,11 +75,11 @@ private:
  * @tparam T
  * @tparam Enable check for constness
  */
-template<class T, typename Enable = void>
-struct RawMemoryStandardType : public fep3::arya::IRawMemory
-{
-    ///the standard layout type value
+template <class T, typename Enable = void>
+struct RawMemoryStandardType : public fep3::arya::IRawMemory {
+    /// the standard layout type value
     T& _value;
+
     /**
      * @brief Construct a new Raw Memory Standard Type wrap up
      *
@@ -88,76 +88,80 @@ struct RawMemoryStandardType : public fep3::arya::IRawMemory
     RawMemoryStandardType(T& value) : _value(value)
     {
     }
+
     ///@copydoc fep3::arya::IRawMemory::capacity
     size_t capacity() const override
     {
         return sizeof(T);
     }
+
     ///@copydoc fep3::arya::IRawMemory::cdata
     const void* cdata() const override
     {
         return &_value;
     }
+
     ///@copydoc fep3::arya::IRawMemory::size
     size_t size() const override
     {
         return sizeof(T);
     }
+
     ///@copydoc fep3::arya::IRawMemory::set
     size_t set(const void* data, size_t data_size) override
     {
-        if (data_size != size())
-        {
-            //usually throw
+        if (data_size != size()) {
+            // usually throw
             return 0;
         }
-        else
-        {
+        else {
             return a_util::memory::copy(&_value, data, data_size) ? data_size : 0;
         }
     }
+
     ///@copydoc fep3::arya::IRawMemory::resize
     size_t resize(size_t data_size) override
     {
-        if (data_size != size())
-        {
-            //usually throw
+        if (data_size != size()) {
+            // usually throw
             return size();
         }
-        else
-        {
+        else {
             return size();
         }
     }
 };
 
+///@cond nodoc
 /**
  * @brief Helper class to wrap up a standard layout type as IRawMemory interface
  *
  * @tparam T
  */
-template<class T>
-struct RawMemoryStandardType<T,
-    typename std::enable_if<std::is_const<T>::value>::type>
-    : public fep3::arya::IRawMemory
-{
-    ///the reference of value
+template <class T>
+struct RawMemoryStandardType<T, typename std::enable_if<std::is_const<T>::value>::type>
+    : public fep3::arya::IRawMemory {
+    /// the reference of value
     T& _value;
+
     /**
-    * CTOR
-    * @param[in] value reference to the representing value
-    */
+     * CTOR
+     * @param[in] value reference to the representing value
+     */
     RawMemoryStandardType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return sizeof(T);
     }
+
     const void* cdata() const override
     {
         return &_value;
     }
+
     size_t size() const override
     {
         return sizeof(T);
@@ -165,12 +169,13 @@ struct RawMemoryStandardType<T,
 
     size_t set(const void* /*data*/, size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
+
     size_t resize(size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
 };
@@ -178,16 +183,16 @@ struct RawMemoryStandardType<T,
 /**
  * @brief Helper class to wrap up a class type as IRawMemory interface
  * the given class type must provide an interface to access
- * \p capacity(), \p size(), \p cdata(), \p resize()
+ * @p capacity(), @p size(), @p cdata(), @p resize()
  *
  * @tparam T
  * @tparam Enable check for constness
  */
-template<class T, typename Enable = void>
-struct RawMemoryClassType : public fep3::arya::IRawMemory
-{
+template <class T, typename Enable = void>
+struct RawMemoryClassType : public fep3::arya::IRawMemory {
     /// reference to the representing value
     T& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the representing value
@@ -195,28 +200,31 @@ struct RawMemoryClassType : public fep3::arya::IRawMemory
     RawMemoryClassType(T& value) : _value(value)
     {
     }
+
     /// @copydoc fep3::arya::IRawMemory::capacity
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     /// @copydoc fep3::arya::IRawMemory::cdata
     const void* cdata() const override
     {
         return _value.cdata();
     }
+
     /// @copydoc fep3::arya::IRawMemory::size
     size_t size() const override
     {
         return _value.size();
     }
-    /// @cond no_documentation
+
     size_t set(const void* data, size_t /*data_size*/) override
     {
         _value = static_cast<const typename T::value_type*>(data);
         return size();
     }
-    /// @endcond no_documentation
+
     /// @copydoc fep3::arya::IRawMemory::resize
     size_t resize(size_t data_size) override
     {
@@ -228,17 +236,16 @@ struct RawMemoryClassType : public fep3::arya::IRawMemory
 /**
  * @brief Helper class to wrap up a class type as IRawMemory interface
  * the given class type must provide an interface to access
- * \p capacity(), \p size(), \p cdata(), \p resize()
+ * @p capacity(), @p size(), @p cdata(), @p resize()
  *
  * @tparam T
  */
-template<typename T>
-struct RawMemoryClassType<T,
-    typename std::enable_if<std::is_const<T>::value>::type >
-    : public fep3::arya::IRawMemory
-{
+template <typename T>
+struct RawMemoryClassType<T, typename std::enable_if<std::is_const<T>::value>::type>
+    : public fep3::arya::IRawMemory {
     /// reference to the representing value
     T& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the representing value
@@ -246,39 +253,44 @@ struct RawMemoryClassType<T,
     RawMemoryClassType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     const void* cdata() const override
     {
         return _value.cdata();
     }
+
     size_t size() const override
     {
         return _value.size();
     }
+
     size_t set(const void* /*data*/, size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
+
     size_t resize(size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
 };
 /**
  * specialized raw memory type for the non-standard layout type std::string
  */
-template<>
-struct RawMemoryClassType<std::string, void> : public fep3::arya::IRawMemory
-{
+template <>
+struct RawMemoryClassType<std::string, void> : public fep3::arya::IRawMemory {
     /// type to use for string
     typedef std::string T;
     /// reference to the representing value
     T& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the representing value
@@ -286,24 +298,29 @@ struct RawMemoryClassType<std::string, void> : public fep3::arya::IRawMemory
     RawMemoryClassType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     const void* cdata() const override
     {
         return _value.c_str();
     }
+
     size_t size() const override
     {
-        //we ALWAYS use it with trailing \0
+        // we ALWAYS use it with trailing \0
         return _value.size() + 1;
     }
+
     size_t set(const void* data, size_t /*data_size*/) override
     {
         _value = static_cast<const typename T::value_type*>(data);
         return size();
     }
+
     size_t resize(size_t data_size) override
     {
         _value.resize(data_size);
@@ -314,13 +331,13 @@ struct RawMemoryClassType<std::string, void> : public fep3::arya::IRawMemory
 /**
  * @brief specialized raw memory class type to wrap up a std::string as IRawMemory
  */
-template<>
-struct RawMemoryClassType<const std::string, const std::string> : public fep3::arya::IRawMemory
-{
+template <>
+struct RawMemoryClassType<const std::string, const std::string> : public fep3::arya::IRawMemory {
     /// definition for type string as value type
     typedef const std::string T;
-    ///value reference
+    /// value reference
     T& _value;
+
     /**
      * CTOR
      * @param[in] value Reference to the value
@@ -328,42 +345,46 @@ struct RawMemoryClassType<const std::string, const std::string> : public fep3::a
     RawMemoryClassType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     const void* cdata() const override
     {
         return _value.c_str();
     }
+
     size_t size() const override
     {
-        //we ALWAYS use it with trailing \0
+        // we ALWAYS use it with trailing \0
         return _value.size() + 1;
     }
+
     size_t set(const void* /*data*/, size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
+
     size_t resize(size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
 };
 
-
 /**
  * specialized raw memory type for the non-standard layout type std::string
  */
-template<>
-struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory
-{
-    ///the type of value
+template <>
+struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory {
+    /// the type of value
     typedef std::string T;
-    ///the reference of value
+    /// the reference of value
     T& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the value representing as IRawMemory
@@ -371,24 +392,29 @@ struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory
     RawMemoryStandardType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     const void* cdata() const override
     {
         return _value.c_str();
     }
+
     size_t size() const override
     {
-        //we ALWAYS use it with trailing \0
+        // we ALWAYS use it with trailing \0
         return _value.size() + 1;
     }
+
     size_t set(const void* data, size_t /*data_size*/) override
     {
         _value = static_cast<const typename T::value_type*>(data);
         return size();
     }
+
     size_t resize(size_t data_size) override
     {
         _value.resize(data_size);
@@ -399,13 +425,13 @@ struct RawMemoryStandardType<std::string, void> : public fep3::arya::IRawMemory
 /**
  * specialized raw memory type for the non-standard layout type const std::string
  */
-template<>
-struct RawMemoryStandardType<const std::string, const std::string> : public fep3::arya::IRawMemory
-{
+template <>
+struct RawMemoryStandardType<const std::string, const std::string> : public fep3::arya::IRawMemory {
     /// type to the string as value type of RawMemoryStandardType
     typedef const std::string T;
     /// reference to the value
     T& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the value representing as IRawMemory
@@ -413,27 +439,32 @@ struct RawMemoryStandardType<const std::string, const std::string> : public fep3
     RawMemoryStandardType(T& value) : _value(value)
     {
     }
+
     size_t capacity() const override
     {
         return _value.capacity();
     }
+
     const void* cdata() const override
     {
         return _value.c_str();
     }
+
     size_t size() const override
     {
-        //we ALWAYS use it with trailing \0
+        // we ALWAYS use it with trailing \0
         return _value.size() + 1;
     }
+
     size_t set(const void* /*data*/, size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
+
     size_t resize(size_t /*data_size*/) override
     {
-        //usually throw
+        // usually throw
         return 0;
     }
 };
@@ -441,11 +472,11 @@ struct RawMemoryStandardType<const std::string, const std::string> : public fep3
 /**
  * Specialized raw memory type for the non-standard layout type std::vector
  */
-template<typename T>
-struct RawMemoryClassType<std::vector<T>, void> : public fep3::arya::IRawMemory
-{
+template <typename T>
+struct RawMemoryClassType<std::vector<T>, void> : public fep3::arya::IRawMemory {
     /// reference to the representing value
     std::vector<T>& _value;
+
     /**
      * CTOR
      * @param[in] value reference to the std vector which will be wrapped
@@ -489,7 +520,8 @@ struct RawMemoryClassType<std::vector<T>, void> : public fep3::arya::IRawMemory
      *
      * @param[in] data Pointer to c-array of type T
      * @param[in] data_size Size in bytes. Equals to element count multiplied by element size
-     * @return size_t The size in bytes that were copied (if not equal to @p data_size, something went wrong)
+     * @return size_t The size in bytes that were copied (if not equal to @p data_size, something
+     * went wrong)
      */
     size_t set(const void* data, size_t data_size) override
     {
@@ -514,6 +546,7 @@ struct RawMemoryClassType<std::vector<T>, void> : public fep3::arya::IRawMemory
         return size();
     }
 };
+///@endcond nodoc
 
 } // namespace arya
 using arya::RawMemoryClassType;

@@ -1,14 +1,8 @@
 // Copyright @ 2021 VW Group. All rights reserved.
 //
-//     This Source Code Form is subject to the terms of the Mozilla
-//     Public License, v. 2.0. If a copy of the MPL was not distributed
-//     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// If it is not possible or desirable to put the notice in a particular file, then
-// You may include the notice in a location (such as a LICENSE file in a
-// relevant directory) where a recipient would be likely to look for such a notice.
-//
-// You may add additional accurate notices of copyright ownership.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License, v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 [
     // returns a comma seperated list of all signal names coming in
     {
@@ -33,12 +27,14 @@
             "signal_name": "signal_name"
         },
         "returns": {
-            "meta_type": "meta_type",
-            "properties": {
-                "names": "name_prop_1,name_prop_2,name_prop_3",
-                "values": "value_prop_1,value_prop_2,value_prop_3",
-                "types": "type_prop_1,type_prop_2,type_prop_3"
-            }
+            "meta_type": "meta_type", // meta type name
+            "properties": [ // stream type properties
+                {
+                    "name": "name", // property name
+                    "value": "value", // property value
+                    "type": "type" // property type
+                }
+            ]
         }
     }
  ]

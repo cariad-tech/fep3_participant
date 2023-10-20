@@ -4,39 +4,28 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <memory>
-
 #include <fep3/fep3_result_decl.h>
-namespace fep3
-{
-namespace arya
-{
 
+#include <memory>
+#include <vector>
+
+namespace fep3 {
+namespace arya {
 
 /**
  * @brief Interface for a property node to store configuration information.
  * The node can be registered at the @ref fep3::arya::IConfigurationService.
  * The node consists of a value, a name and a vector of children.
  */
-class IPropertyNode
-{
+class IPropertyNode {
 protected:
     /// DTOR
     ~IPropertyNode() = default;
@@ -49,7 +38,7 @@ public:
      */
     virtual std::string getName() const = 0;
 
-     /**
+    /**
      * @brief Get the current value of the node as string.
      *
      * @return Current value of node as std::string
@@ -59,7 +48,7 @@ public:
     /**
      * @brief Get the type name of the node.
      *
-     * See @ref fep3::base::arya::PropertyType<T>::getTypeName for default types.
+     * See @ref fep3::base::arya::PropertyType<T,U>::getTypeName for default types.
      *
      * @return Type name of node
      */
@@ -132,7 +121,6 @@ public:
     virtual bool isChild(const std::string& name) const = 0;
 };
 
-}  // namespace arya
+} // namespace arya
 using arya::IPropertyNode;
 } // namespace fep3
-

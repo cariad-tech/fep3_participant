@@ -4,22 +4,12 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include <gtest_asserts.h>
 #include <properties_test_helper.h>
 
@@ -31,8 +21,55 @@ using NativePropertyNode = fep3::base::NativePropertyNode;
 const std::string default_type = fep3::base::PropertyType<std::string>::getTypeName();
 
 /**
+ * @brief The Copy CTOR is tested
+ */
+TEST(NativePropertyNode, CopyCTOR)
+{
+    auto native_property_node = createTestProperty();
+    auto copy_constructed_node(native_property_node);
+
+    ASSERT_TRUE(native_property_node.isEqual(copy_constructed_node));
+}
+
+/**
+ * @brief The Move CTOR is tested
+ */
+TEST(NativePropertyNode, MoveCTOR)
+{
+    auto native_property_node = createTestProperty();
+    auto native_property_node_copy = native_property_node;
+    auto move_constructed_node(std::move(native_property_node));
+
+    ASSERT_TRUE(native_property_node_copy.isEqual(move_constructed_node));
+}
+
+/**
+ * @brief The Copy assignment operator is tested
+ */
+TEST(NativePropertyNode, CopyAssignmentOperator)
+{
+    auto native_property_node = createTestProperty();
+    NativePropertyNode copy_assigned_node("test");
+    copy_assigned_node = native_property_node;
+
+    ASSERT_TRUE(native_property_node.isEqual(copy_assigned_node));
+}
+
+/**
+ * @brief The Move assignment operator is tested
+ */
+TEST(NativePropertyNode, MoveAssignmentOperator)
+{
+    auto native_property_node = createTestProperty();
+    auto native_property_node_copy = native_property_node;
+    NativePropertyNode move_assigned_node("test");
+    move_assigned_node = std::move(native_property_node);
+
+    ASSERT_TRUE(native_property_node_copy.isEqual(move_assigned_node));
+}
+
+/**
  * @brief The property name validation upon construction is tested
- *
  */
 TEST(NativePropertyNode, propertyNameValidationOnConstruction)
 {
@@ -42,7 +79,6 @@ TEST(NativePropertyNode, propertyNameValidationOnConstruction)
 
 /**
  * @brief Method isEqual is tested
- *
  */
 TEST(NativePropertyNode, isEqual)
 {
@@ -51,14 +87,20 @@ TEST(NativePropertyNode, isEqual)
     auto property_node = std::make_shared<base::NativePropertyNode>(main_node_name);
 
     {
-        EXPECT_TRUE(NativePropertyNode("my_node", "value", "my_type").isEqual(NativePropertyNode("my_node", "value", "my_type")));
-        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type").isEqual(NativePropertyNode("my_node", "value_not", "my_type")));
-        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type").isEqual(NativePropertyNode("my_node", "value", "my_type_not")));
+        EXPECT_TRUE(NativePropertyNode("my_node", "value", "my_type")
+                        .isEqual(NativePropertyNode("my_node", "value", "my_type")));
+        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type")
+                         .isEqual(NativePropertyNode("my_node", "value_not", "my_type")));
+        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type")
+                         .isEqual(NativePropertyNode("my_node", "value", "my_type_not")));
         EXPECT_TRUE(createTestProperties()->isEqual(*createTestProperties()));
 
         {
             const auto test_properties = createTestProperties();
-            EXPECT_FEP3_NOERROR(test_properties->getChild("Clocks")->getChild("Clock1")->getChild("CycleTime")->setValue("2"));
+            EXPECT_FEP3_NOERROR(test_properties->getChild("Clocks")
+                                    ->getChild("Clock1")
+                                    ->getChild("CycleTime")
+                                    ->setValue("2"));
             EXPECT_FALSE(test_properties->isEqual(*createTestProperties()));
         }
     }
@@ -66,7 +108,6 @@ TEST(NativePropertyNode, isEqual)
 
 /**
  * @brief Method setChild is tested for child that is not yet existing
- *
  */
 TEST(NativePropertyNode, setChildThatIsNew)
 {
@@ -75,7 +116,8 @@ TEST(NativePropertyNode, setChildThatIsNew)
 
     auto property_node = std::make_shared<base::NativePropertyNode>(main_node_name);
     {
-        property_node->setChild(std::make_shared<base::NativePropertyNode>(node_name, "value", default_type));
+        property_node->setChild(
+            std::make_shared<base::NativePropertyNode>(node_name, "value", default_type));
 
         EXPECT_EQ(property_node->getNumberOfChildren(), 1);
         EXPECT_EQ(property_node->getChild(node_name)->getName(), node_name);
@@ -87,7 +129,6 @@ TEST(NativePropertyNode, setChildThatIsNew)
 /**
  * @brief Method setChild is tested for child that is already existing.
  * The already existing child has to be overridden.
- *
  */
 TEST(NativePropertyNode, setChildThatIsExisting)
 {
@@ -96,10 +137,14 @@ TEST(NativePropertyNode, setChildThatIsExisting)
 
     auto property_node = std::make_shared<base::NativePropertyNode>(main_node_name);
     {
-        setChildImpl(property_node, std::make_shared<base::NativePropertyNode>(node_name, "value_old", default_type))
-            ->setChild(std::make_shared<base::NativePropertyNode>("my_child_property", "value_child", default_type));
+        setChildImpl(
+            property_node,
+            std::make_shared<base::NativePropertyNode>(node_name, "value_old", default_type))
+            ->setChild(std::make_shared<base::NativePropertyNode>(
+                "my_child_property", "value_child", default_type));
 
-        auto property_to_add = std::make_shared<base::NativePropertyNode>(node_name, "value_new", default_type);
+        auto property_to_add =
+            std::make_shared<base::NativePropertyNode>(node_name, "value_new", default_type);
         property_node->setChild(property_to_add);
 
         EXPECT_TRUE(property_node->getChild(node_name)->isEqual(*property_to_add));
@@ -108,24 +153,24 @@ TEST(NativePropertyNode, setChildThatIsExisting)
 
 /**
  * @brief The methods getName(), getValue(), getType() are tested
- *
  */
 TEST(NativePropertyNode, getNameValueType)
 {
     const auto test_properties = createTestProperties();
     EXPECT_EQ(test_properties->getName(), "Clock");
     EXPECT_EQ(test_properties->getValue(), "");
-    EXPECT_EQ(test_properties->getTypeName(), base::PropertyType<base::NodePropertyType>::getTypeName().c_str());
+    EXPECT_EQ(test_properties->getTypeName(),
+              base::PropertyType<base::NodePropertyType>::getTypeName());
 
-    const auto cycle_time_node = test_properties->getChild("Clocks")->getChild("Clock1")->getChild("CycleTime");
+    const auto cycle_time_node =
+        test_properties->getChild("Clocks")->getChild("Clock1")->getChild("CycleTime");
     EXPECT_EQ(cycle_time_node->getName(), "CycleTime");
     EXPECT_EQ(cycle_time_node->getValue(), "1");
-    EXPECT_EQ(cycle_time_node->getTypeName(), fep3::base::PropertyType<int32_t>::getTypeName().c_str());
+    EXPECT_EQ(cycle_time_node->getTypeName(), fep3::base::PropertyType<int32_t>::getTypeName());
 }
 
 /**
  * @brief The methods getChild(), getNumberOfChildren(), getChildren() are tested
- *
  */
 TEST(NativePropertyNode, getChildRelatedMethods)
 {
@@ -142,7 +187,6 @@ TEST(NativePropertyNode, getChildRelatedMethods)
 
 /**
  * @brief The method copyDeepFrom is tested
- *
  */
 TEST(NativePropertyNode, copyDeepFrom)
 {
@@ -150,17 +194,15 @@ TEST(NativePropertyNode, copyDeepFrom)
     NativePropertyNode copy_target("some_name");
 
     {
-    ASSERT_FALSE(copy_target.isEqual(*copy_source));
-    copy_target.copyDeepFrom(*copy_source);
-    EXPECT_TRUE(copy_target.isEqual(*copy_source));
+        ASSERT_FALSE(copy_target.isEqual(*copy_source));
+        copy_target.copyDeepFrom(*copy_source);
+        EXPECT_TRUE(copy_target.isEqual(*copy_source));
     }
 }
 
-
 /**
-* @brief The method setProperty is tested
-*
-*/
+ * @brief The method setProperty is tested
+ */
 TEST(NativePropertyNode, setProperty)
 {
     const auto main_node_name = "main_node";
@@ -172,16 +214,14 @@ TEST(NativePropertyNode, setProperty)
     EXPECT_EQ(properties.getValue(), "new_value");
 }
 
-
-struct Observer : public fep3::base::IPropertyObserver
-{
+struct Observer : public fep3::base::IPropertyObserver {
     MOCK_METHOD1(onUpdate, void(fep3::IPropertyNode&));
 };
 
 /**
-* @brief The observer registration and updating of an observer is tested
-* @req_id
-*/
+ * @brief The observer registration and updating of an observer is tested
+ * @req_id
+ */
 TEST(NativePropertyNode, observerRegisterAndUpdate)
 {
     const auto property_node_name = "name";
@@ -204,7 +244,6 @@ TEST(NativePropertyNode, observerRegisterAndUpdate)
 
 /**
  * @brief The unregistration of an observer is tested
- *
  */
 TEST(NativePropertyNode, observerUnregister)
 {
@@ -234,7 +273,6 @@ TEST(NativePropertyNode, observerUnregister)
 
 /**
  * @brief It is tested that a PropertyVariable can be created with all supported no array types.
- *
  */
 TEST(PropertyVariable, PropertyVariableTypes)
 {
@@ -246,14 +284,13 @@ TEST(PropertyVariable, PropertyVariableTypes)
     EXPECT_TRUE(true);
 }
 
-struct PropertyVariableRegistrationFixture
-    : public ::testing::Test
-{
+struct PropertyVariableRegistrationFixture : public ::testing::Test {
     PropertyVariableRegistrationFixture()
     {
-        property_node = std::make_shared<base::NativePropertyNode>(main_node_name
-            , base::DefaultPropertyTypeConversion<double>::toString(init_value)
-            , base::PropertyType<double>::getTypeName());
+        property_node = std::make_shared<base::NativePropertyNode>(
+            main_node_name,
+            base::DefaultPropertyTypeConversion<double>::toString(init_value),
+            base::PropertyType<double>::getTypeName());
     }
 
     double init_value = 0.0;
@@ -264,7 +301,6 @@ struct PropertyVariableRegistrationFixture
 
 /**
  * @brief The method registerVariable is tested
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, registerVariable)
 {
@@ -279,9 +315,8 @@ TEST_F(PropertyVariableRegistrationFixture, registerVariable)
 }
 
 /**
- * @brief The method registerVariable is tested for the case that the variable has different type than the property
- * In this case an error is expected.
- *
+ * @brief The method registerVariable is tested for the case that the variable has different type
+ * than the property In this case an error is expected.
  */
 TEST_F(PropertyVariableRegistrationFixture, registerVariableWrongType)
 {
@@ -291,7 +326,6 @@ TEST_F(PropertyVariableRegistrationFixture, registerVariableWrongType)
 
 /**
  * @brief The method registerVariable is tested for the case that a child node has to be created
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, registerVariableAsChild)
 {
@@ -312,15 +346,15 @@ TEST_F(PropertyVariableRegistrationFixture, registerVariableAsChild)
 /**
  * @brief The method registerVariable is tested for the case that a child node is already existing
  * The property value has to be updated on registration.
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, registerVariableAsChildChildExisting)
 {
     const auto child_name = "child";
 
-    property_node->setChild(std::make_shared<base::NativePropertyNode>(child_name
-        , base::DefaultPropertyTypeConversion<double>::toString(init_value)
-        , base::PropertyType<double>::getTypeName()));
+    property_node->setChild(std::make_shared<base::NativePropertyNode>(
+        child_name,
+        base::DefaultPropertyTypeConversion<double>::toString(init_value),
+        base::PropertyType<double>::getTypeName()));
 
     const auto new_init_value = 2.0;
     base::PropertyVariable<double> variable = new_init_value;
@@ -338,7 +372,6 @@ TEST_F(PropertyVariableRegistrationFixture, registerVariableAsChildChildExisting
 
 /**
  * @brief The method unregisterVariable is tested
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, unregisterVariable)
 {
@@ -355,7 +388,6 @@ TEST_F(PropertyVariableRegistrationFixture, unregisterVariable)
 
 /**
  * @brief The method unregisterVariable for a child node is tested
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, unregisterVariableAsChild)
 {
@@ -376,7 +408,6 @@ TEST_F(PropertyVariableRegistrationFixture, unregisterVariableAsChild)
 
 /**
  * @brief The method unregisterVariable for a child node is tested if the child is not existing
- *
  */
 TEST_F(PropertyVariableRegistrationFixture, unregisterVariableAsChildWhichIsNotExisting)
 {

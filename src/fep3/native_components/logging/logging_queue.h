@@ -4,41 +4,26 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <atomic>   //std::atomic<int32_t>
-#include <string>
+#include <fep3/base/queue/fep3_locked_queue.h>
+#include <fep3/fep3_errors.h>
+
+#include <a_util/concurrency.h>
+#include <a_util/memory.h>
+#include <a_util/system.h>
+
 #include <functional>
 
-#include "a_util/concurrency.h"
-#include "a_util/memory.h"
-#include "a_util/system.h"
-#include "fep3/base/queue/fep3_locked_queue.h"
-#include "fep3/fep3_errors.h"
-
-namespace fep3
-{
-namespace native
-{
-namespace arya
-{
-class LoggingQueue
-{
-
+namespace fep3 {
+namespace native {
+class LoggingQueue {
 public:
     /**
      * Default constructor
@@ -65,14 +50,12 @@ public:
      */
     fep3::Result add(const std::function<void()>& fcn);
 
-
-
 private:
     /**
-    * Method called by the TimerFunc to publish a single queued message.
-    * @retval ERR_NOERROR Message has been logged successfully.
-    * @retval ERR_EMPTY Queue is empty.
-    */
+     * Method called by the TimerFunc to publish a single queued message.
+     * @retval ERR_NOERROR Message has been logged successfully.
+     * @retval ERR_EMPTY Queue is empty.
+     */
     fep3::Result collectAndExecute();
     /// Maximum number of queue-slots
     int _max_queue_slot_num;
@@ -99,7 +82,5 @@ private:
     /// The actual lock free queue
     base::LockedQueue<std::function<void()>> _function_queue;
 };
-} // namespace arya
-using arya::LoggingQueue;
 } // namespace native
 } // namespace fep3

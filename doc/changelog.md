@@ -5,13 +5,7 @@
       Public License, v. 2.0. If a copy of the MPL was not distributed
       with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
   
-  If it is not possible or desirable to put the notice in a particular file, then
-  You may include the notice in a location (such as a LICENSE file in a
-  relevant directory) where a recipient would be likely to look for such a notice.
-  
-  You may add additional accurate notices of copyright ownership.
-  
-  -->
+-->
 
 # FEP SDK Participant Library Changelog
 All notable changes to this project will be documented in this file.
@@ -19,6 +13,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0) and this project adheres to [Semantic Versioning](https://semver.org/lang/en).
 
 ## [Unreleased]
+
+## [3.2.0]
+
+For the changes and bugfixes please have a look to the FEP SDK changelog.
+
 
 ## [3.1.0]
 

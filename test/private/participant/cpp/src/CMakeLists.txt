@@ -1,18 +1,10 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
-fep3_participant_create_copy_target(private_participant_cpp)
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+internal_fep3_participant_create_copy_target(private_participant_cpp)
 set_target_properties(fep_participant_file_copy_private_participant_cpp PROPERTIES FOLDER "test/private/participant/cpp")
 
 ##################################################################
@@ -27,10 +19,12 @@ add_test(NAME tester_job
 )
 target_link_libraries(tester_job PRIVATE
     GTest::gtest_main
+    GTest::gmock
     ${CMAKE_DL_LIBS}
     participant_private_test_utils
     participant_test_utils
     fep3_participant_cpp
+    fep3_component_registry
 )
 add_dependencies(tester_job fep_participant_file_copy_private_participant_cpp)
 set_target_properties(tester_job PROPERTIES FOLDER "test/private/participant/cpp")
@@ -50,6 +44,7 @@ target_link_libraries(tester_data_job_element PRIVATE
     GTest::gmock
     participant_test_utils
     fep3_participant_cpp
+    fep3_components_test
 )
 add_dependencies(tester_data_job_element fep_participant_file_copy_private_participant_cpp)
 set_target_properties(tester_data_job_element PROPERTIES FOLDER "test/private/participant/cpp")

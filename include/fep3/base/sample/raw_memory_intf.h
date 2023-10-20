@@ -4,35 +4,22 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <fep3/fep3_participant_types.h>
+#include <cstddef>
 
-namespace fep3
-{
-namespace arya
-{
+namespace fep3 {
+namespace arya {
 /**
  * @brief Raw Memory interface to access any kind of data by a raw memory pointer and its size
- *
  */
-class IRawMemory
-{
+class IRawMemory {
 protected:
     /// DTOR
     ~IRawMemory() = default;
@@ -44,12 +31,14 @@ public:
      * @return size_t The size in bytes
      */
     virtual size_t capacity() const = 0;
+
     /**
      * @brief Gets the raw pointer to the memory
      *
      * @return const void* The pointer
      */
     virtual const void* cdata() const = 0;
+
     /**
      * @brief Gets the size of the current stored value in the memory
      *
@@ -62,9 +51,11 @@ public:
      *
      * @param[in] data The data to set
      * @param[in] data_size The size in bytes to set
-     * @return size_t The size in bytes that were copied (if not equal to @p data_size, something went wrong)
+     * @return size_t The size in bytes that were copied (if not equal to @p data_size, something
+     * went wrong)
      */
     virtual size_t set(const void* data, size_t data_size) = 0;
+
     /**
      * @brief Resizes the memory
      *
@@ -73,6 +64,6 @@ public:
      */
     virtual size_t resize(size_t data_size) = 0;
 };
-}
+} // namespace arya
 using arya::IRawMemory;
-}
+} // namespace fep3

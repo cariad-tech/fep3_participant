@@ -4,32 +4,22 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
- //Guideline - FEP System Library API Exception
+// Guideline - FEP System Library API Exception
 #ifndef _FEP_BASE_LOGGING_TYPES_H
 #define _FEP_BASE_LOGGING_TYPES_H
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
-namespace fep3
-{
+namespace fep3 {
 /// Version namespace
-namespace arya
-{
+namespace arya {
 /// Filter for logging events, the smaller the number the less events will be given
 enum class LoggerSeverity : uint8_t
 {
@@ -51,8 +41,7 @@ enum class LoggerSeverity : uint8_t
  * Struct for a log message
  * is used within the ILogger interface.
  */
-struct LogMessage
-{
+struct LogMessage {
     /// The timestamp of the simulation time [ns]
     std::string _timestamp;
     /// The level of importance of the event
@@ -72,8 +61,7 @@ struct LogMessage
  */
 inline std::string getString(arya::LoggerSeverity severity)
 {
-    switch (severity)
-    {
+    switch (severity) {
     case LoggerSeverity::info:
         return "Info";
     case LoggerSeverity::warning:
@@ -90,10 +78,9 @@ inline std::string getString(arya::LoggerSeverity severity)
 }
 
 /**
-* Struct to describe a logging configuration
-*/
-struct LoggerFilter
-{
+ * Struct to describe a logging configuration
+ */
+struct LoggerFilter {
     /// The maximum level that should be logged
     arya::LoggerSeverity _severity;
     /// List of all enabled logging sinks. Natively supported are "file", "console" and "rpc"
@@ -101,9 +88,9 @@ struct LoggerFilter
 };
 
 } // namespace arya
+using arya::LoggerFilter;
 using arya::LoggerSeverity;
 using arya::LogMessage;
-using arya::LoggerFilter;
 } // namespace fep3
 
 #endif //_FEP_BASE_LOGGING_TYPES_H

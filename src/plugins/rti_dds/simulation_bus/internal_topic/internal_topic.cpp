@@ -4,50 +4,39 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <plugins/rti_dds/simulation_bus/rti_conext_dds_include.h>
-#include <fep3/base/stream_type/default_stream_type.h>
-#include <fep3/base/sample/data_sample.h>
 #include "internal_topic.h"
+
+#include <fep3/base/sample/data_sample.h>
 
 using namespace fep3;
 using namespace dds::domain;
 
-
-InternalTopic::InternalTopic(
-    const std::string& topic_name):
-    _topic_name(topic_name)
+InternalTopic::InternalTopic(const std::string& topic_name) : _topic_name(topic_name)
 {
 }
-
 
 std::string InternalTopic::GetTopic()
 {
     return _topic_name;
 }
 
-std::unique_ptr<fep3::ISimulationBus::IDataReader> InternalTopic::createDataReader
-    (size_t /*queue_capacity*/
-    , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& /*data_access_collection*/
-    )
+std::unique_ptr<fep3::ISimulationBus::IDataReader> InternalTopic::createDataReader(
+    size_t, /*queue_capacity*/
+    const std::weak_ptr<
+        fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& /*data_access_collection*/
+)
 {
     return std::make_unique<InternalTopic::InternalReader>(shared_from_this());
 }
 
-std::unique_ptr<fep3::ISimulationBus::IDataWriter> InternalTopic::createDataWriter(size_t /*queue_capacity*/)
+std::unique_ptr<fep3::ISimulationBus::IDataWriter> InternalTopic::createDataWriter(
+    size_t /*queue_capacity*/)
 {
     return {};
 }
@@ -55,8 +44,7 @@ std::unique_ptr<fep3::ISimulationBus::IDataWriter> InternalTopic::createDataWrit
 void InternalTopic::write(const std::string& data)
 {
     std::lock_guard<std::recursive_mutex> guard(_queue_mutex);
-    while (_queue.size() > 10)
-    {
+    while (_queue.size() > 10) {
         _queue.pop();
     }
 
@@ -66,7 +54,6 @@ void InternalTopic::write(const std::string& data)
 InternalTopic::InternalReader::InternalReader(const std::shared_ptr<InternalTopic>& internal_topic)
     : _internal_topic(internal_topic)
 {
-
 }
 
 size_t InternalTopic::InternalReader::size() const
@@ -83,8 +70,7 @@ size_t InternalTopic::InternalReader::capacity() const
 
 bool InternalTopic::InternalReader::pop(fep3::ISimulationBus::IDataReceiver& receiver)
 {
-    if (size() > 0)
-    {
+    if (size() > 0) {
         std::lock_guard<std::recursive_mutex> guard(_internal_topic->_queue_mutex);
         const std::string data = _internal_topic->_queue.front();
         _internal_topic->_queue.pop();
@@ -100,9 +86,9 @@ bool InternalTopic::InternalReader::pop(fep3::ISimulationBus::IDataReceiver& rec
     return false;
 }
 
-void InternalTopic::InternalReader::reset(const std::shared_ptr<fep3::arya::ISimulationBus::IDataReceiver>& /*receiver*/)
+void InternalTopic::InternalReader::reset(
+    const std::shared_ptr<fep3::arya::ISimulationBus::IDataReceiver>& /*receiver*/)
 {
-
 }
 
 fep3::Optional<fep3::Timestamp> InternalTopic::InternalReader::getFrontTime() const

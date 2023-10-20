@@ -4,19 +4,11 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
 
 #include "data_io.h"
 
@@ -31,31 +23,31 @@ DataRegistry::DataReader::~DataReader()
 {
 }
 
-
-
 /***************************************************************/
 /* DataWriter                                                  */
 /***************************************************************/
 
 fep3::Result DataRegistry::DataWriter::write(const IDataSample& data_sample)
 {
-    //usually we should NOT imidiatelly forward here but push to a queue and forward it while flush is called!
-    //but this can be done only if we are able to preallocate data_write_ptr from the simbus
+    // usually we should NOT imidiatelly forward here but push to a queue and forward it while flush
+    // is called! but this can be done only if we are able to preallocate data_write_ptr from the
+    // simbus
     return _dataout_writer_ref.write(data_sample);
 }
 
 fep3::Result DataRegistry::DataWriter::write(const IStreamType& stream_type)
 {
-    //usually we should NOT imidiatelly forward here but push to a queue and forward it while flush is called!
-    //but this can be done only if we are able to preallocate data_write_ptr from the simbus
+    // usually we should NOT imidiatelly forward here but push to a queue and forward it while flush
+    // is called! but this can be done only if we are able to preallocate data_write_ptr from the
+    // simbus
     return _dataout_writer_ref.write(stream_type);
 }
 
 fep3::Result DataRegistry::DataWriter::flush()
 {
-    //usually we should forward our queue content here and call transmit afterwards in a whole
-    //but this can be done only if we are able to preallocate data_write_ptr from the simbus and hold them in a queue here
-    //(alloc_write_sample! )
+    // usually we should forward our queue content here and call transmit afterwards in a whole
+    // but this can be done only if we are able to preallocate data_write_ptr from the simbus and
+    // hold them in a queue here (alloc_write_sample! )
     return _dataout_writer_ref.transmit();
 }
 
@@ -64,7 +56,6 @@ size_t DataRegistry::DataWriter::capacity() const
     return _queue_capacity;
 }
 
-
 /***************************************************************/
 /* DataReaderProxy                                             */
 /***************************************************************/
@@ -72,9 +63,9 @@ size_t DataRegistry::DataWriter::capacity() const
 DataRegistry::DataReaderProxy::DataReaderProxy(std::shared_ptr<IDataRegistry::IDataReader> reader)
     : _data_reader(reader)
 {
-    if (!_data_reader)
-    {
-        throw std::runtime_error("DataReaderProxy cannot be constructed with an invalid reader object!");
+    if (!_data_reader) {
+        throw std::runtime_error(
+            "DataReaderProxy cannot be constructed with an invalid reader object!");
     }
 }
 
@@ -105,9 +96,9 @@ fep3::Optional<Timestamp> DataRegistry::DataReaderProxy::getFrontTime() const
 DataRegistry::DataWriterProxy::DataWriterProxy(std::shared_ptr<IDataRegistry::IDataWriter> writer)
     : _data_writer(writer)
 {
-    if (!_data_writer)
-    {
-        throw std::runtime_error("DataWriterProxy cannot be constructed with an invalid writer object!");
+    if (!_data_writer) {
+        throw std::runtime_error(
+            "DataWriterProxy cannot be constructed with an invalid writer object!");
     }
 }
 

@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 Copyright @ 2021 VW Group. All rights reserved.
- 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
- 
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
- 
-You may add additional accurate notices of copyright ownership.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -->
 <components xmlns="http://fep.vwgroup.com/fep_sdk/3.0/components">
     <schema_version>1.0.0</schema_version>
@@ -24,7 +18,7 @@ You may add additional accurate notices of copyright ownership.
       <source type="cpp-plugin">
         ./fep_components_plugin
       </source>
-        <iid>service_bus.arya.fep3.iid</iid>
+        <iid>service_bus.catelyn.fep3.iid</iid>
     </component>
     <component>
         <source type="cpp-plugin">
@@ -37,11 +31,5 @@ You may add additional accurate notices of copyright ownership.
             test_cpp_plugin_2
         </source>
         <iid>ITestComponentC</iid>
-    </component>
-    <component>
-        <source type="c-plugin">
-            test_component_intfs_sim_bus_c_plugin
-        </source>
-        <iid>simulation_bus.arya.fep3.iid</iid>
     </component>
 </components>

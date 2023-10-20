@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 
@@ -38,10 +30,14 @@ install(
     DESTINATION include/fep3
 )
 
-find_package(dev_essential REQUIRED COMPONENTS pkg_rpc ddl)
-find_package(Boost 1.73.0 REQUIRED COMPONENTS filesystem date_time)
-# disable boost autolink, otherwise boost will look the library with the wrong name
-add_compile_definitions(BOOST_ALL_NO_LIB)
+if(NOT TARGET dev_essential)
+    find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc ddl)
+else()
+    include(${dev_essential_SOURCE_DIR}/scripts/cmake/stub_generation.cmake)
+endif()
+
+find_package(Boost 1.73.0 REQUIRED COMPONENTS date_time filesystem)
+include(../../scripts/cmake/set_boost_interface_targets.cmake)
 
 set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_export.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_errors.h
@@ -51,12 +47,12 @@ set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_exp
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_types.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_timestamp.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_duration.h
-                         ${PROJECT_SOURCE_DIR}/include/fep3/c_access_wrapper/fep3_result_c_access_wrapper.h
-                         ${PROJECT_SOURCE_DIR}/include/fep3/c_intf/fep3_result_c_intf.h
                          ${PROJECT_BINARY_DIR}/include/fep3/fep3_participant_version.h)
 
 set (FEP3_SOURCES ${FEP3_COMMON_SOURCES})
 set (FEP3_PLUGIN_CPP_LIB_SOURCES ${FEP3_COMMON_SOURCES})
+set (FEP_NATIVE_COMPONENTS_STUB_GENERATORS)
+set (FEP_PARTICIPANT_STUB_GENERATORS)
 
 source_group(common FILES ${FEP3_COMMON_SOURCES})
 ################################################
@@ -72,22 +68,11 @@ include(components/job_registry/cmake.sources)
 include(components/participant_info/cmake.sources)
 include(components/scheduler/cmake.sources)
 include(components/simulation_bus/cmake.sources)
+include(components/service_bus/cmake.sources)
 # native components
-include(native_components/base/cmake.sources)
-include(native_components/data_registry/cmake.sources)
-include(native_components/scheduler/cmake.sources)
-include(native_components/service_bus/cmake.sources)
 include(native_components/clock/cmake.sources)
 include(native_components/clock_sync/cmake.sources)
-include(native_components/simulation_bus/cmake.sources)
-include(native_components/logging/cmake.sources)
-include(native_components/job_registry/cmake.sources)
-include(native_components/configuration/cmake.sources)
-include(native_components/participant_info/cmake.sources)
-include(native_components/health/cmake.sources)
 # plugin
-include(plugin/base/cmake.sources)
-include(plugin/c/cmake.sources)
 include(plugin/cpp/cmake.sources)
 # participant
 include(participant/cmake.sources)
@@ -106,6 +91,8 @@ target_sources(fep3_participant_object_lib PRIVATE ${FEP3_SOURCES})
 add_library(fep3_participant SHARED
     $<TARGET_OBJECTS:fep3_participant_object_lib>
 )
+add_dependencies(fep3_participant_object_lib ${FEP_NATIVE_COMPONENTS_STUB_GENERATORS}
+                                             ${FEP_PARTICIPANT_STUB_GENERATORS})
 
 ###########################################
 # configure object_library
@@ -116,17 +103,17 @@ set_target_properties(fep3_participant_object_lib PROPERTIES FOLDER "libraries")
 
 target_include_directories(fep3_participant_object_lib PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
-    PRIVATE ${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(fep3_participant_object_lib PUBLIC
-    dev_essential::ddl
-    dev_essential::pkg_rpc
-    PRIVATE
-    Boost::date_time
-    Boost::filesystem
-    Boost::disable_autolinking
+target_link_libraries(fep3_participant_object_lib
+    PUBLIC dev_essential::ddl
+           dev_essential::pkg_rpc
+    PRIVATE Boost::filesystem
+            fep3_environment_variable
+            fep3_default_severity_from_env_variable
 )
+
+set_target_properties(fep3_participant_object_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
     target_link_libraries(fep3_participant_object_lib PUBLIC "Iphlpapi.lib")
 endif()
@@ -147,9 +134,14 @@ target_compile_definitions(fep3_participant_object_lib PRIVATE _FEP3_PARTICIPANT
 # configure fep_participant
 ###########################################
 
-target_link_libraries(fep3_participant PRIVATE fep3_participant_object_lib
+target_link_libraries(fep3_participant PRIVATE fep3_participant_object_lib fep3_component_registry
                                        PUBLIC dev_essential::result
                                               dev_essential::memory)
+
+if(UNIX)
+    # we shall not export symbols from linked static libraries
+    target_link_options(fep3_participant PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:fep3_component_registry>")
+endif(UNIX)
 
 target_compile_features(fep3_participant PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 if(MSVC)
@@ -174,11 +166,7 @@ set_target_properties(fep3_participant PROPERTIES
     RELWITHDEBINFO_POSTFIX "${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR}"
 )
 
-# "SYSTEM" includes (compiler warnings will be ignored)
-target_include_directories(fep3_participant_object_lib SYSTEM
-    PRIVATE
-    ${CONAN_INCLUDE_DIRS}
-)
+target_compile_definitions(fep3_participant PRIVATE _FEP3_PARTICIPANT_DO_EXPORT)
 
 ##################################################
 # setup a static target for the cpp plugin creation
@@ -187,7 +175,7 @@ target_include_directories(fep3_participant_object_lib SYSTEM
 # Add imported library target for the participant_cpp_plugin
 add_library(fep3_participant_cpp_plugin STATIC
             ${FEP3_PLUGIN_CPP_LIB_SOURCES})
-target_compile_definitions(fep3_participant_cpp_plugin PUBLIC _FEP3_PARTICIPANT_INCLUDED_STATIC)
+
 target_include_directories(fep3_participant_cpp_plugin PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
@@ -207,6 +195,10 @@ set_target_properties(fep3_participant_cpp_plugin PROPERTIES FOLDER "libraries")
 # setup a static target for the core api library
 ##################################################
 
+if(NOT TARGET clipp)
+    find_package(clipp 1.2.3 REQUIRED COMPONENTS clipp)
+endif()
+
 # Add imported library target for the participant_core
 add_library(fep3_participant_core STATIC
             ${FEP3_CORE_LIB_SOURCES})
@@ -215,7 +207,7 @@ target_include_directories(fep3_participant_core PUBLIC
     "$<BUILD_INTERFACE:${BUILD_INTERFACE_INCLUDES}>"
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
-target_link_libraries(fep3_participant_core PUBLIC fep3_participant)
+target_link_libraries(fep3_participant_core PUBLIC fep3_participant clipp::clipp)
 if (MSVC)
 else ()
     target_link_libraries(fep3_participant_core PRIVATE pthread)
@@ -335,3 +327,11 @@ if(WIN32)
     #install(FILES $<TARGET_PDB_FILE:fep3_participant_core> DESTINATION lib OPTIONAL)
     #install(FILES $<TARGET_PDB_FILE:fep3_participant_cpp> DESTINATION lib OPTIONAL)
 endif(WIN32)
+
+##################################################
+# add subdirectories
+##################################################
+add_subdirectory(base/environment_variable)
+add_subdirectory(base/component_registry)
+add_subdirectory(base/logging)
+add_subdirectory(base/thread_utilities)

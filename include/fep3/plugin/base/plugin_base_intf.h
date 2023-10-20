@@ -4,40 +4,32 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <stdint.h>
 #include <fep3/plugin/base/fep3_calling_convention.h>
 #include <fep3/plugin/base/fep3_plugin_export.h>
 
+#include <stdint.h>
+
 // symbols that must never change, because they are not bound to a namespace version
-/// Defines the symbol name of the function that returns the participant library version (major, minor, etc.)
+/// Defines the symbol name of the function that returns the participant library version (major,
+/// minor, etc.)
 #define SYMBOL_fep3_plugin_getParticipantLibraryVersion "fep3_plugin_getParticipantLibraryVersion"
 /// Defines the symbol name of the function that returns the plugin version as string
 #define SYMBOL_fep3_plugin_getPluginVersion "fep3_plugin_getPluginVersion"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /// Structure for the participant library version
-typedef struct
-{
+typedef struct {
     /// The version identifier of the participant library
     const char* _id;
     /// The major version integer
@@ -57,8 +49,9 @@ typedef struct
  * @param[in] destination The pointer to the destination the callback
  *                    target shall copy the plugin version string to
  */
-FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getPluginVersion
-    (void(*callback)(void*, const char*), void* destination);
+FEP3_PLUGIN_EXPORT void FEP3_PLUGIN_CALL fep3_plugin_getPluginVersion(void (*callback)(void*,
+                                                                                       const char*),
+                                                                      void* destination);
 
 #ifdef __cplusplus
 }

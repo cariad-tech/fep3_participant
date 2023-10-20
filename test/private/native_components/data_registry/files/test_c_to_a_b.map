@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<mapping>
+    <header>
+        <language_version>1.00</language_version>
+        <author>fep_team</author>
+        <date_creation>2020-Feb-10</date_creation>
+        <date_change>2020-Feb-10</date_change>
+        <description>Simple mapping description for testing purposes</description>
+    </header>
+
+    <sources>
+        <source name="source_signal_c" type="tTestStructC" />
+    </sources>
+
+    <targets>
+        <target name="target_signal_a" type="tTestStructA">
+            <assignment to="tUInt16First" from="source_signal_c.tUInt16Fourth" />
+            <assignment to="tInt8Second" from="source_signal_c.tInt8Fifth" />
+            <trigger type="signal" variable="source_signal_c" />
+        </target>
+        <target name="target_signal_b" type="tTestStructB">
+            <assignment to="tUInt32Second" from="source_signal_c.tUInt32Third" />
+            <assignment to="tUInt64First" from="source_signal_c.tUInt64First" />
+            <trigger type="signal" variable="source_signal_c" />
+        </target>
+    </targets>
+
+    <transformations>
+    </transformations>
+</mapping>

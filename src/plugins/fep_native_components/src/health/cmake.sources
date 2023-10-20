@@ -1,32 +1,66 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
 #
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-#
-# You may add additional accurate notices of copyright ownership.
-#
-#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(NATIVE_COMPONENTS_HEALTH_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/health)
-set(COMPONENTS_PLUGIN_HEALTH_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/experimental)
+set(NATIVE_COMPONENTS_HEALTH_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/health_service)
 
 set(COMPONENTS_PLUGIN_HEALTH_SOURCES_PRIVATE
     ${NATIVE_COMPONENTS_HEALTH_DIR}/health_service.h
     ${NATIVE_COMPONENTS_HEALTH_DIR}/health_service.cpp
+    ${NATIVE_COMPONENTS_HEALTH_DIR}/job_health_registry.cpp
+    ${NATIVE_COMPONENTS_HEALTH_DIR}/job_health_registry.h
+    ${NATIVE_COMPONENTS_HEALTH_DIR}/job_health_registry_job_configuration_visitor.h
+    ${NATIVE_COMPONENTS_HEALTH_DIR}/job_health_registry_job_configuration_visitor.cpp
 )
 
-set(COMPONENTS_PLUGIN_HEALTH_SOURCES ${COMPONENTS_PLUGIN_HEALTH_SOURCES_PRIVATE})
-source_group(components\\health FILES ${COMPONENTS_PLUGIN_HEALTH_SOURCES})
+set(NATIVE_COMPONENTS_HEALTH_SOURCES_PUBLIC
+    ${NATIVE_COMPONENTS_HEALTH_INCLUDE_DIR}/health_service_intf.h
+)
+
+set(COMPONENTS_PLUGIN_HEALTH_SOURCES ${COMPONENTS_PLUGIN_HEALTH_SOURCES_PRIVATE} ${NATIVE_COMPONENTS_HEALTH_SOURCES_PUBLIC})
+source_group(components\\health FILES ${COMPONENTS_PLUGIN_HEALTH_SOURCES_PRIVATE})
+source_group(components\\health\\public FILES ${NATIVE_COMPONENTS_HEALTH_SOURCES_PUBLIC})
+
+##################################################################
+# RPC
+##################################################################
+set(NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/health)
+set(NATIVE_COMPONENTS_HEALTH_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/health)
+
+add_custom_target(health_service_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET health_service_rpc_stub_generator
+    INPUT_FILE "${NATIVE_COMPONENTS_HEALTH_RPC_INCLUDE_DIR}/health.json"
+    OUTPUT_DIR "${NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCHealthClientStub
+    CLIENT_FILE_NAME health_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCHealthServiceStub
+    SERVER_FILE_NAME health_service_stub.h
+)
+
+set(NATIVE_COMPONENTS_HEALTH_RPC_SOURCES
+    ${NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR}/health_service_stub.h
+    ${NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR}/health_client_stub.h
+    ${NATIVE_COMPONENTS_HEALTH_RPC_INCLUDE_DIR}/health.json
+    ${NATIVE_COMPONENTS_HEALTH_RPC_INCLUDE_DIR}/health_service_rpc_intf_def.h)
+
+source_group(components\\health\\rpc FILES ${NATIVE_COMPONENTS_HEALTH_RPC_SOURCES})
+
+install(FILES
+    ${NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR}/health_service_stub.h
+    ${NATIVE_COMPONENTS_HEALTH_RPC_BINARY_DIR}/health_client_stub.h
+    DESTINATION
+    include/fep3/rpc_services/health)
 
 ######################################
 # Set up the variable
 ######################################
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENTS_PLUGIN_HEALTH_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${NATIVE_COMPONENTS_HEALTH_RPC_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_STUB_GENERATORS health_service_rpc_stub_generator)
 
 

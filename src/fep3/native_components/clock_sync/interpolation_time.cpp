@@ -4,32 +4,18 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #include "interpolation_time.h"
 
-#include <a_util/system/system.h>
-
-namespace fep3
-{
+namespace fep3 {
 
 InterpolationTime::InterpolationTime()
-    : _last_interpolated_time(0)
-    , _offset(0)
-    , _last_time_set(0)
-    , _last_raw_time(0)
+    : _last_interpolated_time(0), _offset(0), _last_time_set(0), _last_raw_time(0)
 {
 }
 
@@ -37,29 +23,28 @@ Timestamp InterpolationTime::getTime() const
 {
     using namespace std::chrono;
 
-    if (_last_time_set.count() > 0)
-    {
+    std::lock_guard<std::mutex> guard(_mutex);
+
+    if (_last_time_set.count() > 0) {
         const auto time = steady_clock::now().time_since_epoch() - _offset;
-        if (_last_interpolated_time < time)
-        {
+        if (_last_interpolated_time < time) {
             _last_interpolated_time = time;
         }
         return _last_interpolated_time;
     }
-    else
-    {
-        return _last_time_set; //not yet received a time!!
+    else {
+        return _last_time_set; // not yet received a time!!
     }
 }
 
-void InterpolationTime::setTime(const Timestamp time,const  Duration roundtrip_time)
+void InterpolationTime::setTime(const Timestamp time, const Duration roundtrip_time)
 {
     using namespace std::chrono;
+    std::lock_guard<std::mutex> guard(_mutex);
 
-    //autodetection of a reset
-    if (time < _last_raw_time)
-    {
-        resetTime(time);
+    // autodetection of a reset
+    if (time < _last_raw_time) {
+        resetInternal(time);
     }
     _last_raw_time = time;
 
@@ -70,8 +55,13 @@ void InterpolationTime::setTime(const Timestamp time,const  Duration roundtrip_t
 
 void InterpolationTime::resetTime(const Timestamp time)
 {
-    using namespace std::chrono;
+    std::lock_guard<std::mutex> guard(_mutex);
+    resetInternal(time);
+}
 
+void InterpolationTime::resetInternal(const Timestamp time)
+{
+    using namespace std::chrono;
     _last_raw_time = time;
     _last_time_set = time;
     _offset = steady_clock::now().time_since_epoch() - time;

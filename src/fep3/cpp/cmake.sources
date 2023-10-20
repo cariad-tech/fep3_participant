@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 set(CPP_DIR ${PROJECT_SOURCE_DIR}/src/fep3/cpp)
@@ -24,12 +16,16 @@ set(CPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/cpp)
 
 set(CPP_SOURCES_PRIVATE
     ${CPP_DIR}/datajob.cpp
+    ${CPP_DIR}/datajob_base.cpp
+    ${CPP_DIR}/datajob_base_job_configuration_visitor.h
+    ${CPP_DIR}/datajob_base_job_configuration_visitor.cpp
 )
 
 set(CPP_SOURCES_PUBLIC
     ${CPP_INCLUDE_DIR}/element_base.h
     ${CPP_INCLUDE_DIR}/participant.h
     ${CPP_INCLUDE_DIR}/datajob.h
+    ${CPP_INCLUDE_DIR}/datajob_base.h
 
     #easy include for the user
     ${PROJECT_SOURCE_DIR}/include/fep3/cpp.h

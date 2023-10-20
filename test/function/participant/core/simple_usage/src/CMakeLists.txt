@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 add_executable(test_simple_usage_tooling tester_tooling_participant.cpp)
@@ -24,4 +16,22 @@ target_link_libraries(test_simple_usage_tooling PRIVATE GTest::gtest_main)
 set_target_properties(test_simple_usage_tooling PROPERTIES FOLDER "test/function/participant/core")
 
 target_link_libraries(test_simple_usage_tooling PRIVATE fep3_participant_core)
-fep3_participant_deploy(test_simple_usage_tooling)
+internal_fep3_participant_deploy(test_simple_usage_tooling)
+
+target_compile_options(test_simple_usage_tooling PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
+                                                         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>)
+
+add_executable(test_default_job tester_default_job.cpp)
+add_test(NAME test_default_job
+    COMMAND test_default_job
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/"
+)
+target_link_libraries(test_default_job PRIVATE GTest::gtest_main)
+set_target_properties(test_default_job PROPERTIES FOLDER "test/function/participant/core")
+
+target_link_libraries(test_default_job PRIVATE fep3_participant_core)
+internal_fep3_participant_deploy(test_default_job)
+
+target_compile_options(test_default_job PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
+                                                         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>)

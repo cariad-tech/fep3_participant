@@ -4,52 +4,39 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
-#include <string>
 
-#include <fep3/fep3_participant_types.h>
 #include <fep3/fep3_errors.h>
+
 #include <memory>
 
-namespace fep3
-{
-namespace arya
-{
+namespace fep3 {
+namespace arya {
 /**
  * @brief Instance of one requester to send a client request to a server.
- *
  */
-class IRPCRequester
-{
+class IRPCRequester {
 public:
     /// Interface of an RPC response
-    class IRPCResponse
-    {
+    class IRPCResponse {
     protected:
         /// DTOR
         ~IRPCResponse() = default;
 
     public:
         /**
-        * \c Sets the response message.
-        *
-        * @param[in] response The response data.
-        *
-        * @retval ERR_NOERROR Everything went as expected.
-        */
+         * @brief Sets the response message.
+         *
+         * @param[in] response The response data.
+         *
+         * @retval ERR_NOERROR Everything went as expected.
+         */
         virtual fep3::Result set(const std::string& response) = 0;
     };
 
@@ -68,7 +55,8 @@ public:
      * @retval ERR_IO_ERROR server address not reachable or connection closed
      * @retval ERR_NOERROR response_callback will contain a valid response message
      *
-     * @remark the \p request_message content must be serialized already (usually i.e. a json-string)
+     * @remark the @p request_message content must be serialized already (usually i.e. a
+     * json-string)
      */
     virtual fep3::Result sendRequest(const std::string& service_name,
                                      const std::string& request_message,
@@ -77,17 +65,13 @@ public:
 
 /**
  * @brief one server access point
- *
  */
-class IRPCServer
-{
+class IRPCServer {
 public:
     /**
      * @brief Service (a part of a server with a dedicated functionality)
-     *
      */
-    class IRPCService
-    {
+    class IRPCService {
     protected:
         /// DTOR
         ~IRPCService() = default;
@@ -106,7 +90,7 @@ public:
         virtual std::string getRPCInterfaceDefinition() const = 0;
 
         /**
-         * \c Handles a request send to this server.
+         * @c Handles a request send to this server.
          *
          * @param[in]  content_type The content type of the request.
          * @param[in]  request_message The request message.
@@ -132,12 +116,14 @@ public:
      * @return std::string the url
      */
     virtual std::string getUrl() const = 0;
+
     /**
      * @brief Get the name
      *
      * @return std::string the name
      */
     virtual std::string getName() const = 0;
+
     /**
      * @brief Sets the name
      *
@@ -146,11 +132,11 @@ public:
     virtual void setName(const std::string& name) = 0;
 
     /**
-     * \c Registers an RPC server with a unique \c service_name
+     * @c Registers an RPC server with a unique @c service_name
      *
-     * @param[in] service_name The name of the server. \c oRPCObjectServerInstance name is updated.
+     * @param[in] service_name The name of the server. @c oRPCObjectServerInstance name is updated.
      * @param[in,out] service The server that is registered.
-     * \note The server instance must be available as long as the server is registered.
+     * @note The server instance must be available as long as the server is registered.
      *
      * @retval ERR_INVALID_ARG If the name already exists
      * @retval ERR_NOERROR Everything went as expected.
@@ -159,10 +145,10 @@ public:
                                          const std::shared_ptr<IRPCService>& service) = 0;
 
     /**
-     * \c Unregisters a server by its \c service_name.
+     * @c Unregisters a server by its @c service_name.
      *
      * @param[in] service_name The name of the server.
-     * \note Only after the server is unregistered it may be deleted.
+     * @note Only after the server is unregistered it may be deleted.
      *
      * @retval ERR_NOT_FOUND If the server is not registered.
      * @retval ERR_NOERROR Everything went as expected.
@@ -175,7 +161,8 @@ public:
      */
     static constexpr const char* const _use_default_url = "use_default_url";
 };
-}
+} // namespace arya
+
 using arya::IRPCRequester;
 using arya::IRPCServer;
-} //namespace fep3
+} // namespace fep3

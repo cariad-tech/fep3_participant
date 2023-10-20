@@ -4,117 +4,93 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <fep3/components/base/components_intf.h>
-#include <fep3/components/data_registry/data_registry_intf.h>
-#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/sample/data_sample.h>
-#include "data_reader_backlog.h"
+#include <fep3/base/stream_type/default_stream_type.h>
+#include <fep3/components/base/components_intf.h>
+#include <fep3/core/data/data_reader_backlog.h>
 
-#include <stdexcept>
-#include <string>
-
-namespace fep3
-{
-namespace core
-{
-namespace arya
-{
+namespace fep3 {
+namespace core {
+namespace arya {
 
 /**
  * @brief Data Reader helper class to read data from a fep::IDataRegistry::IDataReader
  * if registered at the fep::IDataRegistry
- *
  */
-class DataReader : public arya::DataReaderBacklog
-{
+class DataReader : public arya::DataReaderBacklog {
 public:
     /**
      * @brief Construct a new Data Reader
      *
+     * @param[in] time_comparator comparator for sample timestamp and simulation time to check
+     * sample validity
      */
-    DataReader();
+    DataReader(const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
+                   std::less<fep3::Timestamp>{});
+
     /**
      * @brief Construct a new Data Reader
      *
      * @param[in] name name of incoming data
      * @param[in] stream_type type of incoming data
+     * @param[in] time_comparator comparator for sample timestamp and simulation time to check
+     * sample validity
      */
     DataReader(std::string name,
-        const fep3::base::arya::StreamType& stream_type);
-    /**
-    * @brief Construct a new Data Reader
-    *
-    * @param[in] name name of incoming data
-    * @param[in] stream_type type of incoming data
-    * @param[in] queue_size size of the data reader's sample backlog
-    */
-    DataReader(std::string name,
-        const fep3::base::arya::StreamType& stream_type,
-        size_t queue_size);
+               const fep3::base::arya::StreamType& stream_type,
+               const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
+                   std::less<fep3::Timestamp>{});
+
     /**
      * @brief Construct a new Data Reader
      *
-     * @tparam PLAIN_RAW_TYPE plain old c-type for the incoming data
-     * @param[in] name name of the incoming data
-     * @see fep3::base::arya::StreamTypePlain
+     * @param[in] name name of incoming data
+     * @param[in] stream_type type of incoming data
+     * @param[in] queue_size size of the data reader's sample backlog
+     * @param[in] time_comparator comparator for sample timestamp and simulation time to check
+     * sample validity
      */
-    template<typename PLAIN_RAW_TYPE>
-    DataReader(std::string name);
-    /**
-     * @brief Construct a new Data Reader
-     *
-     * @tparam PLAIN_RAW_TYPE plain old c-type for the incoming data
-     * @param[in] name name of the incoming data
-     * @param[in] queue_capacity capacity of the queue (it will not grow dynamically)
-     * @see fep3::base::arya::StreamTypePlain
-     */
-    template<typename PLAIN_RAW_TYPE>
-    DataReader(std::string name, size_t queue_capacity);
-    /**
-     * @brief copy Construct a new Data Reader
-     *
-     * @param[in] other
-     */
-    DataReader(const DataReader& other);
+    DataReader(std::string name,
+               const fep3::base::arya::StreamType& stream_type,
+               size_t queue_size,
+               const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
+                   std::less<fep3::Timestamp>{});
 
     /**
-     * @brief assignment operator
+     * @brief Deleted Copy CTOR
+     */
+    DataReader(const DataReader&) = delete;
+
+    /**
+     * @brief Deleted Copy assignment operator
      *
-     * @param[in] other
      * @return DataReader&
      */
-    DataReader& operator=(const DataReader& other);
+    DataReader& operator=(const DataReader&) = delete;
 
     /**
-     * @brief move construct a new Data Reader
-     *
-     * @param[in] other
+     * @brief Deleted Move CTOR
      */
-    DataReader(DataReader&& other) = default;
+    DataReader(DataReader&&) = delete;
+
     /**
-     * @brief move assignment
+     * @brief Deleted Move assignment operator
      *
-     * @param[in] other
      * @return DataReader&
      */
-    DataReader& operator=(DataReader&& other) = default;
+    DataReader& operator=(DataReader&&) = delete;
 
+    /**
+     * @brief Default DTOR
+     */
     ~DataReader() = default;
 
     /**
@@ -127,16 +103,20 @@ public:
 
     /**
      * @deprecated
-     * @brief remove the readers reference to the data registry without removing the corresponding reader from the data registry
+     * @brief remove the readers reference to the data registry without removing the corresponding
+     * reader from the data registry
      *
      * @return fep3::Result
      * @see fep3::DataReader::removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry)
      */
-    [[deprecated ("fep3::DataReader::removeFromDataRegistry() is deprecated. Please use fep3::DataReader::removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry) instead.")]]
-    fep3::Result removeFromDataRegistry();
+    [[deprecated("fep3::DataReader::removeFromDataRegistry() is deprecated. Please use "
+                 "fep3::DataReader::removeFromDataRegistry(fep3::arya::IDataRegistry& "
+                 "data_registry) instead.")]] fep3::Result
+    removeFromDataRegistry();
 
     /**
-     * @brief remove the readers reference to the data registry and removes the corresponding reader from the registry
+     * @brief remove the readers reference to the data registry and removes the corresponding reader
+     * from the registry
      *
      * @param[in] data_registry the data registry to remove from
      * @return fep3::Result
@@ -144,11 +124,12 @@ public:
     fep3::Result removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry);
 
     /**
-     * @brief will handle and receive all items from the reader queue until the given time is reached (excluding given time)
+     * @brief will handle and receive all items from the reader queue until the given time is
+     * reached (excluding given time)
      *
-     * This method implements the behavior known from FEP SDK greater than or equal to version 2.3.0.
-     * Samples having a timestamp lower than the current simulation time are considered valid for the
-     * current simulation step.
+     * This method implements the behavior known from FEP SDK greater than or equal to
+     * version 2.3.0. Samples having a timestamp lower than the current simulation time are
+     * considered valid for the current simulation step.
      *
      * @param[in] time_of_update samples with a timestamp lower than the time_of_update is received
      */
@@ -163,12 +144,11 @@ public:
 private:
     /// name of data reader
     std::string _name;
-    /// initial type of data
-    fep3::base::arya::StreamType _stream_type;
     /// IDataReader connected
     std::unique_ptr<fep3::arya::IDataRegistry::IDataReader> _connected_reader;
+    /// method to validate incoming samples according to the time of update
+    const std::function<bool(fep3::Timestamp, fep3::Timestamp)> _time_comparator;
 };
-
 
 /**
  * @brief helper function to register a data reader to a data registry
@@ -180,63 +160,37 @@ private:
 fep3::Result addToDataRegistry(fep3::arya::IDataRegistry& registry, DataReader& reader);
 
 /**
- * @brief helper function to register a data reader to a data registry which is part of the given component registry
+ * @brief helper function to register a data reader to a data registry which is part of the given
+ * component registry
  *
- * @param[in] components the components registry to get the data registry from where to register the data reader
+ * @param[in] components the components registry to get the data registry from where to register the
+ * data reader
  * @param[in] reader the reader to register
  * @return fep3::Result
  */
 fep3::Result addToComponents(arya::DataReader& reader, const fep3::arya::IComponents& components);
 
 /**
- * @brief helper function to remove the data reader from the data registry which is part of the given component registry
+ * @brief helper function to remove the data reader from the data registry which is part of the
+ * given component registry
  *
- * @param[in] components the components registry to get the data registry from where to register the data reader
+ * @param[in] components the components registry to get the data registry from where to register the
+ * data reader
  * @param[in] reader the reader to remove
  * @return fep3::Result
  */
-fep3::Result removeFromComponents(arya::DataReader& reader, const fep3::arya::IComponents& components);
+fep3::Result removeFromComponents(arya::DataReader& reader,
+                                  const fep3::arya::IComponents& components);
 
-/**
-* @brief Construct a new Data Reader
-*
-* @tparam PLAIN_RAW_TYPE plain old c-type for the incoming data
-* @param[in] name name of the incoming data
-* @see fep3::base::arya::StreamTypePlain
-*/
-
-template<typename PLAIN_RAW_TYPE>
-inline DataReader::DataReader(std::string name) :
-    _name(std::move(name),
-        _stream_type(fep3::base::arya::StreamTypePlain<PLAIN_RAW_TYPE>())),
-    arya::DataReaderBacklog(1, _stream_type)
-{
-}
-
-/**
-* @brief Construct a new Data Reader
-*
-* @tparam PLAIN_RAW_TYPE plain old c-type for the incoming data
-* @param[in] name name of the incoming data
-* @param[in] queue_capacity capacity of the queue (it will not grow dynamically)
-* @see fep3::base::arya::StreamTypePlain
-*/
-
-template<typename PLAIN_RAW_TYPE>
-inline DataReader::DataReader(std::string name, size_t queue_capacity) :
-    _name(std::move(name),
-        _stream_type(fep3::base::arya::StreamTypePlain<PLAIN_RAW_TYPE>())),
-    arya::DataReaderBacklog(queue_capacity, _stream_type)
-{
-}
-
-}
+} // namespace arya
 using arya::DataReader;
 
 /**
- * @brief helper function to register a data reader to a data registry which is part of the given component registry
+ * @brief helper function to register a data reader to a data registry which is part of the given
+ * component registry
  *
- * @param[in] components the components registry to get the data registry from where to register the data reader
+ * @param[in] components the components registry to get the data registry from where to register the
+ * data reader
  * @param[in] reader the reader to register
  * @return fep3::Result
  */
@@ -246,42 +200,49 @@ inline fep3::Result addToComponents(DataReader& reader, const fep3::arya::ICompo
 }
 
 /**
- * @brief helper function to remove the data reader from the data registry which is part of the given component registry
+ * @brief helper function to remove the data reader from the data registry which is part of the
+ * given component registry
  *
- * @param[in] components the components registry to get the data registry from where to register the data reader
+ * @param[in] components the components registry to get the data registry from where to register the
+ * data reader
  * @param[in] reader the reader to remove
  * @return fep3::Result
  */
-inline fep3::Result removeFromComponents(DataReader& reader, const fep3::arya::IComponents& components)
+inline fep3::Result removeFromComponents(DataReader& reader,
+                                         const fep3::arya::IComponents& components)
 {
     return arya::removeFromComponents(reader, components);
 }
 
-}
-} // end of fep namespace
+} // namespace core
+} // namespace fep3
 
 /**
+ * @deprecated
  * @brief streaming operator to read data to the given Memory.
  * The oldest data sample available is popped from the data reader backlog.
  *
  * @tparam T                  the type of memory
  * @param[in] reader             the reader to read from
  * @param[out] value              the value to copy the received sample content to
- * @throw  std::runtime_error if data size of \p value does not match the size of the sample to be read
+ * @throw  std::runtime_error if data size of @p value does not match the size of the sample to be
+ * read
  * @return const fep::DataReader&
  */
-template<typename T>
-fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader& reader,
-    T& value)
+template <typename T>
+[[deprecated("Since 3.1, fep3::core::arya::DataReader& operator>> "
+             "(fep3::core::arya::DataReader&, T&) is deprecated. Please use "
+             "fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader&, "
+             "fep3::arya::Optional<T>&) instead.")]] fep3::core::arya::DataReader&
+operator>>(fep3::core::arya::DataReader& reader, T& value)
 {
     fep3::data_read_ptr<const fep3::arya::IDataSample> ptr = reader.popSampleOldest();
-    if (ptr)
-    {
+    if (ptr) {
         fep3::base::arya::DataSampleType<T> sample_wrapup(value);
         auto copied_bytes = ptr->read(sample_wrapup);
-        if(copied_bytes != sample_wrapup.size())
-        {
-            throw std::runtime_error(std::string() + "reading sample from reader " + reader.getName() + " failed");
+        if (copied_bytes != sample_wrapup.size()) {
+            throw std::runtime_error(std::string() + "reading sample from reader " +
+                                     reader.getName() + " failed");
         }
     }
     return reader;
@@ -291,80 +252,90 @@ fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader& reader,
  * @brief streaming operator to read data to the given Memory with an optional output
  * The oldest data sample available is popped from the data reader backlog.
  *
- * @tparam T                    the type of memory for the opitonal output
+ * @tparam T                    the type of memory for the optional output
  * @param[in] reader            the reader to read from
- * @param[out] value            the optional value to copy the received sample content to, it can be empty
+ * @param[out] value            the optional value to copy the received sample content to, it can be
+ * empty
  * @return const fep::DataReader&
  */
-template<typename T>
-fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader& reader, 
-    fep3::arya::Optional<T>& value)
+template <typename T>
+fep3::core::arya::DataReader& operator>>(fep3::core::arya::DataReader& reader,
+                                         fep3::arya::Optional<T>& value)
 {
     fep3::data_read_ptr<const fep3::arya::IDataSample> ptr = reader.popSampleOldest();
-    if (ptr)
-    {
+    if (ptr) {
         fep3::base::arya::DataSampleType<T> sample_wrapup(*value);
         auto copied_bytes = ptr->read(sample_wrapup);
-        if(copied_bytes != sample_wrapup.size())
-        {
+        if (copied_bytes != sample_wrapup.size()) {
             value.reset();
-            throw std::runtime_error(std::string() + "reading sample from reader " + reader.getName() + " failed");
+            throw std::runtime_error(std::string() + "reading sample from reader " +
+                                     reader.getName() + " failed");
         }
-        else
-        {
+        else {
             value = *value; // engage the value manually.
         }
     }
-    else
-    {
+    else {
         value.reset(); // disengage the value.
     }
 
     return reader;
 }
 
-
 /**
+ * @deprecated
  * @brief streaming operator to read and copy a type
  *
  * @param[in] reader the reader
  * @param[out] value  the stream type value to read
  * @return const fep::DataReader&
  */
-inline fep3::core::arya::DataReader& operator>>(fep3::core::arya::DataReader& reader,
-    fep3::base::arya::StreamType& value)
+[[deprecated(
+    "Since 3.1, fep3::core::arya::DataReader& operator>>(fep3::core::arya::DataReader&,"
+    "fep3::base::arya::StreamType&) is deprecated. Please use "
+    "fep3::core::arya::DataReader::readType instead.")]] inline fep3::core::arya::DataReader&
+operator>>(fep3::core::arya::DataReader& reader, fep3::base::arya::StreamType& value)
 {
     fep3::data_read_ptr<const fep3::arya::IStreamType> ptr = reader.readType();
-    if (ptr)
-    {
+    if (ptr) {
         value = *ptr;
     }
     return reader;
 }
 
 /**
+ * @deprecated
  * @brief streaming operator to read a sample read pointer
  * The oldest data sample available is popped from the data reader backlog.
  * @param reader the reader
  * @param value the stream type value to read
  * @return const fep3::core::DataReader&
  */
-inline fep3::core::arya::DataReader& operator>>(fep3::core::arya::DataReader& reader,
-    fep3::data_read_ptr<const fep3::arya::IDataSample>& value)
+[[deprecated(
+    "Since 3.1, fep3::core::arya::DataReader& operator>>(fep3::core::arya::DataReader&,"
+    "fep3::data_read_ptr<const fep3::arya::IDataSample>&) is deprecated. Please use "
+    "fep3::core::arya::DataReader::popSampleOldest instead.")]] inline fep3::core::arya::DataReader&
+operator>>(fep3::core::arya::DataReader& reader,
+           fep3::data_read_ptr<const fep3::arya::IDataSample>& value)
 {
     value = reader.popSampleOldest();
     return reader;
 }
 
 /**
+ * @deprecated
  * @brief streaming operator to read a stream type read pointer
  *
  * @param[in] reader the reader
  * @param[out] value the stream type value to read
  * @return const fep3::core::arya::DataReader&
  */
-inline fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader& reader,
-    fep3::data_read_ptr<const fep3::arya::IStreamType>& value)
+[[deprecated(
+    "Since 3.1, fep3::core::arya::DataReader& operator>> (fep3::core::arya::DataReader&,"
+    "fep3::data_read_ptr<const fep3::arya::IStreamType>&) is deprecated. Please use "
+    "fep3::core::arya::DataReader::readType instead.")]] inline fep3::core::arya::DataReader&
+operator>>(fep3::core::arya::DataReader& reader,
+           fep3::data_read_ptr<const fep3::arya::IStreamType>& value)
 {
     value = reader.readType();
     return reader;

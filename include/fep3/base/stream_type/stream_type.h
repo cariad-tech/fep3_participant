@@ -4,29 +4,21 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
- //Guideline - FEP System Library API Exception
+// Guideline - FEP System Library API Exception
 #ifndef _FEP3_BASE_STREAM_TYPE_H_
 #define _FEP3_BASE_STREAM_TYPE_H_
 
-#include <list>
-#include <map>
-#include <string>
+#include <fep3/base/properties/properties.h>
+#include <fep3/base/stream_type/stream_type_intf.h>
+
 #include <algorithm>
-#include "stream_type_intf.h"
-#include "../properties/properties.h"
+#include <list>
 
 namespace fep3 {
 namespace base {
@@ -36,36 +28,42 @@ namespace arya {
  * This representation contains the name of the meta type and it will also
  * contain a list of properties which are mandatory to describe this kind of meta type
  */
-class StreamMetaType
-{
+class StreamMetaType {
 protected:
     /**
      * @brief Construct a new Stream Meta Type object
-     *
      */
     StreamMetaType() = default;
+
 public:
     /**
      * @brief Construct a new Stream Meta Type object
-     *
      */
     StreamMetaType(StreamMetaType&&) = default;
+
     /**
      * @brief Construct a new Stream Meta Type object
-     *
      */
     StreamMetaType(const StreamMetaType&) = default;
+
     /**
      * @brief Default move operator
      *
      * @return StreamMetaType&
      */
     StreamMetaType& operator=(StreamMetaType&&) = default;
+
     /**
      * default operator=
      * @return the streammetatype
      */
     StreamMetaType& operator=(const StreamMetaType&) = default;
+
+    /**
+     * @brief Default DTOR
+     */
+    virtual ~StreamMetaType() = default;
+
     /**
      * @brief Construct a new Stream Meta Type object
      *
@@ -74,18 +72,19 @@ public:
     StreamMetaType(std::string meta_type_name) : _meta_type_name(std::move(meta_type_name))
     {
     }
+
     /**
      * @brief Construct a new Stream Meta Type object
      *
      * @param[in] meta_type_name the name if the metatype
      * @param[in] required_properties a list of required mandatory property names for the metatype
      */
-    StreamMetaType(std::string meta_type_name,
-        std::list<std::string> required_properties)
+    StreamMetaType(std::string meta_type_name, std::list<std::string> required_properties)
         : _meta_type_name(std::move(meta_type_name)),
-        _required_properties(std::move(required_properties))
+          _required_properties(std::move(required_properties))
     {
     }
+
     /**
      * @brief Gets the Name of the meta type
      *
@@ -95,6 +94,7 @@ public:
     {
         return _meta_type_name.c_str();
     }
+
     /**
      * @brief compares (only) the names of the meta types
      *
@@ -105,6 +105,7 @@ public:
     {
         return _meta_type_name == other.getName();
     }
+
     /**
      * @brief compares (only) the names of the meta types
      *
@@ -115,27 +116,28 @@ public:
     {
         return _meta_type_name == other.getMetaTypeName();
     }
+
 private:
-    ///storage variable of the metatypename
+    /// storage variable of the metatypename
     std::string _meta_type_name;
-    ///storage variable of the required mandatory properties of this metatype
+    /// storage variable of the required mandatory properties of this metatype
     std::list<std::string> _required_properties;
 };
 
 /**
  * Helper function to check if the given stream type is part of the given list with streammetatypes.
- * The given \p type is supported if its metatype is part of the given metatype list.
+ * The given @p type is supported if its metatype is part of the given metatype list.
  * @param[in] supported_list list of metatypes to check
  * @param[in] type stream_type to check if it is part of the supported list.
  * @return @c true if the type is supported, @c false otherwise
  */
-inline bool isSupportedMetaType(const std::vector<arya::StreamMetaType>& supported_list, const fep3::arya::IStreamType& type)
+inline bool isSupportedMetaType(const std::vector<arya::StreamMetaType>& supported_list,
+                                const fep3::arya::IStreamType& type)
 {
-    return std::any_of(supported_list.begin(),
-                       supported_list.end(),
-                       [&type](const arya::StreamMetaType& smt) {
-                            return smt.getName() == type.getMetaTypeName();
-                       });
+    return std::any_of(
+        supported_list.begin(), supported_list.end(), [&type](const arya::StreamMetaType& smt) {
+            return smt.getName() == type.getMetaTypeName();
+        });
 }
 
 /**
@@ -148,50 +150,59 @@ class StreamType : public base::arya::Properties<fep3::arya::IStreamType> {
 protected:
     /**
      * @brief Construct a new Stream Type object
-     *
      */
     StreamType() = default;
+
 public:
     /**
      * @brief Construct a new Stream Type object
-     *
      */
     StreamType(StreamType&&) = default;
+
     /**
      * @brief Construct a new Stream Type object
-     *
      */
     StreamType(const StreamType&) = default;
+
     /**
      * @brief
      *
      * @return StreamType&
      */
     StreamType& operator=(StreamType&&) = default;
+
     /**
      * @brief
      *
      * @return StreamType&
      */
     StreamType& operator=(const StreamType&) = default;
+
+    /**
+     * @brief Default DTOR
+     */
+    virtual ~StreamType() = default;
+
     /**
      * @brief Construct a new Stream Type object
      *
      * @param[in] meta_type the metatype the stream type is instantiating
-     *
      */
     StreamType(arya::StreamMetaType meta_type) : _meta_type_name(std::move(meta_type))
     {
     }
+
     /**
      * @brief Construct a new Stream Type object
      *
      * @param[in] stream_type stream type as interface
      */
-    StreamType(const fep3::arya::IStreamType& stream_type) : _meta_type_name(stream_type.getMetaTypeName())
+    StreamType(const fep3::arya::IStreamType& stream_type)
+        : _meta_type_name(stream_type.getMetaTypeName())
     {
         stream_type.copyTo(*this);
     }
+
     /**
      * @brief assignment operator
      *
@@ -232,7 +243,7 @@ public:
     }
 
 private:
-    ///the local stream meta type decription
+    /// the local stream meta type decription
     arya::StreamMetaType _meta_type_name;
 };
 } // namespace arya
@@ -250,12 +261,10 @@ using arya::StreamType;
  */
 inline bool operator==(const fep3::arya::IStreamType& lhs, const fep3::arya::IStreamType& rhs)
 {
-    if (std::string(lhs.getMetaTypeName()) != rhs.getMetaTypeName())
-    {
+    if (std::string(lhs.getMetaTypeName()) != rhs.getMetaTypeName()) {
         return false;
     }
-    else
-    {
+    else {
         return lhs.isEqual(rhs);
     }
 }

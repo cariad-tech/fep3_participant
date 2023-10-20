@@ -4,45 +4,29 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <cstddef>
-#include <memory>
-#include <mutex>
-#include <fep3/fep3_errors.h>
-#include <fep3/fep3_optional.h>
-#include <fep3/fep3_timestamp.h>
 #include <fep3/base/queue/data_item_queue.h>
 #include <fep3/components/data_registry/data_registry_intf.h>
 
-namespace fep3
-{
-namespace core
-{
-namespace arya
-{
+#include <mutex>
+
+namespace fep3 {
+namespace core {
+namespace arya {
 
 /**
  * @brief Reader Backlog Queue to keep the last items (capacity) until they are read.
  * Pop calls will empty the backlog. Read calls wont.
  * Backlog will overwrite oldest item if capacity is full and a new item is received.
  */
-class DataReaderBacklog : public fep3::arya::IDataRegistry::IDataReceiver
-{
+class DataReaderBacklog : public fep3::arya::IDataRegistry::IDataReceiver {
 public:
     /**
      * @brief CTOR for a Data Reader Backlog object
@@ -50,23 +34,21 @@ public:
      * @param sample_queue_capacity sample queue capacity
      * @param init_type Stream Type at init time
      */
-    DataReaderBacklog(size_t sample_queue_capacity,
-                      const fep3::arya::IStreamType& init_type)
-        : _sample_queue(sample_queue_capacity)
-        , _init_type(std::make_shared<fep3::base::arya::StreamType>(init_type))
+    DataReaderBacklog(size_t sample_queue_capacity, const fep3::arya::IStreamType& init_type)
+        : _sample_queue(sample_queue_capacity),
+          _init_type(std::make_shared<fep3::base::arya::StreamType>(init_type))
     {
     }
 
-    /// \cond nodoc
+    /// @cond nodoc
     DataReaderBacklog(const DataReaderBacklog&) = delete;
     DataReaderBacklog(DataReaderBacklog&&) = delete;
     DataReaderBacklog& operator=(const DataReaderBacklog&) = delete;
     DataReaderBacklog& operator=(DataReaderBacklog&&) = delete;
-    /// \endcond
+    /// @endcond
 
     /**
      * @brief DTOR
-     *
      */
     ~DataReaderBacklog()
     {
@@ -180,29 +162,53 @@ public:
      * @param upper_bound time looking for
      * @return data_read_ptr<const IDataSample>
      * @retval valid pointer the sample read
-     * @retval invalid pointer the queue was empty or did not contain a sample with timestamp below upper_bound
+     * @retval invalid pointer the queue was empty or did not contain a sample with timestamp below
+     * upper_bound
      */
-    data_read_ptr<const fep3::arya::IDataSample> readSampleBefore(fep3::arya::Timestamp upper_bound) const
+    data_read_ptr<const fep3::arya::IDataSample> readSampleBefore(
+        fep3::arya::Timestamp upper_bound) const
     {
         std::lock_guard<std::mutex> lock_guard(_mutex);
 
-        if ( 0 == _sample_queue.size())
-        {
-            return{};
+        if (0 == _sample_queue.size()) {
+            return {};
         }
 
         data_read_ptr<const fep3::arya::IDataSample> result;
-        _sample_queue.reverseIteration([&result, upper_bound](const data_read_ptr<const fep3::arya::IDataSample> & sample, const data_read_ptr<const fep3::arya::IStreamType> &, fep3::arya::Timestamp timestamp)
-        {
-            if (timestamp < upper_bound)
-            {
-                result = sample;
-                return false;
-            }
-            return true;
-        });
+        _sample_queue.reverseIteration(
+            [&result, upper_bound](const data_read_ptr<const fep3::arya::IDataSample>& sample,
+                                   const data_read_ptr<const fep3::arya::IStreamType>&,
+                                   fep3::arya::Timestamp timestamp) {
+                if (timestamp < upper_bound) {
+                    result = sample;
+                    return false;
+                }
+                return true;
+            });
 
         return result;
+    }
+
+    /**
+     * @brief pops latest sample older than timestamp
+     * and purges all other samples which are older than the given timestamp from queue
+     *
+     * @param[in] timestamp threshold for samples to remove
+     * @return data_read_ptr<const IDataSample>
+     * @retval valid pointer the sample popped
+     * @retval invalid pointer the queue was empty or does not contain a sample older than the given
+     * timestamp
+     */
+    data_read_ptr<const fep3::arya::IDataSample> purgeAndPopSampleBefore(
+        const fep3::arya::Timestamp timestamp)
+    {
+        data_read_ptr<const fep3::arya::IDataSample> sample, oldest = readSampleOldest();
+        // check for newer samples (which are still older than the timestamp)
+        while (oldest && (oldest->getTime() < timestamp)) {
+            sample = popSampleOldest();
+            oldest = readSampleOldest();
+        }
+        return sample;
     }
 
     /**
@@ -228,8 +234,7 @@ public:
      */
     size_t setCapacity(size_t sample_queue_size)
     {
-        if (sample_queue_size <= 0)
-        {
+        if (sample_queue_size <= 0) {
             sample_queue_size = 1;
         }
 
@@ -245,7 +250,7 @@ public:
      */
     data_read_ptr<const fep3::arya::IStreamType> readTypeBefore(Timestamp /*upper_bound*/) const
     {
-        //TODO: create a ITEM Queue to receive the right type for the right sample
+        // TODO: create a ITEM Queue to receive the right type for the right sample
         std::lock_guard<std::mutex> lock_guard(_mutex);
         return _init_type;
     }
@@ -257,7 +262,7 @@ private:
     mutable std::mutex _mutex;
     ///@endcond no_documentation
 };
-}
+} // namespace arya
 using arya::DataReaderBacklog;
-}
-}
+} // namespace core
+} // namespace fep3

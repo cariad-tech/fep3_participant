@@ -4,23 +4,15 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
+#include "logging_queue.h"
 
 #include <cassert>
-
-#include "logging_queue.h"
 
 using namespace fep3;
 using namespace fep3::native;
@@ -28,22 +20,21 @@ using namespace fep3::native;
 static const uint32_t internal_max_msg_size = 255;
 static const uint64_t timer_intervall_us = 1000;
 
-#pragma warning(disable:4355) // 'this' used in base member initializer list
+#pragma warning(disable : 4355) // 'this' used in base member initializer list
 LoggingQueue::LoggingQueue()
     : _log_timer(timer_intervall_us, &LoggingQueue::timerFunc, *this),
-    _internal_msg(internal_max_msg_size, '\0'),
-    _max_queue_slot_num(200),
-    _next_slot(0),
-    _queue_lvl(0)
+      _internal_msg(internal_max_msg_size, '\0'),
+      _max_queue_slot_num(200),
+      _next_slot(0),
+      _queue_lvl(0)
 {
     // these are for initialization only and should be statics....
     // (which they were before anyway.)
     _max_message_length = internal_max_msg_size;
-                                             // message + log level
+    // message + log level
     _max_queue_mem_size = _max_queue_slot_num * (_max_message_length + sizeof(uint8_t));
 
-    if (!_message_mem.allocate(_max_queue_mem_size))
-    {
+    if (!_message_mem.allocate(_max_queue_mem_size)) {
         assert(!"System out of memory!");
     }
     a_util::memory::set(_message_mem, 0, _message_mem.getSize());
@@ -66,18 +57,15 @@ fep3::Result LoggingQueue::add(const std::function<void()>& fcn)
 
     fep3::Result res = ERR_NOERROR;
 
-    if (_queue_lvl == _max_queue_slot_num)
-    {
+    if (_queue_lvl == _max_queue_slot_num) {
         // theres not even place for the warning message.
         res = ERR_MEMORY;
     }
 
-    if (isOk(res))
-    {
+    if (res) {
         _function_queue.enqueue(std::move(fcn));
 
-        if (++_next_slot == _max_queue_slot_num)
-        {
+        if (++_next_slot == _max_queue_slot_num) {
             // Circular queue overrun.
             _next_slot = 0;
         }
@@ -90,8 +78,7 @@ fep3::Result LoggingQueue::add(const std::function<void()>& fcn)
 fep3::Result LoggingQueue::collectAndExecute()
 {
     std::function<void()> entry = NULL;
-    if (_function_queue.tryDequeue(entry))
-    {
+    if (_function_queue.tryDequeue(entry)) {
         entry();
 
         --_queue_lvl;

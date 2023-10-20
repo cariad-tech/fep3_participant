@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<adtf:ddl xmlns:adtf="adtf">
+ <header>
+  <language_version>3.00</language_version>
+  <author>fep_team</author>
+  <date_creation>20.02.2020</date_creation>
+  <date_change>20.02.2020</date_change>
+  <description>Simplistic DDL for testing purposes</description>
+ </header>
+ <units />
+ <datatypes>
+  <datatype description="predefined ADTF tFloat64 datatype" name="tFloat64" size="32" />
+ </datatypes>
+ <enums>
+ </enums>
+ <structs>
+ </structs>
+ <streams />
+</adtf:ddl>

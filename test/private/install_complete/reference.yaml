@@ -1,20 +1,20 @@
 # Copyright @ 2021 VW Group. All rights reserved.
 #
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-#
-# You may add additional accurate notices of copyright ownership.
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Clang tidy is enabled/disabled via env var which cannot be used as condition in reference file
+exclude:
+    files:
+        - test/results/sca/result_clang-tidy_sca_tests.xml
 
 common:
     files:
         - README.md
-        - doc/license/LICENSE.md
+        - doc/changelog.md
         - doc/license/license_notes_from_aosd.txt
+        - doc/license/LICENSE.md
         - doc/license/used_licenses/.+
         - fep3_participant-config-version.cmake
         - fep3_participant-config.cmake
@@ -23,39 +23,29 @@ common:
         - fep3_participant_core-config.cmake
         - fep3_participant_cpp-config-version.cmake
         - fep3_participant_cpp-config.cmake
+        - fep3_components_test-config-version.cmake
+        - fep3_components_test-config.cmake
+        - fep3_component_registry-config.cmake
         - include/fep3/base/data_registry/data_registry.h
         - include/fep3/base/logging/logging_types.h
-        - include/fep3/base/health/health_types.h
-        - include/fep3/base/properties/c_access_wrapper/properties_c_access_wrapper.h
-        - include/fep3/base/properties/c_intf/properties_c_intf.h
         - include/fep3/base/properties/properties.h
         - include/fep3/base/properties/properties_intf.h
         - include/fep3/base/properties/property_type.h
         - include/fep3/base/properties/property_type_conversion.h
-        - include/fep3/base/sample/c_access_wrapper/data_sample_c_access_wrapper.h
-        - include/fep3/base/sample/c_access_wrapper/raw_memory_c_access_wrapper.h
-        - include/fep3/base/sample/c_intf/data_sample_c_intf.h
-        - include/fep3/base/sample/c_intf/raw_memory_c_intf.h
         - include/fep3/base/sample/data_sample.h
         - include/fep3/base/sample/data_sample_intf.h
         - include/fep3/base/sample/raw_memory.h
         - include/fep3/base/sample/raw_memory_intf.h
-        - include/fep3/base/stream_type/c_access_wrapper/stream_type_c_access_wrapper.h
-        - include/fep3/base/stream_type/c_intf/stream_type_c_intf.h
         - include/fep3/base/stream_type/default_stream_type.h
         - include/fep3/base/stream_type/stream_type.h
         - include/fep3/base/stream_type/stream_type_intf.h
         - include/fep3/base/queue/data_item_queue_base.h
         - include/fep3/base/queue/data_item_queue.h
-        - include/fep3/components/base/c_access_wrapper/component_base_c_access.h
-        - include/fep3/components/base/c_access_wrapper/component_c_wrapper.h
-        - include/fep3/components/base/c_access_wrapper/component_getter_function_getter_intf.h
-        - include/fep3/components/base/c_access_wrapper/component_getter.h
-        - include/fep3/components/base/c_access_wrapper/components_c_access.h
-        - include/fep3/components/base/c_access_wrapper/components_c_wrapper.h
-        - include/fep3/components/base/c_access_wrapper/transferable_component_base.h
+        - include/fep3/base/template_helpers/template_helpers.h
+        - include/fep3/base/component_registry/component_registry.h
+        - include/fep3/base/component_registry/component_registry_factory.h
+        - include/fep3/base/component_registry/component_version_info.h
         - include/fep3/components/base/components_intf.h
-        - include/fep3/components/base/c_intf/component_c_intf.h
         - include/fep3/components/base/component.h
         - include/fep3/components/base/component_iid.h
         - include/fep3/components/base/component_intf.h
@@ -63,35 +53,19 @@ common:
         - include/fep3/components/clock/clock_registry_intf.h
         - include/fep3/components/clock/clock_service_intf.h
         - include/fep3/components/clock_sync/clock_sync_service_intf.h
-        - include/fep3/components/clock/c_access_wrapper/clock_c_access_wrapper.h
-        - include/fep3/components/clock/c_access_wrapper/clock_service_c_access_wrapper.h
-        - include/fep3/components/clock/c_intf/clock_c_intf.h
-        - include/fep3/components/clock/c_intf/clock_service_c_intf.h
         - include/fep3/components/clock/clock_intf.h
         - include/fep3/components/data_registry/data_registry_intf.h
-        - include/fep3/components/experimental/health_service_intf.h
+        - include/fep3/components/health_service/health_service_intf.h
         - include/fep3/components/job_registry/job_configuration.h
         - include/fep3/components/job_registry/job_info.h
         - include/fep3/components/job_registry/job_registry_intf.h
-        - include/fep3/components/job_registry/c_access_wrapper/job_c_access_wrapper.h
-        - include/fep3/components/job_registry/c_access_wrapper/job_registry_c_access_wrapper.h
-        - include/fep3/components/job_registry/c_intf/job_c_intf.h
-        - include/fep3/components/job_registry/c_intf/job_configuration_c_intf.h
-        - include/fep3/components/job_registry/c_intf/job_info_c_intf.h
-        - include/fep3/components/job_registry/c_intf/job_registry_c_intf.h
         - include/fep3/components/job_registry/job_intf.h
         - include/fep3/components/logging/logger_intf.h
         - include/fep3/components/logging/logging_service_intf.h
         - include/fep3/components/logging/easy_logger.h
         - include/fep3/components/participant_info/participant_info_intf.h
-        - include/fep3/components/participant_info/c_access_wrapper/participant_info_c_access_wrapper.h
-        - include/fep3/components/participant_info/c_intf/participant_info_c_intf.h
         - include/fep3/components/scheduler/scheduler_registry_intf.h
         - include/fep3/components/scheduler/scheduler_service_intf.h
-        - include/fep3/components/scheduler/c_access_wrapper/scheduler_c_access_wrapper.h
-        - include/fep3/components/scheduler/c_access_wrapper/scheduler_service_c_access_wrapper.h
-        - include/fep3/components/scheduler/c_intf/scheduler_c_intf.h
-        - include/fep3/components/scheduler/c_intf/scheduler_service_c_intf.h
         - include/fep3/components/scheduler/scheduler_intf.h
         - include/fep3/components/service_bus/rpc/fep_json_rpc.h
         - include/fep3/components/service_bus/rpc/fep_rpc.h
@@ -101,12 +75,8 @@ common:
         - include/fep3/components/service_bus/service_bus_intf.h
         - include/fep3/components/service_bus/service_registry_base.hpp
         - include/fep3/components/service_bus/system_access_base.hpp
-        - include/fep3/components/simulation_bus/c_access_wrapper/simulation_bus_c_access_wrapper.h
-        - include/fep3/components/simulation_bus/c_intf/simulation_bus_c_intf.h
         - include/fep3/components/simulation_bus/simulation_bus_intf.h
         - include/fep3/components/simulation_bus/simulation_data_access.h
-        - include/fep3/c_access_wrapper/fep3_result_c_access_wrapper.h
-        - include/fep3/c_intf/fep3_result_c_intf.h
         - include/fep3/fep3_duration.h
         - include/fep3/fep3_errors.h
         - include/fep3/fep3_macros.h
@@ -121,6 +91,12 @@ common:
         - include/fep3/participant/element_factory_intf.h
         - include/fep3/participant/element_intf.h
         - include/fep3/participant/participant.h
+        - include/fep3/core/default_job_element.h
+        - include/fep3/core/default_job.h
+        - include/fep3/core/custom_job_element.h
+        - include/fep3/core/custom_element_factory.h
+        - include/fep3/core/data_io_container_intf.h
+        - include/fep3/core/data_io_container.h
         - include/fep3/core/element_base.h
         - include/fep3/core/element_configurable.h
         - include/fep3/core/element_factory.h
@@ -135,28 +111,14 @@ common:
         - include/fep3/cpp/element_base.h
         - include/fep3/cpp/participant.h
         - include/fep3/cpp/datajob.h
+        - include/fep3/cpp/datajob_base.h
         - include/fep3/cpp.h
         - include/fep3/plugin/base/fep3_calling_convention.h
         - include/fep3/plugin/base/fep3_plugin_export.h
         - include/fep3/plugin/base/plugin_base_intf.h
-        - include/fep3/plugin/c/c_access/c_access_exception.h
-        - include/fep3/plugin/c/c_access/c_access_helper.h
-        - include/fep3/plugin/c/c_access/destructor_c_access.h
-        - include/fep3/plugin/c/c_access/shared_binary_c_access.h
-        - include/fep3/plugin/c/c_intf/c_intf_errors.h
-        - include/fep3/plugin/c/c_intf/destruction_manager_c_intf.h
-        - include/fep3/plugin/c/c_intf/shared_binary_c_intf.h
-        - include/fep3/plugin/c/c_plugin.h
-        - include/fep3/plugin/c/c_plugin_intf.h
-        - include/fep3/plugin/c/c_wrapper/c_wrapper_helper.h
-        - include/fep3/plugin/c/c_wrapper/destructor_c_wrapper.h
-        - include/fep3/plugin/c/c_wrapper/shared_binary_c_wrapper.h
-        - include/fep3/plugin/c/destruction_manager.h
-        - include/fep3/plugin/c/destructor_intf.h
-        - include/fep3/plugin/c/shared_binary_intf.h
-        - include/fep3/plugin/c/shared_binary_manager.h
         - include/fep3/plugin/cpp/cpp_plugin_component_factory.h
         - include/fep3/plugin/cpp/cpp_plugin_component_factory_intf.h
+        - include/fep3/plugin/cpp/cpp_plugin_component_wrapper.h
         - include/fep3/plugin/cpp/cpp_plugin_impl_arya.hpp
         - include/fep3/plugin/cpp/cpp_plugin_impl_base.hpp
         - include/fep3/plugin/cpp/cpp_plugin_intf.h
@@ -190,15 +152,21 @@ common:
         - include/fep3/rpc_services/participant_info/participant_info_client_stub.h
         - include/fep3/rpc_services/participant_info/participant_info_rpc_intf_def.h
         - include/fep3/rpc_services/participant_info/participant_info_service_stub.h
+        - include/fep3/rpc_services/participant_statemachine/participant_statemachine_arya.json
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine.json
-        - include/fep3/rpc_services/participant_statemachine/participant_statemachine_client_stub.h
+        - include/fep3/rpc_services/participant_statemachine/participant_statemachine_client_stub_arya.h
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine_rpc_intf_def.h
+        - include/fep3/rpc_services/participant_statemachine/participant_statemachine_service_stub_arya.h
+        - include/fep3/rpc_services/participant_statemachine/participant_statemachine_client_stub.h
         - include/fep3/rpc_services/participant_statemachine/participant_statemachine_service_stub.h
         - include/fep3/rpc_services/component_registry/component_registry.json
         - include/fep3/rpc_services/component_registry/component_registry_client_stub.h
         - include/fep3/rpc_services/component_registry/component_registry_rpc_intf_def.h
         - include/fep3/rpc_services/component_registry/component_registry_service_stub.h
+        - include/fep3/rpc_services/base/fep_rpc_result_to_json.h
+        - include/fep3/rpc_services/base/fep_rpc_json_to_result.h
         - lib/cmake/fep3_connext_dds_plugin_targets.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets.cmake
         - include/fep3/rpc_services/logging/logging_client_stub.h
         - include/fep3/rpc_services/logging/logging_rpc_sink_client.json
         - include/fep3/rpc_services/logging/logging_rpc_sink_client_client_stub.h
@@ -217,22 +185,43 @@ common:
         - include/fep3/rpc_services/scheduler_service/scheduler_service_client_stub.h
         - include/fep3/rpc_services/scheduler_service/scheduler_service_rpc_intf_def.h
         - include/fep3/rpc_services/scheduler_service/scheduler_service_service_stub.h
+        - include/fep3/rpc_services/service_bus/http_server.json
+        - include/fep3/rpc_services/service_bus/http_server_client_stub.h
+        - include/fep3/rpc_services/service_bus/http_server_service_stub.h
+        - include/fep3/rpc_services/service_bus/http_server_rpc_intf_def.h
+        - include/fep3/rpc_services/base/fep_rpc_result_to_json.h
         - lib/cmake/fep3_http_service_bus_targets.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets.cmake
         - lib/cmake/fep3_participant_targets.cmake
         - lib/cmake/fep3_participant_core_targets.cmake
         - lib/cmake/fep3_participant_cpp_targets.cmake
         - lib/cmake/fep_components_plugin_targets.cmake
+        - lib/cmake/fep3_components_test_targets.cmake
+        - lib/cmake/fep3_component_registry_targets.cmake
         - lib/rti/USER_QOS_PROFILES.xml
         - lib/fep3_participant.fep_components
         - include/fep3/components/configuration/configuration_service_intf.h
         - include/fep3/base/properties/propertynode.h
         - include/fep3/base/properties/propertynode_helper.h
         - include/fep3/components/configuration/propertynode_intf.h
-        - include/fep3/components/configuration/c_access_wrapper/configuration_service_c_access_wrapper.h
-        - include/fep3/components/configuration/c_access_wrapper/property_node_c_access_wrapper.h
-        - include/fep3/components/configuration/c_intf/configuration_service_c_intf.h
-        - include/fep3/components/configuration/c_intf/property_node_c_intf.h
+        - test/include/fep3/components/base/mock_component.h
+        - test/include/fep3/components/base/mock_components.h
+        - test/include/fep3/components/clock/mock_clock.h
+        - test/include/fep3/components/clock/mock_clock_service.h
+        - test/include/fep3/components/clock_sync/mock_clock_sync_service.h
+        - test/include/fep3/components/configuration/mock_configuration_service.h
+        - test/include/fep3/components/configuration/mock_property_node.h
+        - test/include/fep3/components/data_registry/mock_data_registry.h
+        - test/include/fep3/components/job_registry/mock_job.h
+        - test/include/fep3/components/job_registry/mock_job_registry.h
+        - test/include/fep3/components/logging/mock_logger.h
+        - test/include/fep3/components/logging/mock_logging_service.h
+        - test/include/fep3/components/participant_info/mock_participant_info.h
+        - test/include/fep3/components/scheduler/mock_scheduler.h
+        - test/include/fep3/components/scheduler/mock_scheduler_service.h
+        - test/include/fep3/components/service_bus/mock_service_bus.h
+        - test/include/fep3/components/simulation_bus/mock_simulation_bus.h
+        - test/include/fep3/components/health_service/mock_health_service.h
         - test/results/function/test_command_line_interface.xml
         - test/results/function/test_component_factory_cpp_plugins.xml
         - test/results/function/test_component_registry.xml
@@ -241,35 +230,40 @@ common:
         - test/results/function/test_connext_dds_plugin.xml
         - test/results/function/test_connext_dds_simulation_bus.xml
         - test/results/function/test_connext_dds_simulation_bus_domain_id.xml
+        - test/results/function/test_connext_dds_service_discovery.xml
         - test/results/function/test_connext_dds_simulation_bus_late_joiner.xml
         - test/results/function/test_connext_dds_simulation_bus_version.xml
+        - test/results/function/test_connext_dds_stream_item_topic.xml
+        - test/results/function/test_dds_service_bus.xml
         - test/results/function/test_data_registry.xml
         - test/results/function/test_mapping.xml
         - test/results/function/test_participant_state_machine.xml
         - test/results/function/test_service_bus.xml
+        - test/results/function/test_http_server_rpc.xml
         - test/results/function/test_sim_bus.xml
-        - test/results/function/tester_c_plugin.xml
         - test/results/function/tester_clock_based_scheduler.xml
         - test/results/function/tester_clock_registry.xml
         - test/results/function/tester_clock_service.xml
-        - test/results/function/tester_clock_service_rpc.xml
+        - test/results/function/tester_rpc_clock_service.xml
+        - test/results/function/tester_rpc_clock_sync_service.xml
+        - test/results/function/tester_rpc_clock_sync_client.xml
         - test/results/function/tester_clock_sync_client.xml
         - test/results/function/tester_clock_sync_master.xml
         - test/results/function/tester_clock_sync_service.xml
         - test/results/function/tester_clock_synchronization.xml
-        - test/results/function/tester_clock_system.xml
-        - test/results/function/tester_component_intfs_clock_serv_c_plugin.xml
-        - test/results/function/tester_component_intfs_conf_serv_c_plugin.xml
-        - test/results/function/tester_component_intfs_job_reg_c_plugin.xml
-        - test/results/function/tester_component_intfs_part_info_c_plugin.xml
-        - test/results/function/tester_component_intfs_sched_serv_c_plugin.xml
-        - test/results/function/tester_component_intfs_sim_bus_c_plugin.xml
+        - test/results/function/tester_clock_event_sink_registry.xml
+        - test/results/function/tester_simulation_clock.xml
+        - test/results/function/tester_system_clock.xml
         - test/results/function/tester_configuration_service.xml
         - test/results/function/tester_configuration_service_rpc.xml
         - test/results/function/tester_console_logger.xml
         - test/results/function/tester_data_job_element.xml
+        - test/results/function/tester_default_job.xml
+        - test/results/function/tester_default_job_element.xml
+        - test/results/function/tester_custom_element_factory.xml
+        - test/results/function/tester_data_reader.xml
         - test/results/function/tester_data_reader_backlog.xml
-        - test/results/function/tester_foreign_components_c_plugin.xml
+        - test/results/function/tester_data_writer.xml
         - test/results/function/tester_foreign_components_cpp_plugin.xml
         - test/results/function/tester_health_service.xml
         - test/results/function/tester_health_service_rpc.xml
@@ -282,14 +276,14 @@ common:
         - test/results/function/tester_job_runner.xml
         - test/results/function/tester_logging_service.xml
         - test/results/function/tester_participant_info.xml
-        - test/results/function/tester_rpc_implementation_job_reg_c_plugin.xml
         - test/results/function/tester_scheduler_registry.xml
         - test/results/function/tester_scheduler_service.xml
         - test/results/function/tester_scheduler_service_rpc.xml
         - test/results/function/tester_scheduling.xml
         - test/results/function/tester_shared_library.xml
-        - test/results/function/tester_timer_scheduler.xml
+        - test/results/function/tester_task_executor.xml
         - test/results/function/test_rpc_component_registry.xml
+        - test/results/function/test_threaded_executor.xml
 
 linux_shared_debug:
     conditions:
@@ -298,15 +292,18 @@ linux_shared_debug:
             build_type: Debug
     files:
         - lib/cmake/fep3_connext_dds_plugin_targets-debug.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets-debug.cmake
         - lib/cmake/fep3_http_service_bus_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets-debug.cmake
         - lib/cmake/fep3_participant_targets-debug.cmake
         - lib/cmake/fep3_participant_core_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_targets-debug.cmake
         - lib/cmake/fep_components_plugin_targets-debug.cmake
-        - lib/libfep3_participant_cpp_plugind3.1.a
-        - lib/libfep3_participantd3.1.so
+        - lib/cmake/fep3_component_registry_targets-debug.cmake
+        - lib/libfep3_participant_cpp_plugind3.2.a
+        - lib/libfep3_participantd3.2.so
         - lib/rti/libfep3_connext_dds_plugin.so
+        - lib/rti/libfep3_dds_service_bus_plugin.so
         - lib/rti/libnddscd.so
         - lib/rti/libnddscored.so
         - lib/rti/libnddscpp2d.so
@@ -314,8 +311,9 @@ linux_shared_debug:
         - lib/rti/libnddsmetpd.so
         - lib/rti/librticonnextmsgcppd.so
         - lib/rti/librtimonitoringd.so
-        - lib/libfep3_participant_cored3.1.a
-        - lib/libfep3_participant_cppd3.1.a
+        - lib/libfep3_participant_cored3.2.a
+        - lib/libfep3_participant_cppd3.2.a
+        - lib/libfep3_component_registryd3.2.a
 
 linux_shared_rel_with_deb_info:
     conditions:
@@ -324,15 +322,18 @@ linux_shared_rel_with_deb_info:
             build_type: RelWithDebInfo
     files:
         - lib/cmake/fep3_connext_dds_plugin_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_http_service_bus_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_core_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_cpp_targets-relwithdebinfo.cmake
         - lib/cmake/fep_components_plugin_targets-relwithdebinfo.cmake
-        - lib/libfep3_participant_cpp_plugin3.1.a
-        - lib/libfep3_participant3.1.so
+        - lib/cmake/fep3_component_registry_targets-relwithdebinfo.cmake
+        - lib/libfep3_participant_cpp_plugin3.2.a
+        - lib/libfep3_participant3.2.so
         - lib/rti/libfep3_connext_dds_plugin.so
+        - lib/rti/libfep3_dds_service_bus_plugin.so
         - lib/rti/libnddsc.so
         - lib/rti/libnddscore.so
         - lib/rti/libnddscpp2.so
@@ -340,9 +341,10 @@ linux_shared_rel_with_deb_info:
         - lib/rti/libnddsmetp.so
         - lib/rti/librticonnextmsgcpp.so
         - lib/rti/librtimonitoring.so
-        - lib/libfep3_participant_core3.1.a
-        - lib/libfep3_participant_cpp3.1.a
-        
+        - lib/libfep3_participant_core3.2.a
+        - lib/libfep3_participant_cpp3.2.a
+        - lib/libfep3_component_registry3.2.a
+
 linux_shared_release:
     conditions:
         my_conds:
@@ -350,14 +352,17 @@ linux_shared_release:
             build_type: Release
     files:
         - lib/cmake/fep3_connext_dds_plugin_targets-release.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets-release.cmake
         - lib/cmake/fep3_http_service_bus_targets-release.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets-release.cmake
         - lib/cmake/fep3_participant_targets-release.cmake
         - lib/cmake/fep3_participant_core_targets-release.cmake
         - lib/cmake/fep3_participant_cpp_targets-release.cmake
         - lib/cmake/fep_components_plugin_targets-release.cmake
-        - lib/libfep3_participant3.1.so
-        - lib/libfep3_participant_cpp_plugin3.1.a
+        - lib/cmake/fep3_component_registry_targets-release.cmake
+        - lib/libfep3_participant3.2.so
+        - lib/libfep3_participant_cpp_plugin3.2.a
+        - lib/fep3_component_registry3.2.a
         - lib/rti/libnddsc.so
         - lib/rti/libnddscore.so
         - lib/rti/libnddscpp.so
@@ -365,8 +370,9 @@ linux_shared_release:
         - lib/rti/libnddsmetp.so
         - lib/rti/librticonnextmsgcpp.so
         - lib/rti/librtimonitoring.so
-        - lib/libfep3_participant_core3.1.a
-        - lib/libfep3_participant_cpp3.1.a
+        - lib/libfep3_participant_core3.2.a
+        - lib/libfep3_participant_cpp3.2.a
+        - lib/libfep3_component_registry3.2.a
 
 linux_shared:
     conditions:
@@ -375,6 +381,7 @@ linux_shared:
     files:
         - lib/http/libfep3_http_service_bus.so
         - lib/rti/libfep3_connext_dds_plugin.so
+        - lib/rti/libfep3_dds_service_bus_plugin.so
         - lib/libfep_components_plugin.so
 
 windows_shared_debug:
@@ -384,18 +391,21 @@ windows_shared_debug:
             build_type: Debug
     files:
         - lib/cmake/fep3_connext_dds_plugin_targets-debug.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets-debug.cmake
         - lib/cmake/fep3_http_service_bus_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets-debug.cmake
         - lib/cmake/fep3_participant_targets-debug.cmake
         - lib/cmake/fep3_participant_core_targets-debug.cmake
         - lib/cmake/fep3_participant_cpp_targets-debug.cmake
         - lib/cmake/fep_components_plugin_targets-debug.cmake
-        - lib/fep3_participant_cpp_plugind3.1.lib
-        - lib/fep3_participantd3.1.dll
-        - lib/fep3_participantd3.1.lib
-        - lib/fep3_participantd3.1.pdb
+        - lib/cmake/fep3_component_registry_targets-debug.cmake
+        - lib/fep3_participant_cpp_plugind3.2.lib
+        - lib/fep3_participantd3.2.dll
+        - lib/fep3_participantd3.2.lib
+        - lib/fep3_participantd3.2.pdb
         - lib/http/fep3_http_service_bus.pdb
         - lib/rti/fep3_connext_dds_plugin.pdb
+        - lib/rti/fep3_dds_service_bus_plugin.pdb
         - lib/fep_components_plugin.pdb
         - lib/rti/nddscd.dll
         - lib/rti/nddscd.pdb
@@ -411,8 +421,9 @@ windows_shared_debug:
         - lib/rti/rticonnextmsgcppd.pdb
         - lib/rti/rtimonitoringd.dll
         - lib/rti/rtimonitoringd.pdb
-        - lib/fep3_participant_cored3.1.lib
-        - lib/fep3_participant_cppd3.1.lib
+        - lib/fep3_participant_cored3.2.lib
+        - lib/fep3_participant_cppd3.2.lib
+        - lib/fep3_component_registryd3.2.lib
 
 windows_shared_release:
     conditions:
@@ -428,9 +439,10 @@ windows_shared_release:
         - lib/cmake/fep3_participant_core_targets-release.cmake
         - lib/cmake/fep3_participant_cpp_targets-release.cmake
         - lib/cmake/fep_components_plugin_targets-release.cmake
-        - lib/fep3_participant3.1.dll
-        - lib/fep3_participant3.1.lib
-        - lib/fep3_participant_cpp_plugin3.1.lib
+        - lib/cmake/fep3_component_registry_targets-release.cmake
+        - lib/fep3_participant3.2.dll
+        - lib/fep3_participant3.2.lib
+        - lib/fep3_participant_cpp_plugin3.2.lib
         - lib/rti/nddsc.dll
         - lib/rti/nddscore.dll
         - lib/rti/nddscpp.dll
@@ -438,8 +450,9 @@ windows_shared_release:
         - lib/rti/nddsmetp.dll
         - lib/rti/rticonnextmsgcpp.dll
         - lib/rti/rtimonitoring.dll
-        - lib/fep3_participant_core3.1.lib
-        - lib/fep3_participant_cpp3.1.lib
+        - lib/fep3_participant_core3.2.lib
+        - lib/fep3_participant_cpp3.2.lib
+        - lib/fep3_component_registry3.2.lib
 
 windows_shared_rel_with_deb_info:
     conditions:
@@ -449,21 +462,25 @@ windows_shared_rel_with_deb_info:
 
     files:
         - lib/cmake/fep3_connext_dds_plugin_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_dds_service_bus_plugin_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_http_service_bus_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_core_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_cpp_plugin_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_cpp_targets-relwithdebinfo.cmake
         - lib/cmake/fep3_participant_targets-relwithdebinfo.cmake
         - lib/cmake/fep_components_plugin_targets-relwithdebinfo.cmake
+        - lib/cmake/fep3_component_registry_targets-relwithdebinfo.cmake
         - lib/fep_components_plugin.pdb
-        - lib/fep3_participant3.1.dll
-        - lib/fep3_participant3.1.lib
-        - lib/fep3_participant3.1.pdb
-        - lib/fep3_participant_core3.1.lib
-        - lib/fep3_participant_cpp3.1.lib
-        - lib/fep3_participant_cpp_plugin3.1.lib
+        - lib/fep3_participant3.2.dll
+        - lib/fep3_participant3.2.lib
+        - lib/fep3_participant3.2.pdb
+        - lib/fep3_participant_core3.2.lib
+        - lib/fep3_participant_cpp3.2.lib
+        - lib/fep3_participant_cpp_plugin3.2.lib
+        - lib/fep3_component_registry3.2.lib
         - lib/http/fep3_http_service_bus.pdb
         - lib/rti/fep3_connext_dds_plugin.pdb
+        - lib/rti/fep3_dds_service_bus_plugin.pdb
         - lib/rti/nddsc.dll
         - lib/rti/nddscore.dll
         - lib/rti/nddscpp.dll
@@ -479,13 +496,12 @@ windows_shared:
     files:
         - lib/http/fep3_http_service_bus.dll
         - lib/rti/fep3_connext_dds_plugin.dll
+        - lib/rti/fep3_dds_service_bus_plugin.dll
         - lib/fep_components_plugin.dll
         - lib/fep_components_plugin.lib
 
 documentation:
     conditions:
-        doc_x86:
-            arch: x86
         doc_x86_64:
             arch: x86_64
     files:
@@ -494,14 +510,14 @@ documentation:
         - doc/html/.+\.eot
         - doc/html/.+\.html
         - doc/html/.+\.ico
+        - doc/html/.+\.inv
         - doc/html/.+\.js
+        - doc/html/.+\.pickle
         - doc/html/.+\.png
         - doc/html/.+\.svg
         - doc/html/.+\.ttf
+        - doc/html/.+\.txt
         - doc/html/.+\.woff
         - doc/html/.+\.woff2
-        - doc/html/.+\.pickle
-        - doc/html/.+\.txt
-        - doc/html/.+\.inv
         - doc/html/\.buildinfo
-        - doc/changelog.md
+

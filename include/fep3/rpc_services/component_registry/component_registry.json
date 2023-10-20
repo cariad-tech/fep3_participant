@@ -1,14 +1,8 @@
 // Copyright @ 2021 VW Group. All rights reserved.
 //
-//     This Source Code Form is subject to the terms of the Mozilla
-//     Public License, v. 2.0. If a copy of the MPL was not distributed
-//     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// If it is not possible or desirable to put the notice in a particular file, then
-// You may include the notice in a location (such as a LICENSE file in a
-// relevant directory) where a recipient would be likely to look for such a notice.
-//
-// You may add additional accurate notices of copyright ownership.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License, v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 [
     // returns a comma separated list of RPC services
     // retrieves the version of the component, given the service iid, or an error code if the component was not found
@@ -46,23 +40,29 @@
         "file_path": "/path/to/componentLib.so" // plugin library path if component was found
       }
     },
+  {
+    "name": "getParticipantLibraryVersion",
+    "params": {
+      "service_iid": "service.iid"
+    },
+    "returns": {
+      "error": // error if component not found
       {
-        "name": "getParticipantLibraryVersion",
-        "params": {
-            "service_iid": "service.iid"
-        },
-      "returns": {
-        "error" : // error if component not found
-        {
-            "error_code": 0, // error code
-            "description": "error_description", // error description
-            "line": "line", // line
-            "file": "file", // file
-            "function": "function" // function
-        },
-        "participant_version": "fep3_participant @ 3.0.1 build 0" // particpant library version if component was found
-      }
+        "error_code": 0, // error code
+        "description": "error_description", // error description
+        "line": "line", // line
+        "file": "file", // file
+        "function": "function" // function
+      },
+      "participant_version": "fep3_participant @ 3.0.1 build 0" // particpant library version if component was found
     }
+  },
+  {
+    "name": "getComponentIIDs",
+    "returns": {
+      "component_iids": "job_registry.arya.fep3.iid, scheduler_service.catelyn.fep3.iid" // loaded component iids
+    }
+  }
 ]
 \\ {
 \\  "definitions": {},

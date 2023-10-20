@@ -4,37 +4,28 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
+
+#include <fep3/fep3_optional.h>
 
 #include <gtest/gtest.h>
 
 #include <math.h>
 
-#include <fep3/fep3_optional.h>
-
-#include <cmath>
-
 /**
  * @brief A move-only type
  */
-class MoveOnly
-{
+class MoveOnly {
 public:
     MoveOnly() = default;
-    MoveOnly(int value)
-        : _value(value)
-    {}
+    MoveOnly(int value) : _value(value)
+    {
+    }
+
     MoveOnly(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&) = default;
     MoveOnly& operator=(const MoveOnly&) = delete;
@@ -45,10 +36,12 @@ public:
     {
         return _value == other._value;
     }
+
     int value() const
     {
         return _value;
     }
+
 private:
     int _value{0};
 };
@@ -56,13 +49,13 @@ private:
 /**
  * @brief Another move-only type
  */
-class OtherMoveOnly : public MoveOnly
-{
+class OtherMoveOnly : public MoveOnly {
 public:
     OtherMoveOnly() = default;
-    OtherMoveOnly(int value)
-        : MoveOnly(value)
-    {}
+    OtherMoveOnly(int value) : MoveOnly(value)
+    {
+    }
+
     OtherMoveOnly(const OtherMoveOnly&) = delete;
     OtherMoveOnly(OtherMoveOnly&&) = default;
     OtherMoveOnly& operator=(const OtherMoveOnly&) = delete;
@@ -73,7 +66,7 @@ public:
 /**
  * Tests construction of fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testConstruction)
 {
     using ::fep3::Optional;
@@ -123,7 +116,7 @@ TEST(OptionalTester, testConstruction)
 /**
  * Tests construction of fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testAssignment)
 {
     using ::fep3::Optional;
@@ -174,11 +167,11 @@ TEST(OptionalTester, testAssignment)
 /**
  * Tests an empty fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testEmpty)
 {
-    using ::fep3::Optional;
     using ::fep3::BadOptionalAccess;
+    using ::fep3::Optional;
     Optional<int> optional_integer;
     EXPECT_FALSE(optional_integer.operator bool());
     EXPECT_FALSE(optional_integer.has_value());
@@ -193,11 +186,11 @@ TEST(OptionalTester, testEmpty)
 /**
  * Tests a non-empty fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testNonEmpty)
 {
-    using ::fep3::Optional;
     using ::fep3::BadOptionalAccess;
+    using ::fep3::Optional;
 
     Optional<int> optional_integer(1);
     EXPECT_TRUE(optional_integer.operator bool());
@@ -237,7 +230,7 @@ TEST(OptionalTester, testNonEmpty)
 /**
  * Tests emplacing a fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testEmplace)
 {
     using ::fep3::Optional;
@@ -248,17 +241,17 @@ TEST(OptionalTester, testEmplace)
     EXPECT_NO_THROW(optional_integer.value());
     EXPECT_EQ(optional_integer.value(), 1);
     // note value_or does not support move-only types
-    //EXPECT_EQ(optional_integer.value_or(99), 1);
+    // EXPECT_EQ(optional_integer.value_or(99), 1);
 }
 
 /**
  * Tests resetting of a fep3::Optional
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testReset)
 {
-    using ::fep3::Optional;
     using ::fep3::BadOptionalAccess;
+    using ::fep3::Optional;
 
     Optional<int> optional_integer(1);
     optional_integer.reset();
@@ -270,7 +263,7 @@ TEST(OptionalTester, testReset)
 /**
  * Tests comparison of fep3::Optionals
  * @req_id FEPSDK-2007
-*/
+ */
 TEST(OptionalTester, testComparison)
 {
     using ::fep3::Optional;

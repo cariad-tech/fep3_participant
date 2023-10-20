@@ -1,20 +1,13 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
 #
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-#
-# You may add additional accurate notices of copyright ownership.
-#
-#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 set(COMPONENTS_PLUGIN_DATA_REGISTRY_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/data_registry)
+set(DATA_REGISTRY_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/data_registry)
 
 set(DATA_REGISTRY_SOURCES_PRIVATE
     ${COMPONENTS_PLUGIN_DATA_REGISTRY_DIR}/data_registry.cpp
@@ -28,8 +21,13 @@ set(DATA_REGISTRY_SOURCES_PRIVATE
     ${COMPONENTS_PLUGIN_DATA_REGISTRY_DIR}/data_signal_renaming.cpp
 )
 
-set(DATA_REGISTRY_SOURCES ${DATA_REGISTRY_SOURCES_PRIVATE})
-source_group(components\\data_registry FILES ${DATA_REGISTRY_SOURCES})
+set(DATA_REGISTRY_SOURCES_PUBLIC
+    ${DATA_REGISTRY_INCLUDE_DIR}/data_registry_intf.h
+)
+
+set(DATA_REGISTRY_SOURCES ${DATA_REGISTRY_SOURCES_PRIVATE} ${DATA_REGISTRY_SOURCES_PUBLIC})
+source_group(components\\data_registry FILES ${DATA_REGISTRY_SOURCES_PRIVATE})
+source_group(components\\data_registry\\public FILES ${DATA_REGISTRY_SOURCES_PUBLIC})
 
 ##################################################################
 # Mapping
@@ -59,9 +57,42 @@ set(DDL_MANAGER_SOURCES_PRIVATE
 set(DDL_MANAGER_SOURCES ${DDL_MANAGER_SOURCES_PRIVATE})
 source_group(components\\data_registry\\ddl FILES ${DDL_MANAGER_SOURCES})
 
+##################################################################
+# RPC
+##################################################################
+set(DATA_REGISTRY_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/data_registry)
+set(DATA_REGISTRY_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/data_registry)
+
+add_custom_target(data_registry_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET data_registry_rpc_stub_generator
+    INPUT_FILE "${DATA_REGISTRY_RPC_INCLUDE_DIR}/data_registry.json"
+    OUTPUT_DIR "${DATA_REGISTRY_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCDataRegistryClientStub
+    CLIENT_FILE_NAME data_registry_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCDataRegistryServiceStub
+    SERVER_FILE_NAME data_registry_service_stub.h
+)
+
+set(DATA_REGISTRY_RPC_SOURCES
+    ${DATA_REGISTRY_RPC_BINARY_DIR}/data_registry_service_stub.h
+    ${DATA_REGISTRY_RPC_BINARY_DIR}/data_registry_client_stub.h
+    ${DATA_REGISTRY_RPC_INCLUDE_DIR}/data_registry.json
+    ${DATA_REGISTRY_RPC_INCLUDE_DIR}/data_registry_rpc_intf_def.h)
+
+source_group(components\\data_registry\\rpc FILES ${DATA_REGISTRY_RPC_SOURCES})
+
+install(FILES
+    ${DATA_REGISTRY_RPC_BINARY_DIR}/data_registry_service_stub.h
+    ${DATA_REGISTRY_RPC_BINARY_DIR}/data_registry_client_stub.h
+    DESTINATION
+    include/fep3/rpc_services/data_registry)
+
 ######################################
 # Set up the variable
 ######################################
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${DATA_REGISTRY_SOURCES})
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${MAPPING_SOURCES})
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${DDL_MANAGER_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${DATA_REGISTRY_RPC_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_STUB_GENERATORS job_registry_rpc_stub_generator)

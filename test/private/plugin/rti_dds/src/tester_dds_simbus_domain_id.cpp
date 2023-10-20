@@ -4,32 +4,22 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <gmock/gmock.h>
-
-#include <helper/gmock_async_helper.h>
-#include <helper/platform_dep_name.h>
-#include <fep3/components/simulation_bus/mock/mock_simulation_bus.h>
-#include <fep3/base/sample/mock/mock_data_sample.h>
-
 #include "detail/test_read_write_test_class.hpp"
 #include "detail/test_submitter.hpp"
-#include "detail/test_receiver.hpp"
 
-MATCHER_P(DataSampleSmartPtrValueMatcher, pointer_to_expected_value, "Matcher for value of smart pointer to IDataSample")
+#include <fep3/components/simulation_bus/mock_simulation_bus.h>
+
+#include <helper/gmock_async_helper.h>
+
+MATCHER_P(DataSampleSmartPtrValueMatcher,
+          pointer_to_expected_value,
+          "Matcher for value of smart pointer to IDataSample")
 {
     return arg->getCounter() == *pointer_to_expected_value;
 }
@@ -50,8 +40,7 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleDomains)
     /*----------------------------------------------------------------------------
      *  Make sure they have a different domain_id
      *----------------------------------------------------------------------------*/
-    while (blackbird_domain_id == sparrow_domain_id)
-    {
+    while (blackbird_domain_id == sparrow_domain_id) {
         blackbird_domain_id = randomDomainId();
     }
 
@@ -72,50 +61,60 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleDomains)
                                         fep3::base::StreamTypePlain<uint32_t>());
 
         auto sparrow_reader = dynamic_cast<ISimulationBus*>(sparrow_simulation_bus2.get())
-            ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
-        const auto& mock_sparrow_receiver = std::make_shared<::testing::StrictMock<fep3::mock::DataReceiver>>();
+                                  ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
+        const auto& mock_sparrow_receiver =
+            std::make_shared<::testing::StrictMock<fep3::mock::SimulationBus::DataReceiver>>();
         sparrow_reader->reset(mock_sparrow_receiver);
         test::helper::Notification sparrow_all_items_received;
         { // setting of expectations for mock_sparrow_receiver
             ::testing::InSequence sequence;
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IStreamType>&>
-                (::testing::_))).WillOnce(::testing::Return());
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IStreamType>&>(::testing::_)))
+                .WillOnce(::testing::Return());
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
                 .Times(sparrow_data_sample_count - 1)
-                .WillRepeatedly(::testing::Return())
-                ;
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
-                .WillOnce(Notify(&sparrow_all_items_received))
-                ;
+                .WillRepeatedly(::testing::Return());
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
+                .WillOnce(Notify(&sparrow_all_items_received));
         }
         startReception(dynamic_cast<ISimulationBus*>(sparrow_simulation_bus2.get()));
 
         auto blackbird_reader = dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get())
-            ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
-        const auto& mock_blackbird_receiver = std::make_shared<::testing::StrictMock<fep3::mock::DataReceiver>>();
+                                    ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
+        const auto& mock_blackbird_receiver =
+            std::make_shared<::testing::StrictMock<fep3::mock::SimulationBus::DataReceiver>>();
         blackbird_reader->reset(mock_blackbird_receiver);
         { // setting of expectations for mock_blackbird_receiver
             // expect to receive nothing because blackbird is in a different domain
-            EXPECT_CALL(*mock_blackbird_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IStreamType>&>
-                (::testing::_))).Times(0);
-            EXPECT_CALL(*mock_blackbird_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>
-                (::testing::_))).Times(0);
+            EXPECT_CALL(
+                *mock_blackbird_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IStreamType>&>(::testing::_)))
+                .Times(0);
+            EXPECT_CALL(
+                *mock_blackbird_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
+                .Times(0);
         }
         startReception(dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get()));
 
         /*----------------------------------------------------------------------------
          *  add sparrow data samples
          *----------------------------------------------------------------------------*/
-        for (unsigned int value = 0; value < sparrow_data_sample_count; ++value)
-        {
-            sparrow_submitter.addDataSample(fep3::base::DataSampleType<uint32_t>(value));
+        for (unsigned int value = 0; value < sparrow_data_sample_count; ++value) {
+            sparrow_submitter.addDataSample(value);
         }
         sparrow_submitter.submitDataSamples();
 
         /*----------------------------------------------------------------------------
          *  listen for sparrow samples and make sure blackbird received nothing
          *----------------------------------------------------------------------------*/
-        EXPECT_TRUE(sparrow_all_items_received.waitForNotificationWithTimeout(std::chrono::seconds(5)));
+        EXPECT_TRUE(
+            sparrow_all_items_received.waitForNotificationWithTimeout(std::chrono::seconds(5)));
 
         stopReception(dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get()));
         stopReception(dynamic_cast<ISimulationBus*>(sparrow_simulation_bus2.get()));
@@ -150,44 +149,51 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleSystemNames)
 
         auto sparrow_reader = dynamic_cast<ISimulationBus*>(sparrow_simulation_bus.get())
                                   ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
-        const auto& mock_sparrow_receiver = std::make_shared<::testing::StrictMock<fep3::mock::DataReceiver>>();
+        const auto& mock_sparrow_receiver =
+            std::make_shared<::testing::StrictMock<fep3::mock::SimulationBus::DataReceiver>>();
         sparrow_reader->reset(mock_sparrow_receiver);
         test::helper::Notification sparrow_all_items_received;
         { // setting of expectations for mock_sparrow_receiver
             ::testing::InSequence sequence;
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IStreamType>&>
-                (::testing::_))).WillOnce(::testing::Return());
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IStreamType>&>(::testing::_)))
+                .WillOnce(::testing::Return());
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
                 .Times(sparrow_data_sample_count - 1)
-                .WillRepeatedly(::testing::Return())
-                ;
-            EXPECT_CALL(*mock_sparrow_receiver.get(), call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
-                .WillOnce(Notify(&sparrow_all_items_received))
-                ;
+                .WillRepeatedly(::testing::Return());
+            EXPECT_CALL(
+                *mock_sparrow_receiver.get(),
+                call(::testing::Matcher<const data_read_ptr<const IDataSample>&>(::testing::_)))
+                .WillOnce(Notify(&sparrow_all_items_received));
         }
         startReception(dynamic_cast<ISimulationBus*>(sparrow_simulation_bus.get()));
 
         auto blackbird_reader = dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get())
                                     ->getReader(topic, fep3::base::StreamTypePlain<uint32_t>());
-        const auto& mock_blackbird_receiver = std::make_shared<::testing::StrictMock<fep3::mock::DataReceiver>>();
+        const auto& mock_blackbird_receiver =
+            std::make_shared<::testing::StrictMock<fep3::mock::SimulationBus::DataReceiver>>();
         blackbird_reader->reset(mock_blackbird_receiver);
         test::helper::Notification blackbird_all_items_received;
-        // note: blackbird reader is expected to receive nothing because it's part of a different system
+        // note: blackbird reader is expected to receive nothing because it's part of a different
+        // system
         startReception(dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get()));
 
         /*----------------------------------------------------------------------------
          *  add sparrow data samples
          *----------------------------------------------------------------------------*/
-        for (unsigned int value = 0; value < sparrow_data_sample_count; ++value)
-        {
-            sparrow_submitter.addDataSample(fep3::base::DataSampleType<uint32_t>(value));
+        for (unsigned int value = 0; value < sparrow_data_sample_count; ++value) {
+            sparrow_submitter.addDataSample(value);
         }
         sparrow_submitter.submitDataSamples();
 
         /*----------------------------------------------------------------------------
          *  listen for sparrow samples and make sure blackbird recieved nothing
          *----------------------------------------------------------------------------*/
-        EXPECT_TRUE(sparrow_all_items_received.waitForNotificationWithTimeout(std::chrono::seconds(5)));
+        EXPECT_TRUE(
+            sparrow_all_items_received.waitForNotificationWithTimeout(std::chrono::seconds(5)));
 
         stopReception(dynamic_cast<ISimulationBus*>(blackbird_simulation_bus.get()));
         stopReception(dynamic_cast<ISimulationBus*>(sparrow_simulation_bus2.get()));
@@ -198,4 +204,3 @@ TEST_F(TestConnextDDSSimulationBus, SendAndReceiveSamplesMultipleSystemNames)
     TearDownComponent(*sparrow_simulation_bus2);
     TearDownComponent(*sparrow_simulation_bus);
 }
-

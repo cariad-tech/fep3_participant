@@ -4,34 +4,25 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
-
-#include <iostream>
 
 #ifdef WIN32
     #include <Windows.h>
 #endif
 
-#include <fep3/fep3_errors.h>
 #include "console_logger.h"
+
+#include <iostream>
 
 using namespace fep3;
 
-ConsoleLogger::ConsoleLogger(LoggerSeverity minimum_severity)
-    : _minimum_severity(minimum_severity)
-{}
+ConsoleLogger::ConsoleLogger(LoggerSeverity minimum_severity) : _minimum_severity(minimum_severity)
+{
+}
 
 fep3::Result ConsoleLogger::logInfo(const std::string& message) const
 {
@@ -87,22 +78,20 @@ fep3::Result ConsoleLogger::log(const std::string& message, LoggerSeverity sever
 {
     const auto& log_string = getString(severity) + " " + message;
 
-    if (LoggerSeverity::error == severity || LoggerSeverity::fatal == severity)
-    {
+    if (LoggerSeverity::error == severity || LoggerSeverity::fatal == severity) {
         std::cerr << log_string << std::endl;
 #ifdef WIN32
         ::OutputDebugString(log_string.c_str());
 #endif
     }
-    else
-    {
+    else {
 #ifdef WIN32
-#ifdef _DEBUG
+    #ifdef _DEBUG
         ::OutputDebugString(log_string.c_str());
-#endif
+    #endif
 #endif
         std::cout << log_string << std::endl;
     }
 
-    return{};
+    return {};
 }

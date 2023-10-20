@@ -321,7 +321,7 @@ public:
     Service(std::string discover_url,
             std::string network_interface,
             std::chrono::seconds max_age,
-            std::string location_url,
+            std::pair<std::string, bool> location_url,
             std::string unique_service_name,
             std::string search_target,
             std::string product_name,

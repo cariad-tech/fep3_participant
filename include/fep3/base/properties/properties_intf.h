@@ -4,38 +4,26 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
- //Guideline - FEP System Library API Exception
+// Guideline - FEP System Library API Exception
 #ifndef _FEP3_COMP_PROPERTIES_INTF_H_
 #define _FEP3_COMP_PROPERTIES_INTF_H_
 
 #include <string>
 #include <vector>
-#include <memory>
 
-namespace fep3
-{
-namespace arya
-{
+namespace fep3 {
+namespace arya {
 
 /**
  * @brief Properties interfaces to access a list of key value pairs
- *
  */
-class IProperties
-{
+class IProperties {
 public:
     /// DTOR
     virtual ~IProperties() = default;
@@ -53,8 +41,9 @@ public:
      * depending on the implementation of the interface)
      */
     virtual bool setProperty(const std::string& name,
-        const std::string& value,
-        const std::string& type) = 0;
+                             const std::string& value,
+                             const std::string& type) = 0;
+
     /**
      * @brief gets the property value as string
      *
@@ -75,13 +64,15 @@ public:
 
     /**
      * @brief compares this key value list with the given properties instance
-     * the properties are equal if each property of this will have the same value within \p properties
+     * the properties are equal if each property of this will have the same value within @p
+     * properties
      *
      * @param[in] properties the properties instance to compare to
-     * @return @c true if each property of this have the same value within \p properties,
+     * @return @c true if each property of this have the same value within @p properties,
      * @c false otherwise
      */
     virtual bool isEqual(const IProperties& properties) const = 0;
+
     /**
      * @brief assignment helper
      *
@@ -97,8 +88,7 @@ public:
     virtual std::vector<std::string> getPropertyNames() const = 0;
 };
 
-
-}  // namespace arya
+} // namespace arya
 using arya::IProperties;
 } // namespace fep3
 

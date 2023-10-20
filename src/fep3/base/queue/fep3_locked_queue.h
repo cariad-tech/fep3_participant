@@ -4,45 +4,38 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
 
 #ifndef _FEP_LOCKED_QUEUE_
 #define _FEP_LOCKED_QUEUE_
 
-#include <queue>
 #include <a_util/concurrency/fast_mutex.h>
 
-namespace fep3
-{
-namespace base
-{
-namespace detail
-{
+#include <queue>
+
+namespace fep3 {
+namespace base {
+namespace detail {
 /// Template class of a locked queue.
 /// The specialization using a std::queue is the class LockedQueue
-template <typename T, class QUEUE, class GUARD_MUTEX> class LockedQueueAdaptor
-{
+template <typename T, class QUEUE, class GUARD_MUTEX>
+class LockedQueueAdaptor {
 private:
-    QUEUE       _queue; ///< The internal queue
-    GUARD_MUTEX _lock;  ///< Guarding mutex
+    QUEUE _queue;      ///< The internal queue
+    GUARD_MUTEX _lock; ///< Guarding mutex
 
 public:
-    /// CTOR
-    LockedQueueAdaptor() : _queue(), _lock() { }
-    /// DTOR
-    ~LockedQueueAdaptor() { }
+    LockedQueueAdaptor() : _queue(), _lock()
+    {
+    }
+
+    ~LockedQueueAdaptor()
+    {
+    }
 
 public:
     /// Push an element at end of queue and notify consumer
@@ -60,8 +53,7 @@ public:
     bool tryDequeue(T& t)
     {
         _lock.lock();
-        if (_queue.empty())
-        {
+        if (_queue.empty()) {
             _lock.unlock();
             return false;
         }
@@ -76,11 +68,11 @@ public:
     /// @param[out] t The first element of the queue, if present
     /// @param[in] guard Mutex to guard the queue
     /// @retval @c true if element was found, @c false otherwise (queue is empty)
-    template <class GUARD> bool tryDequeueAndUnlockGuardIfEmpty(T& t, GUARD& guard)
+    template <class GUARD>
+    bool tryDequeueAndUnlockGuardIfEmpty(T& t, GUARD& guard)
     {
         _lock.lock();
-        if (_queue.empty())
-        {
+        if (_queue.empty()) {
             _lock.unlock();
             guard.unlock();
             return false;
@@ -94,16 +86,19 @@ public:
 
 /// Template class of a unlocked queue.
 /// The specialization using a std::queue is the class UnlockedQueue
-template <typename T, class QUEUE> class UnlockedQueueAdaptor
-{
+template <typename T, class QUEUE>
+class UnlockedQueueAdaptor {
 private:
     QUEUE _queue; ///< The internal queue
 
 public:
-    /// CTOR
-    UnlockedQueueAdaptor() : _queue() { }
-    /// DTOR
-    ~UnlockedQueueAdaptor() { }
+    UnlockedQueueAdaptor() : _queue()
+    {
+    }
+
+    ~UnlockedQueueAdaptor()
+    {
+    }
 
 public:
     /// Push an element at end of queue and notify consumer
@@ -119,8 +114,7 @@ public:
     /// @retval false Queue is empty
     bool tryDequeue(T& t)
     {
-        if (_queue.empty())
-        {
+        if (_queue.empty()) {
             return false;
         }
         t = _queue.front();
@@ -131,11 +125,16 @@ public:
 } // namespace detail
 
 /// Locked Queue Template
-template <typename T, class Alloc = std::allocator<T> >
-class LockedQueue : public detail::LockedQueueAdaptor<T, std::queue<T, std::deque<T, Alloc> >, a_util::concurrency::fast_mutex > { };
+template <typename T, class Alloc = std::allocator<T>>
+class LockedQueue : public detail::LockedQueueAdaptor<T,
+                                                      std::queue<T, std::deque<T, Alloc>>,
+                                                      a_util::concurrency::fast_mutex> {
+};
+
 /// Unlocked Queue Template
-template <typename T, class Alloc = std::allocator<T> >
-class UnlockedQueue : public detail::UnlockedQueueAdaptor<T, std::queue<T, std::deque<T, Alloc> > > { };
+template <typename T, class Alloc = std::allocator<T>>
+class UnlockedQueue : public detail::UnlockedQueueAdaptor<T, std::queue<T, std::deque<T, Alloc>>> {
+};
 
 } // namespace base
 } // namespace fep3

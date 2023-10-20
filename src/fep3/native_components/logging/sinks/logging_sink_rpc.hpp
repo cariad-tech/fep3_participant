@@ -4,55 +4,44 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
 
 #pragma once
 
 #include <fep3/base/properties/properties.h>
 #include <fep3/components/logging/logging_service_intf.h>
-#include <fep3/components/service_bus/rpc/fep_rpc.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_service.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
-#include <fep3/rpc_services/logging/logging_service_rpc_intf_def.h>
 #include <fep3/rpc_services/logging/logging_rpc_sink_client_client_stub.h>
 #include <fep3/rpc_services/logging/logging_rpc_sink_service_service_stub.h>
+#include <fep3/rpc_services/logging/logging_service_rpc_intf_def.h>
 
-#include <map>
-#include <tuple>
 #include <mutex>
 
-namespace fep3
-{
-namespace native
-{
+namespace fep3 {
+namespace native {
 
-//this is the class to send messages to a registered sink far away on another process
-//this client MUST register !!
-using RPCSinkClientClient = rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkClientClientStub,
-    fep3::rpc::IRPCLoggingSinkClientDef>;
+// this is the class to send messages to a registered sink far away on another process
+// this client MUST register !!
+using RPCSinkClientClient =
+    rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkClientClientStub,
+                          fep3::rpc::IRPCLoggingSinkClientDef>;
 using RPCSinkClientService = rpc::RPCService<fep3::rpc_stubs::RPCLoggingRPCSinkServiceServiceStub,
-    fep3::rpc::IRPCLoggingSinkServiceDef>;
+                                             fep3::rpc::IRPCLoggingSinkServiceDef>;
 
 class LoggingSinkRPC;
 
-class RPCSinkClientServiceImpl : public RPCSinkClientService
-{
+class RPCSinkClientServiceImpl : public RPCSinkClientService {
 public:
     explicit RPCSinkClientServiceImpl(LoggingSinkRPC& logging_sink);
     int registerRPCLoggingSinkClient(const std::string& address,
-        const std::string& logger_name_filter,
-        int severity) override;
+                                     const std::string& logger_name_filter,
+                                     int severity) override;
     int unregisterRPCLoggingSinkClient(const std::string& address) override;
 
 private:
@@ -75,51 +64,47 @@ public:
     void releaseServiceBus()
     {
         std::lock_guard<std::mutex> lock(_sync_filters);
-        _service_bus->getServer()->unregisterService(fep3::rpc::IRPCLoggingSinkServiceDef::getRPCDefaultName());
+        _service_bus->getServer()->unregisterService(
+            fep3::rpc::IRPCLoggingSinkServiceDef::getRPCDefaultName());
         _service_bus = nullptr;
         _client_filters.clear();
     }
 
-    fep3::Result log(LogMessage log) const override
+    fep3::Result log(LogMessage log) const override final
     {
         fep3::Result result = ERR_NOERROR;
         std::lock_guard<std::mutex> lock(_sync_filters);
 
-        for (const auto& current_client : _client_filters)
-        {
-            //TODO: Filter here!
-            try
-            {
-                result = static_cast<int32_t>(current_client.second._client->onLog(log._message,
-                    log._logger_name,
-                    log._participant_name,
-                    static_cast<int>(log._severity),
-                    log._timestamp));
+        for (const auto& current_client: _client_filters) {
+            // TODO: Filter here!
+            try {
+                result = static_cast<int32_t>(
+                    current_client.second._client->onLog(log._message,
+                                                         log._logger_name,
+                                                         log._participant_name,
+                                                         static_cast<int>(log._severity),
+                                                         log._timestamp));
             }
-            catch (const jsonrpc::JsonRpcException& ex)
-            {
+            catch (const jsonrpc::JsonRpcException& ex) {
                 result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
             }
-            catch (const std::exception& ex)
-            {
+            catch (const std::exception& ex) {
                 result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
             }
         }
         return result;
     }
 
-
 public:
     int registerRPCLoggingSinkClient(const std::string& address,
-        const std::string& logger_name_filter,
-        int severity)
+                                     const std::string& logger_name_filter,
+                                     int severity)
     {
         std::lock_guard<std::mutex> lock(_sync_filters);
-        if (_service_bus)
-        {
+        if (_service_bus) {
             std::unique_ptr<RPCSinkClientClient> new_client(
                 new RPCSinkClientClient(rpc::IRPCLoggingSinkClientDef::getRPCDefaultName(),
-                    _service_bus->getRequester(address, true)));
+                                        _service_bus->getRequester(address, true)));
 
             auto& new_filter = _client_filters[address];
             new_filter._name_filter = logger_name_filter;
@@ -127,9 +112,8 @@ public:
             new_filter._client.reset(new_client.release());
             return 0;
         }
-        else
-        {
-            //this call is while shutting down
+        else {
+            // this call is while shutting down
             return ERR_INVALID_STATE.getCode();
         }
     }
@@ -142,8 +126,7 @@ public:
     }
 
 private:
-    struct ClientFilter
-    {
+    struct ClientFilter {
         std::string _name_filter;
         fep3::LoggerSeverity _severity_filter;
         std::unique_ptr<RPCSinkClientClient> _client;
@@ -159,7 +142,9 @@ inline RPCSinkClientServiceImpl::RPCSinkClientServiceImpl(LoggingSinkRPC& loggin
     : _logging_sink(logging_sink)
 {
 }
-inline int RPCSinkClientServiceImpl::registerRPCLoggingSinkClient(const std::string& address, const std::string& logger_name_filter, int severity)
+
+inline int RPCSinkClientServiceImpl::registerRPCLoggingSinkClient(
+    const std::string& address, const std::string& logger_name_filter, int severity)
 {
     return _logging_sink.registerRPCLoggingSinkClient(address, logger_name_filter, severity);
 }
@@ -169,5 +154,5 @@ inline int RPCSinkClientServiceImpl::unregisterRPCLoggingSinkClient(const std::s
     return _logging_sink.unregisterRPCLoggingSinkClient(address);
 }
 
-}
+} // namespace native
 } // namespace fep3

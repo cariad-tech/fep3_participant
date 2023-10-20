@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 
@@ -24,21 +16,36 @@ set(RPC_SERVICES_INCLUDE_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_servi
 #  rpc service generation
 ########################################################
 
-file(MAKE_DIRECTORY ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine)
-jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
-                             fep3::rpc_stubs::RPCParticipantStateMachineClientStub
-                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h)
-jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
-                             fep3::rpc_stubs::RPCParticipantStateMachineServiceStub
-                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h)
+add_custom_target(participant_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET participant_rpc_stub_generator
+    INPUT_FILE "${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine_arya.json"
+    OUTPUT_DIR "${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::arya::RPCParticipantStateMachineClientStub
+    CLIENT_FILE_NAME participant_statemachine_client_stub_arya.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::arya::RPCParticipantStateMachineServiceStub
+    SERVER_FILE_NAME participant_statemachine_service_stub_arya.h
+)
 
-file(MAKE_DIRECTORY ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry)
-jsonrpc_generate_client_stub(${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
-                             fep3::rpc_stubs::RPCParticipantComponentRegistryClientStub
-                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h)
-jsonrpc_generate_server_stub(${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
-                             fep3::rpc_stubs::RPCParticipantComponentRegistryServiceStub
-                             ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h)
+fep_generate_rpc_stubs_before_target(
+    TARGET participant_rpc_stub_generator
+    INPUT_FILE "${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json"
+    OUTPUT_DIR "${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::catelyn::RPCParticipantStateMachineClientStub
+    CLIENT_FILE_NAME participant_statemachine_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::catelyn::RPCParticipantStateMachineServiceStub
+    SERVER_FILE_NAME participant_statemachine_service_stub.h
+)
+
+fep_generate_rpc_stubs_before_target(
+    TARGET participant_rpc_stub_generator
+    INPUT_FILE "${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json"
+    OUTPUT_DIR "${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCParticipantComponentRegistryClientStub
+    CLIENT_FILE_NAME component_registry_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCParticipantComponentRegistryServiceStub
+    SERVER_FILE_NAME component_registry_service_stub.h
+)
 
 ########################################################
 #  participant implementation
@@ -49,25 +56,13 @@ set(PARTICIPANT_SOURCES_PRIVATE
     ${PARTICIPANT_DIR}/participant.cpp
     ${PARTICIPANT_DIR}/element_manager/element_manager.cpp
     ${PARTICIPANT_DIR}/element_manager/element_manager.h
-    ${PARTICIPANT_DIR}/component_source_type.h
-    ${PARTICIPANT_DIR}/component_source_type.cpp
     ${PARTICIPANT_DIR}/console_logger.h
     ${PARTICIPANT_DIR}/console_logger.cpp
-    # sub directory "component_factories"
-    ${PARTICIPANT_DIR}/component_factories/component_factory_base.h
-    ${PARTICIPANT_DIR}/component_factories/cpp/component_factory_cpp_plugins.h
-    ${PARTICIPANT_DIR}/component_factories/cpp/component_factory_cpp_plugins.cpp
-    ${PARTICIPANT_DIR}/component_factories/c/component_creator_c_plugin.h
-    ${PARTICIPANT_DIR}/component_factories/c/component_factory_c_plugins.h
-    ${PARTICIPANT_DIR}/component_factories/c/component_factory_c_plugins.cpp
-    # sub directory "component_registry_factory"
-    ${PARTICIPANT_DIR}/component_registry_factory/component_registry_factory.cpp
-    ${PARTICIPANT_DIR}/component_registry_factory/component_registry_factory.h
-    ${PARTICIPANT_DIR}/component_registry_factory/components_configuration.cpp
-    ${PARTICIPANT_DIR}/component_registry_factory/components_configuration.h
     # sub directory "state_machine"
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.cpp
     ${PARTICIPANT_DIR}/state_machine/participant_state_machine.h
+    ${PARTICIPANT_DIR}/state_machine/participant_states.cpp
+    ${PARTICIPANT_DIR}/state_machine/participant_states.h
     # sub directory "component_registry_rpc"
     ${PARTICIPANT_DIR}/component_registry_rpc/component_registry_rpc.cpp
     ${PARTICIPANT_DIR}/component_registry_rpc/component_registry_rpc.h
@@ -84,7 +79,10 @@ set(PARTICIPANT_SOURCES_GERNERATED
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h
     ${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine.json
-	${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub_arya.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub_arya.h
+    ${RPC_SERVICES_INCLUDE_DIR}/participant_statemachine/participant_statemachine_arya.json
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h
     ${RPC_SERVICES_INCLUDE_DIR}/component_registry/component_registry.json
 )
@@ -94,10 +92,15 @@ source_group(participant\\private FILES ${PARTICIPANT_SOURCES_PRIVATE})
 source_group(participant\\public FILES ${PARTICIPANT_SOURCES_PUBLIC})
 source_group(participant\\generated FILES ${PARTICIPANT_SOURCES_GERNERATED})
 
+set_source_files_properties(
+        ${PARTICIPANT_DIR}/console_logger.cpp
+        PROPERTIES COMPILE_DEFINITIONS $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+
 ######################################
 # Set up the variable
 ######################################
 set(FEP3_SOURCES ${FEP3_SOURCES} ${PARTICIPANT_SOURCES})
+list(APPEND FEP_PARTICIPANT_STUB_GENERATORS participant_rpc_stub_generator)
 
 ######################################
 # install the generated
@@ -106,11 +109,13 @@ set(FEP3_SOURCES ${FEP3_SOURCES} ${PARTICIPANT_SOURCES})
 install(FILES
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_service_stub_arya.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_statemachine/participant_statemachine_client_stub_arya.h
     DESTINATION
     include/fep3/rpc_services/participant_statemachine)
-	
+
 install(FILES
-	${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_service_stub.h
     ${RPC_SERVICES_INCLUDE_BINARY_DIR}/component_registry/component_registry_client_stub.h
     DESTINATION
     include/fep3/rpc_services/component_registry)
