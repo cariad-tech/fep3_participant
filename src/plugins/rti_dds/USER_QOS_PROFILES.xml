@@ -1,17 +1,10 @@
 <?xml version="1.0"?>
 <!--
   Copyright @ 2021 VW Group. All rights reserved.
-  
-      This Source Code Form is subject to the terms of the Mozilla
-      Public License, v. 2.0. If a copy of the MPL was not distributed
-      with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-  
-  If it is not possible or desirable to put the notice in a particular file, then
-  You may include the notice in a location (such as a LICENSE file in a
-  relevant directory) where a recipient would be likely to look for such a notice.
-  
-  You may add additional accurate notices of copyright ownership.
-  
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -->
 <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/6.0.1/rti_dds_qos_profiles.xsd"
@@ -204,7 +197,33 @@
                     <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
                 </durability>
             </datareader_qos>
-
+        </qos_profile>
+        <qos_profile name="stream_type_big"
+            base_name="BuiltinQosLibExp::Generic.StrictReliable.LargeData.FastFlow">
+            <datawriter_qos>
+                <property>
+                    <value>
+                        <element>
+                            <name>dds.data_writer.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+                            <value>100000</value>
+                        </element>
+                    </value>
+                </property>
+                <history>
+                    <kind>KEEP_ALL_HISTORY_QOS</kind>
+                </history>
+                <durability>
+                    <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+                </durability>
+            </datawriter_qos>
+            <datareader_qos>
+                <history>
+                    <kind>KEEP_ALL_HISTORY_QOS</kind>
+                </history>
+                <durability>
+                    <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+                </durability>
+            </datareader_qos>
         </qos_profile>
 
     </qos_library>

@@ -4,40 +4,32 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <fep3/fep3_timestamp.h>
 #include <fep3/fep3_duration.h>
+#include <fep3/fep3_timestamp.h>
 
-namespace fep3
-{
+#include <mutex>
+
+namespace fep3 {
 
 /**
-* Interface for a clock which interpolates time received from a master clock
-**/
-class IInterpolationTime
-{
+ * Interface for a clock which interpolates time received from a master clock
+ **/
+class IInterpolationTime {
 public:
     /// DTOR
     virtual ~IInterpolationTime() = default;
 
     /**
      * Calculate and return a currently valid timestamp extrapolated from a reference
-     * time set with \c setTime().
+     * time set with @c setTime().
      * @return The currently valid extrapolated timestamp.
      */
     virtual Timestamp getTime() const = 0;
@@ -45,7 +37,8 @@ public:
     /**
      * Set a new reference time obtained from a request.
      * @param[in] time  the reference time stamp.
-     * @param[in] roundtrip_time  The time it took to request the reference time and to get an answer.
+     * @param[in] roundtrip_time  The time it took to request the reference time and to get an
+     * answer.
      */
     virtual void setTime(Timestamp time, Duration roundtrip_time) = 0;
 
@@ -61,8 +54,7 @@ public:
  * The class uses Cristian's Algorithm to extrapolate the current valid timestamp using a reference
  * time and a roundtrip time.
  **/
-class InterpolationTime : public IInterpolationTime
-{
+class InterpolationTime : public IInterpolationTime {
 public:
     /**
      * CTOR
@@ -70,21 +62,27 @@ public:
     InterpolationTime();
 
     /**
-    *\copydoc IInterpolationTime::getTime
-    **/
+     * @copydoc IInterpolationTime::getTime
+     */
     Timestamp getTime() const override;
 
     /**
-    *\copydoc IInterpolationTime::setTime
-    **/
+     * @copydoc IInterpolationTime::setTime
+     */
     void setTime(Timestamp time, Duration roundtrip_time) override;
 
     /**
-    *\copydoc IInterpolationTime::resetTime
-    **/
+     * @copydoc IInterpolationTime::resetTime
+     */
     void resetTime(Timestamp time) override;
+
 private:
-    // Stores the last value calculated by \c getTime
+    /**
+     * @copydoc IInterpolationTime::resetTime
+     */
+    void resetInternal(Timestamp time);
+
+    // Stores the last value calculated by @c getTime
     mutable Timestamp _last_interpolated_time;
     // Offset of local time to reference time
     Duration _offset;
@@ -92,6 +90,7 @@ private:
     Timestamp _last_time_set;
     // Stores the raw time value of the reference time
     Timestamp _last_raw_time;
+    mutable std::mutex _mutex;
 };
 
 } // namespace fep3

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<adtf:ddl xmlns:adtf="adtf">
+<header>
+<language_version>3.00</language_version>
+<author>fep_team</author>
+<date_creation>20.02.2020</date_creation>
+<date_change>20.02.2020</date_change>
+<description>Simplistic DDL for testing purposes</description>
+</header>
+<units />
+<datatypes>
+<datatype description="theoretical datatype for testing purposes that is smaller than FEP3_TRANSPORT_LAYER_MAX_MESSAGE_SIZE" name="smallDatatype" size="256000" />
+<datatype description="theoretical datatype for testing purposes that is bigger than FEP3_TRANSPORT_LAYER_MAX_MESSAGE_SIZE" name="bigDatatype" size="512001" />
+</datatypes>
+<enums>
+</enums>
+<structs>
+<struct alignment="1" name="tSmallStruct" version="1">
+<element alignment="1" arraysize="1" byteorder="LE" bytepos="0" name="smallElement" type="smallDatatype" default="0"/>
+</struct>
+<struct alignment="1" name="tBigStruct" version="1">
+<element alignment="1" arraysize="1" byteorder="LE" bytepos="0" name="bigElement" type="bigDatatype" default="0"/>
+</struct>
+</structs>
+<streams />
+</adtf:ddl>

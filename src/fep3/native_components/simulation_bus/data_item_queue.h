@@ -4,46 +4,32 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
 
 #pragma once
 
 #include "data_item_queue_base.h"
 
-#include <atomic>
 #include <mutex>
-#include <vector>
-#include <memory>
 
-namespace fep3
-{
-namespace native
-{
+namespace fep3 {
+namespace native {
 
 /**
  * @brief Data Item queue (at the moment a locked queue)
- * This implementation will provide a FIFO queue to read samples and types in the same order it was added.
- * The capacity of the DataItemQueue is fixed. If samples are pushed into the queue while the queue's capacity is reached
- * old samples are dropped.
+ * This implementation will provide a FIFO queue to read samples and types in the same order it was
+ * added. The capacity of the DataItemQueue is fixed. If samples are pushed into the queue while the
+ * queue's capacity is reached old samples are dropped.
  *
  * @tparam IDataRegistry::IDataSample class for samples
  * @tparam IStreamType class for types
  */
-template<class SAMPLE_TYPE = const IDataSample, class STREAM_TYPE = const IStreamType>
-class DataItemQueue: public DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE>
-{
+template <class SAMPLE_TYPE = const IDataSample, class STREAM_TYPE = const IStreamType>
+class DataItemQueue : public DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE> {
 private:
     using typename DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE>::DataItem;
     using typename DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE>::QueueType;
@@ -52,12 +38,12 @@ public:
     /**
      * @brief CTOR
      *
-     * @param[in] capacity capacity by item count of the queue (there are sample + stream type covered)
+     * @param[in] capacity capacity by item count of the queue (there are sample + stream type
+     * covered)
      */
     DataItemQueue(size_t capacity) : DataItemQueueBase<SAMPLE_TYPE, STREAM_TYPE>()
     {
-        if (capacity <= 0)
-        {
+        if (capacity <= 0) {
             capacity = 1;
         }
         _items.resize(capacity);
@@ -68,7 +54,6 @@ public:
 
     /**
      * @brief DTOR
-     *
      */
     virtual ~DataItemQueue() = default;
 
@@ -81,8 +66,7 @@ public:
     void push(const data_read_ptr<SAMPLE_TYPE>& sample) override
     {
         std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-        if (_next_write_idx == _items.size())
-        {
+        if (_next_write_idx == _items.size()) {
             _next_write_idx = 0;
         }
 
@@ -92,11 +76,9 @@ public:
         ++_next_write_idx;
         ++_current_size;
 
-        //if queue is full we need to change read index ... item was dropped
-        if (_current_size > capacity())
-        {
-            if (_next_read_idx == _items.size())
-            {
+        // if queue is full we need to change read index ... item was dropped
+        if (_current_size > capacity()) {
+            if (_next_read_idx == _items.size()) {
                 _next_read_idx = 0;
             }
             _current_size = capacity();
@@ -113,8 +95,7 @@ public:
     void push(const data_read_ptr<STREAM_TYPE>& type) override
     {
         std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-        if (_next_write_idx == _items.size())
-        {
+        if (_next_write_idx == _items.size()) {
             _next_write_idx = 0;
         }
         DataItem& ref = _items[_next_write_idx];
@@ -122,11 +103,9 @@ public:
 
         ++_next_write_idx;
         ++_current_size;
-        //if queue is full we need to change read index ... item was dropped
-        if (_current_size > capacity())
-        {
-            if (_next_read_idx == _items.size())
-            {
+        // if queue is full we need to change read index ... item was dropped
+        if (_current_size > capacity()) {
+            if (_next_read_idx == _items.size()) {
                 _next_read_idx = 0;
             }
             _current_size = capacity();
@@ -137,24 +116,19 @@ public:
     Optional<Timestamp> getFrontTime() override
     {
         std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-        if (_current_size > 0)
-        {
-            if (_next_read_idx == _items.size())
-            {
+        if (_current_size > 0) {
+            if (_next_read_idx == _items.size()) {
                 _next_read_idx = 0;
             }
             DataItem& ref = _items[_next_read_idx];
-            if (DataItem::Type::sample == ref.getItemType())
-            {
+            if (DataItem::Type::sample == ref.getItemType()) {
                 return ref.getSample()->getTime();
             }
-            else
-            {
+            else {
                 return {};
             }
         }
-        else
-        {
+        else {
             return {};
         }
     }
@@ -165,26 +139,22 @@ public:
      * @return {nullptr, nullptr} if queue is empty
      * @remark this is threadsafe against push and pop calls
      */
-    std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE> > pop() override
+    std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> pop() override
     {
         data_read_ptr<SAMPLE_TYPE> sample = nullptr;
         data_read_ptr<STREAM_TYPE> stream_type = nullptr;
 
         {
             std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-            if (_current_size > 0)
-            {
-                if (_next_read_idx == _items.size())
-                {
+            if (_current_size > 0) {
+                if (_next_read_idx == _items.size()) {
                     _next_read_idx = 0;
                 }
                 DataItem& ref = _items[_next_read_idx];
-                if (DataItem::Type::sample == ref.getItemType())
-                {
+                if (DataItem::Type::sample == ref.getItemType()) {
                     sample = std::move(ref.getSample());
                 }
-                else if (DataItem::Type::type == ref.getItemType())
-                {
+                else if (DataItem::Type::type == ref.getItemType()) {
                     stream_type = std::move(ref.getStreamType());
                 }
                 ++_next_read_idx;
@@ -224,9 +194,9 @@ public:
 private:
     std::vector<DataItem> _items;
 
-    volatile size_t _next_write_idx;
-    volatile size_t _next_read_idx;
-    volatile size_t _current_size;
+    size_t _next_write_idx;
+    size_t _next_read_idx;
+    size_t _current_size;
     mutable std::recursive_mutex _recursive_mutex;
 };
 

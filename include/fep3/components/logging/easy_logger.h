@@ -4,25 +4,16 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include "logging_service_intf.h"
 #include <fep3/components/base/components_intf.h>
-#include <a_util/result.h>
+#include <fep3/components/logging/logging_service_intf.h>
 
 namespace fep3 {
 namespace base {
@@ -45,7 +36,7 @@ class MyComponent : public base::EasyLogging
 //...
     fep3::Result someInitMethod()
     {
-        return initLogger("component.my_use_of_easy_logger",*getComponents());
+        return initLogger("my_use_of_easy_logger.component",*getComponents());
     }
      fep3::Result someDeinitMethod()
     {
@@ -53,10 +44,8 @@ class MyComponent : public base::EasyLogging
     }
 };
  * @endcode
- *
  */
-class EasyLogging
-{
+class EasyLogging {
 public:
     /**
      * @brief retrieves the logging service and creates a logger to log to
@@ -68,31 +57,30 @@ public:
      * @retval ERR_UNEXPECTED if the creation of logger fails
      */
     fep3::Result initLogger(const fep3::arya::IComponents& components,
-        const std::string& logger_name)
+                            const std::string& logger_name)
     {
         auto logging_service = components.getComponent<fep3::arya::ILoggingService>();
-        if (logging_service)
-        {
-            try
-            {
+        if (logging_service) {
+            try {
                 _logger = logging_service->createLogger(logger_name);
             }
-            catch (const std::exception& ex)
-            {
-                RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, "Can not create logger %s : %s",
-                    logger_name.c_str(),
-                    ex.what());
+            catch (const std::exception& ex) {
+                RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED,
+                                         "Can not create logger %s : %s",
+                                         logger_name.c_str(),
+                                         ex.what());
             }
         }
-        else
-        {
+        else {
             deinitLogger();
+            RETURN_ERROR_DESCRIPTION(ERR_POINTER,
+                                     "FEP Component %s not available.",
+                                     fep3::arya::ILoggingService::getComponentIID());
         }
         return {};
     }
     /**
      * @brief deinit the logger and reset the logger member
-     *
      */
     void deinitLogger()
     {
@@ -111,7 +99,6 @@ public:
 private:
     /**
      * @brief the logger created
-     *
      */
     std::shared_ptr<fep3::arya::ILogger> _logger;
 };
@@ -129,13 +116,12 @@ using arya::EasyLogging;
  * @param[in] given_logger the logger
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOGGER_LOG_DEBUG(given_logger, message_to_log) \
-{ \
-    if(given_logger && given_logger->isDebugEnabled()) \
-    { \
-        given_logger->logDebug(message_to_log); \
-    } \
-}
+#define FEP3_ARYA_LOGGER_LOG_DEBUG(given_logger, message_to_log)                                   \
+    {                                                                                              \
+        if (given_logger && given_logger->isDebugEnabled()) {                                      \
+            given_logger->logDebug(message_to_log);                                                \
+        }                                                                                          \
+    }
 
 /**
  * Logs a fatal message to the logger given.
@@ -143,13 +129,12 @@ using arya::EasyLogging;
  * @param[in] given_logger the logger
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOGGER_LOG_FATAL(given_logger, message_to_log) \
-{ \
-    if(given_logger && given_logger->isFatalEnabled()) \
-    { \
-        given_logger->logFatal(message_to_log); \
-    } \
-}
+#define FEP3_ARYA_LOGGER_LOG_FATAL(given_logger, message_to_log)                                   \
+    {                                                                                              \
+        if (given_logger && given_logger->isFatalEnabled()) {                                      \
+            given_logger->logFatal(message_to_log);                                                \
+        }                                                                                          \
+    }
 
 /**
  * Logs a error message to the logger given.
@@ -157,13 +142,12 @@ using arya::EasyLogging;
  * @param[in] given_logger the logger
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOGGER_LOG_ERROR(given_logger, message_to_log) \
-{ \
-    if(given_logger && given_logger->isErrorEnabled()) \
-    { \
-        given_logger->logError(message_to_log); \
-    } \
-}
+#define FEP3_ARYA_LOGGER_LOG_ERROR(given_logger, message_to_log)                                   \
+    {                                                                                              \
+        if (given_logger && given_logger->isErrorEnabled()) {                                      \
+            given_logger->logError(message_to_log);                                                \
+        }                                                                                          \
+    }
 
 /**
  * Logs a warning message to the logger given.
@@ -171,13 +155,12 @@ using arya::EasyLogging;
  * @param[in] given_logger the logger
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOGGER_LOG_WARNING(given_logger, message_to_log) \
-{ \
-    if(given_logger && given_logger->isWarningEnabled()) \
-    { \
-        given_logger->logWarning(message_to_log); \
-    } \
-}
+#define FEP3_ARYA_LOGGER_LOG_WARNING(given_logger, message_to_log)                                 \
+    {                                                                                              \
+        if (given_logger && given_logger->isWarningEnabled()) {                                    \
+            given_logger->logWarning(message_to_log);                                              \
+        }                                                                                          \
+    }
 
 /**
  * Logs a info message to the logger given.
@@ -185,62 +168,56 @@ using arya::EasyLogging;
  * @param[in] given_logger the logger
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOGGER_LOG_INFO(given_logger, message_to_log) \
-{ \
-    if(given_logger && given_logger->isInfoEnabled()) \
-    { \
-        given_logger->logInfo(message_to_log); \
-    } \
-}
+#define FEP3_ARYA_LOGGER_LOG_INFO(given_logger, message_to_log)                                    \
+    {                                                                                              \
+        if (given_logger && given_logger->isInfoEnabled()) {                                       \
+            given_logger->logInfo(message_to_log);                                                 \
+        }                                                                                          \
+    }
 
 /**
  * Logs a error message to the logger given based on a error code
- * It checks if given_logger is valid and error is enabled and the result isFailed
+ * It checks if given_logger is valid and error is enabled and the result indicates an error
  * @param[in] given_logger the logger
  * @param[in] result_to_log the result
  */
-#define FEP3_ARYA_LOGGER_LOG_RESULT(given_logger, result_to_log) \
-do \
-{ \
-    if(given_logger && given_logger->isErrorEnabled() && fep3::isFailed(result_to_log)) \
-    { \
-        fep3::Result tmp_res(result_to_log); \
-        given_logger->logError(tmp_res.getDescription()); \
-    } \
-} while(false)
+#define FEP3_ARYA_LOGGER_LOG_RESULT(given_logger, result_to_log)                                   \
+    do {                                                                                           \
+        const fep3::Result tmp_res(result_to_log);                                                 \
+        if (given_logger && given_logger->isErrorEnabled() && !tmp_res) {                          \
+            given_logger->logError(tmp_res.getDescription());                                      \
+        }                                                                                          \
+    } while (false)
 
 /***************************************************************
-* convenience macros
-***************************************************************/
+ * convenience macros
+ ***************************************************************/
 /**
  * Logs a debug message to the logger retrieving by getLogger()
  * It checks if getLogger() is valid and debug is enabled.
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOG_DEBUG(message_to_log) \
-    FEP3_ARYA_LOGGER_LOG_DEBUG(getLogger(), message_to_log)
+#define FEP3_ARYA_LOG_DEBUG(message_to_log) FEP3_ARYA_LOGGER_LOG_DEBUG(getLogger(), message_to_log)
 
 /**
  * Logs a fatal message to the logger retrieving by getLogger()
  * It checks if getLogger() is valid and fatal is enabled.
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOG_FATAL(message_to_log) \
-    FEP3_ARYA_LOGGER_LOG_FATAL(getLogger(), message_to_log)
+#define FEP3_ARYA_LOG_FATAL(message_to_log) FEP3_ARYA_LOGGER_LOG_FATAL(getLogger(), message_to_log)
 /**
  * Logs a error message to the logger retrieving by getLogger()
  * It checks if getLogger() is valid and error is enabled.
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOG_ERROR(message_to_log) \
-    FEP3_ARYA_LOGGER_LOG_ERROR(getLogger(), message_to_log)
+#define FEP3_ARYA_LOG_ERROR(message_to_log) FEP3_ARYA_LOGGER_LOG_ERROR(getLogger(), message_to_log)
 
 /**
  * Logs a warning message to the logger retrieving by getLogger()
  * It checks if getLogger() is valid and warning is enabled.
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOG_WARNING(message_to_log) \
+#define FEP3_ARYA_LOG_WARNING(message_to_log)                                                      \
     FEP3_ARYA_LOGGER_LOG_WARNING(getLogger(), message_to_log)
 
 /**
@@ -248,58 +225,51 @@ do \
  * It checks if getLogger() is valid and info is enabled.
  * @param[in] message_to_log the log message
  */
-#define FEP3_ARYA_LOG_INFO(message_to_log) \
-    FEP3_ARYA_LOGGER_LOG_INFO(getLogger(), message_to_log)
+#define FEP3_ARYA_LOG_INFO(message_to_log) FEP3_ARYA_LOGGER_LOG_INFO(getLogger(), message_to_log)
 
 /**
  * Logs a error message to the logger retrieving by getLogger() based on a error code
- * It checks if getLogger() is valid and error is enabled and the given error code isFailed()
+ * It checks if getLogger() is valid and error is enabled and the given error code indicates an
+ * error
  * @param[in] result_to_log the error code
  */
-#define FEP3_ARYA_LOG_RESULT(result_to_log) \
-    FEP3_ARYA_LOGGER_LOG_RESULT(getLogger(), result_to_log)
+#define FEP3_ARYA_LOG_RESULT(result_to_log) FEP3_ARYA_LOGGER_LOG_RESULT(getLogger(), result_to_log)
 
 /***************************************************************
-* convenience macros no versioning
-***************************************************************/
+ * convenience macros no versioning
+ ***************************************************************/
 ///@copydoc FEP3_ARYA_LOG_DEBUG
-#define FEP3_LOG_DEBUG(message_to_log) \
-    FEP3_ARYA_LOG_DEBUG(message_to_log)
+#define FEP3_LOG_DEBUG(message_to_log) FEP3_ARYA_LOG_DEBUG(message_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_DEBUG
-#define FEP3_LOGGER_LOG_DEBUG(given_logger, message_to_log) \
+#define FEP3_LOGGER_LOG_DEBUG(given_logger, message_to_log)                                        \
     FEP3_ARYA_LOGGER_LOG_DEBUG(given_logger, message_to_log)
 
 ///@copydoc FEP3_ARYA_LOG_FATAL
-#define FEP3_LOG_FATAL(message_to_log) \
-    FEP3_ARYA_LOG_FATAL(message_to_log)
+#define FEP3_LOG_FATAL(message_to_log) FEP3_ARYA_LOG_FATAL(message_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_FATAL
-#define FEP3_LOGGER_LOG_FATAL(given_logger, message_to_log) \
+#define FEP3_LOGGER_LOG_FATAL(given_logger, message_to_log)                                        \
     FEP3_ARYA_LOGGER_LOG_FATAL(given_logger, message_to_log)
 
 ///@copydoc FEP3_ARYA_LOG_ERROR
-#define FEP3_LOG_ERROR(message_to_log) \
-    FEP3_ARYA_LOG_ERROR(message_to_log)
+#define FEP3_LOG_ERROR(message_to_log) FEP3_ARYA_LOG_ERROR(message_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_ERROR
-#define FEP3_LOGGER_LOG_ERROR(given_logger, message_to_log) \
+#define FEP3_LOGGER_LOG_ERROR(given_logger, message_to_log)                                        \
     FEP3_ARYA_LOGGER_LOG_ERROR(given_logger, message_to_log)
 
 ///@copydoc FEP3_ARYA_LOG_WARNING
-#define FEP3_LOG_WARNING(message_to_log) \
-    FEP3_ARYA_LOG_WARNING(message_to_log)
+#define FEP3_LOG_WARNING(message_to_log) FEP3_ARYA_LOG_WARNING(message_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_WARNING
-#define FEP3_LOGGER_LOG_WARNING(given_logger, message_to_log) \
+#define FEP3_LOGGER_LOG_WARNING(given_logger, message_to_log)                                      \
     FEP3_ARYA_LOGGER_LOG_WARNING(given_logger, message_to_log)
 
 ///@copydoc FEP3_ARYA_LOG_INFO
-#define FEP3_LOG_INFO(message_to_log) \
-    FEP3_ARYA_LOG_INFO(message_to_log)
+#define FEP3_LOG_INFO(message_to_log) FEP3_ARYA_LOG_INFO(message_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_INFO
-#define FEP3_LOGGER_LOG_INFO(given_logger, message_to_log) \
+#define FEP3_LOGGER_LOG_INFO(given_logger, message_to_log)                                         \
     FEP3_ARYA_LOGGER_LOG_INFO(given_logger, message_to_log)
 
 ///@copydoc FEP3_ARYA_LOG_RESULT
-#define FEP3_LOG_RESULT(result_to_log) \
-    FEP3_ARYA_LOG_RESULT(result_to_log)
+#define FEP3_LOG_RESULT(result_to_log) FEP3_ARYA_LOG_RESULT(result_to_log)
 ///@copydoc FEP3_ARYA_LOGGER_LOG_RESULT
-#define FEP3_LOGGER_LOG_RESULT(given_logger, result_to_log) \
+#define FEP3_LOGGER_LOG_RESULT(given_logger, result_to_log)                                        \
     FEP3_ARYA_LOGGER_LOG_RESULT(given_logger, result_to_log)

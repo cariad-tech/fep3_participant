@@ -4,69 +4,31 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
-
 
 #pragma once
 
 #include "test_connext_dds_simulation_bus.hpp"
+
 #include <fep3/base/stream_type/default_stream_type.h>
-#include <fep3/components/logging/mock/mock_logging_service.h>
-#include "helper/platform_dep_name.h"
 
-class ReaderWriterTestClass : public TestConnextDDSSimulationBus
-{
-public:
-    class Components : public IComponents
-    {
-    public:
-        std::unique_ptr<fep3::native::ConfigurationService> _configuration_service = std::make_unique<fep3::native::ConfigurationService>();
-        std::unique_ptr<ParticipantInfo> _participant_info;
-        std::unique_ptr<fep3::mock::LoggingService> _logging_service;
+class AsyncReaderWriterTestClassType {
+};
+class ReaderWriterTestClassType {
+};
+class SignalWaitingTestClassType {
+};
 
-    public:
-        Components(const std::string participant_name
-            , const std::string system_name = "default_test_system"
-            , std::shared_ptr<fep3::mock::LoggerMock> logging_mock = std::make_shared<::testing::NiceMock<fep3::mock::LoggerMock>>())
-            : _participant_info(std::make_unique<ParticipantInfo>(participant_name, system_name))
-            , _logging_service(std::make_unique<fep3::mock::LoggingService>(logging_mock))
-        {
-            _configuration_service->create();
-            _configuration_service->initialize();
-            _configuration_service->tense();
-            _configuration_service->start();
-        }
+using SimulationBusTypes =
+    ::testing::Types<AsyncReaderWriterTestClassType, ReaderWriterTestClassType>;
 
-        IComponent* findComponent(const std::string& fep_iid) const
-        {
-            if (fep_iid == IConfigurationService::getComponentIID())
-            {
-                return _configuration_service.get();
-            }
-            else if (fep_iid == IParticipantInfo::getComponentIID())
-            {
-                return _participant_info.get();
-            }
-            else if (fep_iid == ILoggingService::getComponentIID())
-            {
-                return _logging_service.get();
-            }
-            return nullptr;
-        }
-    };
+template <typename T>
+class ReaderWriterTestSimulationBus : public TestConnextDDSSimulationBus {
 protected:
-
     virtual void SetUp()
     {
         TestConnextDDSSimulationBus::SetUp();
@@ -76,9 +38,12 @@ protected:
         _sim_participant_name_2 = makePlatformDepName("simbus_participant_2");
         _sim_participant_name_3 = makePlatformDepName("simbus_participant_3");
         _sim_test_system_name = makePlatformDepName("default_test_system");
+        _logger_mock = std::make_shared<::testing::NiceMock<fep3::mock::Logger>>();
 
-        _simulation_bus = createSimulationBus(_domain_id, _sim_participant_name_1, _sim_test_system_name);
-        _simulation_bus_2 = createSimulationBus(_domain_id, _sim_participant_name_2, _sim_test_system_name);
+        ASSERT_NO_THROW(_simulation_bus =
+                            createSimulationBus(_sim_participant_name_1, _sim_test_system_name);
+                        _simulation_bus_2 =
+                            createSimulationBus(_sim_participant_name_2, _sim_test_system_name););
 
         std::string topic = findFreeTopic();
         _writer = getSimulationBus2()->getWriter(topic, fep3::base::StreamTypePlain<uint32_t>());
@@ -88,56 +53,57 @@ protected:
         ASSERT_TRUE(_reader);
     }
 
-    std::unique_ptr<IComponent> createSimulationBus(uint32_t domain_id, std::shared_ptr<Components> components)
+    std::shared_ptr<IComponent> createSimulationBus(std::shared_ptr<Components> components)
     {
-        auto simulation_bus = _factory->createComponent(ISimulationBus::getComponentIID(), nullptr);
-        if (!simulation_bus)
-        {
+        auto simulation_bus =
+            fep3::ComponentFactoryCPPPlugin(FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB)
+                .createComponent(ISimulationBus::getComponentIID(), nullptr);
+        if (!simulation_bus) {
             return nullptr;
         }
 
-        EXPECT_EQ(fep3::Result(), simulation_bus->createComponent(components));
+        EXPECT_FEP3_NOERROR(simulation_bus->createComponent(components));
 
-        auto property_node = components->_configuration_service->getNode("rti_dds_simulation_bus");
-        if (!property_node)
-        {
+        auto property_node =
+            components->_configuration_service->getNode(FEP3_RTI_DDS_SIMBUS_CONFIG);
+        if (!property_node) {
             return nullptr;
         }
 
-        if (auto property = std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(property_node->getChild("participant_domain")))
-        {
-            property->setValue(std::to_string(domain_id));
-            property->updateObservers();
+        if (auto property =
+                std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(
+                    property_node->getChild(FEP3_SIMBUS_PARTICIPANT_DOMAIN_PROPERTY))) {
+            property->setValue(std::to_string(_domain_id));
         }
 
+        if (std::is_same<T, AsyncReaderWriterTestClassType>::value) {
+            if (auto property =
+                    std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(
+                        property_node->getChild(FEP3_RTI_DDS_SIMBUS_ASYNC_WAITSET_PROPERTY))) {
+                property->setValue("true");
+            }
+        }
 
-        EXPECT_EQ(fep3::Result(), simulation_bus->initialize());
-        EXPECT_EQ(fep3::Result(), simulation_bus->tense());
-        EXPECT_EQ(fep3::Result(), simulation_bus->start());
+        EXPECT_FEP3_NOERROR(simulation_bus->initialize());
+        EXPECT_FEP3_NOERROR(simulation_bus->tense());
+        EXPECT_FEP3_NOERROR(simulation_bus->start());
 
         return simulation_bus;
     }
 
-    std::unique_ptr<IComponent> createSimulationBus(uint32_t domain_id, std::string participant_name, std::string system_name = "default_test_system")
+    std::shared_ptr<IComponent> createSimulationBus(std::string participant_name,
+                                                    std::string system_name = "default_test_system")
     {
-        std::shared_ptr<Components> components = std::make_shared<Components>(participant_name, system_name);
-        return createSimulationBus(domain_id, components);
+        std::shared_ptr<Components> components =
+            std::make_shared<Components>(participant_name, system_name, _logger_mock);
+        return createSimulationBus(components);
     }
 
-    uint32_t randomDomainId()
+    void TearDownComponent(IComponent& component)
     {
-        std::random_device rd;
-        std::mt19937 mt(rd());
-        // the actual property is int32, so we cannot set the full value span of uint32
-        std::uniform_int_distribution<uint32_t> dist(1, 200u);
-        return dist(mt);
-    }
-
-    void TearDownComponent(IComponent & component)
-    {
-        EXPECT_EQ(fep3::Result(), component.stop());
-        EXPECT_EQ(fep3::Result(), component.relax());
-        EXPECT_EQ(fep3::Result(), component.deinitialize());
+        EXPECT_FEP3_NOERROR(component.stop());
+        EXPECT_FEP3_NOERROR(component.relax());
+        EXPECT_FEP3_NOERROR(component.deinitialize());
     }
 
     void TearDown()
@@ -149,14 +115,12 @@ protected:
         stopReception(getSimulationBus());
         stopReception(getSimulationBus2());
 
-        if (_simulation_bus)
-        {
+        if (_simulation_bus) {
             TearDownComponent(*_simulation_bus);
             _simulation_bus.reset();
         }
 
-        if (_simulation_bus_2)
-        {
+        if (_simulation_bus_2) {
             TearDownComponent(*_simulation_bus_2);
             _simulation_bus_2.reset();
         }
@@ -184,9 +148,9 @@ protected:
 protected:
     std::unique_ptr<fep3::ISimulationBus::IDataWriter> _writer;
     std::unique_ptr<fep3::ISimulationBus::IDataReader> _reader;
-
-    std::unique_ptr<IComponent> _simulation_bus;
-    std::unique_ptr<IComponent> _simulation_bus_2;
+    std::shared_ptr<::testing::NiceMock<fep3::mock::Logger>> _logger_mock;
+    std::shared_ptr<IComponent> _simulation_bus;
+    std::shared_ptr<IComponent> _simulation_bus_2;
     std::string _sim_participant_name_1;
     std::string _sim_participant_name_2;
     std::string _sim_participant_name_3;
@@ -196,3 +160,66 @@ private:
     uint32_t _domain_id;
 };
 
+using ReaderWriterTestClass = ReaderWriterTestSimulationBus<ReaderWriterTestClassType>;
+using AsyncReaderWriterTestClass = ReaderWriterTestSimulationBus<AsyncReaderWriterTestClassType>;
+
+class SignalWaitingTestClass : public TestConnextDDSSimulationBus {
+protected:
+    std::shared_ptr<fep3::IComponent> createSimulationBus(
+        uint32_t domain_id,
+        const std::string& participant_name,
+        const std::string& system_name = "default_test_system",
+        int64_t datawriter_ready_timeout = 0ll,
+        const std::string& must_be_ready_signals = "",
+        std::shared_ptr<fep3::mock::Logger> logger_mock =
+            std::make_shared<::testing::NiceMock<fep3::mock::Logger>>()) const
+    {
+        std::shared_ptr<Components> components =
+            std::make_shared<Components>(participant_name, system_name, logger_mock);
+        auto simulation_bus =
+            fep3::ComponentFactoryCPPPlugin(FEP3_RTI_DDS_HTTP_SERVICE_BUS_SHARED_LIB)
+                .createComponent(ISimulationBus::getComponentIID(), nullptr);
+        if (!simulation_bus) {
+            return nullptr;
+        }
+
+        EXPECT_FEP3_NOERROR(simulation_bus->createComponent(components));
+
+        auto property_node =
+            components->_configuration_service->getNode(FEP3_RTI_DDS_SIMBUS_CONFIG);
+        if (!property_node) {
+            return nullptr;
+        }
+
+        if (auto property =
+                std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(
+                    property_node->getChild(FEP3_SIMBUS_PARTICIPANT_DOMAIN_PROPERTY))) {
+            property->setValue(std::to_string(domain_id));
+            property->updateObservers();
+        }
+
+        if (datawriter_ready_timeout != 0ll) {
+            if (auto property =
+                    std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(
+                        property_node->getChild(FEP3_SIMBUS_DATAWRITER_READY_TIMEOUT_PROPERTY))) {
+                property->setValue(std::to_string(datawriter_ready_timeout));
+                property->updateObservers();
+            }
+        }
+
+        if (!must_be_ready_signals.empty()) {
+            if (auto property =
+                    std::dynamic_pointer_cast<fep3::base::arya::IPropertyWithExtendedAccess>(
+                        property_node->getChild(FEP3_SIMBUS_MUST_BE_READY_SIGNALS_PROPERTY))) {
+                property->setValue(must_be_ready_signals);
+                property->updateObservers();
+            }
+        }
+
+        EXPECT_FEP3_NOERROR(simulation_bus->initialize());
+        EXPECT_FEP3_NOERROR(simulation_bus->tense());
+        EXPECT_FEP3_NOERROR(simulation_bus->start());
+
+        return simulation_bus;
+    }
+};

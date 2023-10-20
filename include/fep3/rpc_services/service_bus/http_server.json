@@ -1,0 +1,39 @@
+// Copyright @ 2022 VW Group. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License, v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+[
+    // returns a comma seperated list of RPC services
+  {
+    "name": "setHeartbeatInterval",
+    "params": {
+        "interval_ms": 5000
+    },
+    "returns": {
+      "interval_ms": 5000,
+      "error": // error if component not found
+      {
+        "error_code": 0, // error code
+        "description": "error_description", // error description
+        "line": "line", // line
+        "file": "file", // file
+        "function": "function" // function
+      }
+    }
+  },
+  {
+    "name": "getHeartbeatInterval",
+    "returns": {
+      "interval_ms": 5000,
+      "error": // error if component not found
+      {
+        "error_code": 0, // error code
+        "description": "error_description", // error description
+        "line": "line", // line
+        "file": "file", // file
+        "function": "function" // function
+      }
+    }
+  }
+]

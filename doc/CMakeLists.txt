@@ -1,17 +1,12 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+find_package(Doxygen REQUIRED dot)
+
 set(DOXYGEN_INPUTS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
@@ -28,7 +23,7 @@ set(DOXYGEN_EXCLUDES "\" \"")
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/output)
 set(DOXYGEN_XML_OUTPUT_DIR ${DOXYGEN_OUTPUT_DIR}/xml)
 
-set(DOXYGEN_PREDEFINED "FEP3_PARTICIPANT_EXPORT= ")
+set(DOXYGEN_PREDEFINED "FEP3_PARTICIPANT_EXPORT= FEP3_PLUGIN_EXPORT= FEP3_PLUGIN_CALL= ")
 
 if (WIN32)
     set(SPHINX_BUILD_EXE "sphinx-build.exe")
@@ -51,7 +46,7 @@ add_custom_target(DOC_DEV_${PROJECT_NAME} ALL
 )
 
 add_custom_command(OUTPUT ${DOCUMENTATION_GENERATED_FLAG_FILE}
-    COMMAND ${DOXYGEN_ROOT}/bin/doxygen ${DOC_BUILD_DIR}/doxygen.cfg
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${DOC_BUILD_DIR}/doxygen.cfg"
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/input/ ${DOC_BUILD_DIR}
     # -W -n append to sphinx build in order to activate strict building (no warnings at all are tolerated)
     COMMAND ${SPHINX_BUILD_EXE} -W -b html ${DOC_BUILD_DIR} ${CMAKE_CURRENT_BINARY_DIR}/output/sphinx_html
@@ -64,7 +59,5 @@ add_custom_command(OUTPUT ${DOCUMENTATION_GENERATED_FLAG_FILE}
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output/sphinx_html/
         DESTINATION doc/html
 )
-
-install(FILES changelog.md DESTINATION doc)
 
 set_target_properties(DOC_DEV_${PROJECT_NAME} PROPERTIES FOLDER process/doc)

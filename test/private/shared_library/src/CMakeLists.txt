@@ -1,18 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
-
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(LIB_DIR "lib")
 
@@ -28,6 +19,10 @@ target_link_libraries(test_shared_library PRIVATE
     fep3_participant
     test_dependee_shared_library
 )
+
+add_custom_command(TARGET test_shared_library
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:test_shared_library> "$<TARGET_FILE_DIR:test_shared_library>/${CMAKE_SHARED_LIBRARY_PREFIX}test_shared_library1.0.0${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 add_library(test_dependee_shared_library SHARED
     test_libraries/test_dependee_shared_library.h
@@ -60,4 +55,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test/private/shared_lib
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     SHARED_LIBRARY="$<TARGET_FILE:test_shared_library>"
+    SHARED_LIBRARY_DIR="$<TARGET_FILE_DIR:test_shared_library>"
+    SHARED_LIBRARY_SUFFIX="${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    SHARED_LIBRARY_PREFIX="${CMAKE_SHARED_LIBRARY_PREFIX}"
 )

@@ -1,30 +1,31 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
 #
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-#
-# You may add additional accurate notices of copyright ownership.
-#
-#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(COMPONENTS_PLUGIN_LOGGING_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/logging)
 
 set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS
-    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_common.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_common.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_console.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_rpc.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_csv.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_fep.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_intf.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.cpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file_base.hpp
+)
+
+set(COMPONENTS_LOGGING_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/logging)
+
+set(COMPONENTS_LOGGING_SOURCES_PUBLIC
+    ${COMPONENTS_LOGGING_INCLUDE_DIR}/logging_service_intf.h
+    ${COMPONENTS_LOGGING_INCLUDE_DIR}/logger_intf.h
+    ${COMPONENTS_LOGGING_INCLUDE_DIR}/easy_logger.h
 )
 
 if (MSVC)
@@ -48,13 +49,79 @@ set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE
 )
 
 set(COMPONENT_PLUGIN_LOGGING_SOURCES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE}
-                               ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+                               ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS}
+                               ${COMPONENTS_LOGGING_SOURCES_PUBLIC})
 
 source_group(components\\logging\\private FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE})
 source_group(components\\logging\\sinks FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+source_group(components\\logging\\public FILES ${COMPONENTS_LOGGING_SOURCES_PUBLIC})
+
+##################################################################
+# RPC
+##################################################################
+set(COMPONENTS_LOGGING_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/logging)
+set(COMPONENTS_LOGGING_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/logging)
+
+add_custom_target(logging_service_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET logging_service_rpc_stub_generator
+    INPUT_FILE "${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_service.json"
+    OUTPUT_DIR "${COMPONENTS_LOGGING_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCLoggingClientStub
+    CLIENT_FILE_NAME logging_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCLoggingServiceStub
+    SERVER_FILE_NAME logging_service_stub.h
+)
+
+fep_generate_rpc_stubs_before_target(
+    TARGET logging_service_rpc_stub_generator
+    INPUT_FILE "${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_client.json"
+    OUTPUT_DIR "${COMPONENTS_LOGGING_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCLoggingRPCSinkClientClientStub
+    CLIENT_FILE_NAME logging_rpc_sink_client_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCLoggingRPCSinkClientServiceStub
+    SERVER_FILE_NAME logging_rpc_sink_client_service_stub.h
+)
+
+fep_generate_rpc_stubs_before_target(
+    TARGET logging_service_rpc_stub_generator
+    INPUT_FILE "${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_service.json"
+    OUTPUT_DIR "${COMPONENTS_LOGGING_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCLoggingRPCSinkServiceClientStub
+    CLIENT_FILE_NAME logging_rpc_sink_service_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCLoggingRPCSinkServiceServiceStub
+    SERVER_FILE_NAME logging_rpc_sink_service_service_stub.h
+)
+
+set(COMPONENTS_LOGGING_RPC_SOURCES
+    ${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_service.json
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_service_stub.h
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_client_stub.h
+
+    ${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_client.json
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_client_service_stub.h
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_client_client_stub.h
+
+    ${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_rpc_sink_service.json
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_service_service_stub.h
+    ${COMPONENTS_LOGGING_RPC_BINARY_DIR}/logging_rpc_sink_service_client_stub.h
+
+    ${COMPONENTS_LOGGING_RPC_INCLUDE_DIR}/logging_service_rpc_intf_def.h
+)
+
+source_group(components\\logging\\public\\rpc FILES ${COMPONENTS_LOGGING_RPC_SOURCES})
+
+install(FILES
+    ${COMPONENTS_LOGGING_RPC_SOURCES}
+    DESTINATION
+    include/fep3/rpc_services/logging
+)
 
 ######################################
 # Set up the variable
 ######################################
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES})
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENTS_LOGGING_RPC_SOURCES})
+list(APPEND FEP_COMPONENT_PLUGIN_STUB_GENERATORS logging_service_rpc_stub_generator)
+

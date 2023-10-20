@@ -4,29 +4,22 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
-#include <string>
-#include <regex>
-
+#include <fep3/base/properties/property_type_conversion.h>
 #include <fep3/components/configuration/configuration_service_intf.h>
-#include "property_type_conversion.h"
-
+#include <fep3/fep3_errors.h>
 #include <fep3/fep3_optional.h>
-#include <a_util/strings.h>
+
+#include <a_util/strings/strings_format.h>
+
+#include <regex>
 
 namespace fep3 {
 namespace base {
@@ -43,15 +36,13 @@ inline void validatePropertyName(const std::string& property_name)
     using namespace a_util::strings;
     const auto regex = "^[a-zA-Z0-9_]+$";
     const std::regex regex_object(regex);
-    if (!std::regex_match(property_name, regex_object))
-    {
+    if (!std::regex_match(property_name, regex_object)) {
         throw std::invalid_argument(
-            format("The property name '%s' is not valid. It has to comply with the regex '%s'."
-                , property_name.c_str()
-                , regex));
+            format("The property name '%s' is not valid. It has to comply with the regex '%s'.",
+                   property_name.c_str(),
+                   regex));
     }
 }
-
 
 /**
  * @brief Set the value of the @p property_node to @p value in a typed way.
@@ -62,12 +53,14 @@ inline void validatePropertyName(const std::string& property_name)
  * @param[in] property_node Node to set the value for
  * @param[in] value The value to set
  * @return fep3::Result
- * @retval ERR_INVALID_TYPE if @p property_node is of different type than @p T and no conversion is implemented
+ * @retval ERR_INVALID_TYPE if @p property_node is of different type than @p T and no conversion is
+ * implemented
  */
 template <typename T>
 fep3::Result setPropertyValue(fep3::arya::IPropertyNode& property_node, T value)
 {
-    return property_node.setValue(base::arya::DefaultPropertyTypeConversion<T>::toString(value), base::arya::PropertyType<T>::getTypeName());
+    return property_node.setValue(base::arya::DefaultPropertyTypeConversion<T>::toString(value),
+                                  base::arya::PropertyType<T>::getTypeName());
 }
 
 /**
@@ -77,30 +70,32 @@ fep3::Result setPropertyValue(fep3::arya::IPropertyNode& property_node, T value)
  *
  * @tparam T Type of the property with path @p property_path.
  * @param[in] config_service The configuration service of the fep element
- * @param[in] property_path The property path of the property as registered with the @p config_service (e.g. Clock/CycleTime).
+ * @param[in] property_path The property path of the property as registered with the @p
+ * config_service (e.g. Clock/CycleTime).
  * @param[in] value The value to set
  * @return fep3::Result
  * @retval ERR_NOT_FOUND if no property with this @p property_path was found
- * @retval ERR_INVALID_TYPE if property @p property_path is of different type than @p T and no conversion is implemented
+ * @retval ERR_INVALID_TYPE if property @p property_path is of different type than @p T and no
+ * conversion is implemented
  */
 template <typename T>
-fep3::Result setPropertyValue(fep3::arya::IConfigurationService& config_service, const std::string& property_path, T value)
+fep3::Result setPropertyValue(fep3::arya::IConfigurationService& config_service,
+                              const std::string& property_path,
+                              T value)
 {
     auto node = config_service.getNode(property_path);
-    if (!node)
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND
-            , "A property with path '%s' was not found", property_path.c_str());
+    if (!node) {
+        RETURN_ERROR_DESCRIPTION(
+            ERR_NOT_FOUND, "A property with path '%s' was not found", property_path.c_str());
     }
     return setPropertyValue<T>(*node, value);
 }
 
-
 /**
  * @brief Get the value of the @p property_node in a typed way.
  * If the property value cannot be represented by @p T a default value is returned.
- * See implementation of @ref fep3::base::arya::DefaultPropertyTypeConversion<T>::fromString() for used @p T.
- * By default only these types are supported: @ref fep3::base::arya::PropertyType<T>.
+ * See implementation of @ref fep3::base::arya::DefaultPropertyTypeConversion<T>::fromString() for
+ * used @p T. By default only these types are supported: @ref fep3::base::arya::PropertyType<T>.
  *
  * @tparam T Type of the @p property_node
  * @param[in] property_node Property to get value from
@@ -123,12 +118,12 @@ T getPropertyValue(const fep3::arya::IPropertyNode& property_node)
  * @return If the node cannot be found, an empty @ref fep3::arya::Optional<T> is returned
  */
 template <typename T>
-fep3::arya::Optional<T> getPropertyValue(const fep3::arya::IConfigurationService& config_service, const std::string& property_path)
+fep3::arya::Optional<T> getPropertyValue(const fep3::arya::IConfigurationService& config_service,
+                                         const std::string& property_path)
 {
     auto result_value = fep3::arya::Optional<T>();
     auto node = config_service.getNode(property_path);
-    if (node)
-    {
+    if (node) {
         result_value = getPropertyValue<T>(*node);
     }
 

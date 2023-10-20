@@ -4,107 +4,104 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <gtest/gtest.h>
-
+#include <fep3/base/component_registry/component_registry.h>
 #include <fep3/fep3_participant_version.h>
-#include "fep3/components/base/component_registry.h"
-#include "fep3/native_components/logging/sinks/logging_sink_common.hpp"
-#include "fep3/native_components/logging/sinks/logging_sink_rpc.hpp"
-#include "fep3/components/service_bus/rpc/fep_rpc.h"
-#include "fep3/native_components/logging/logging_service.h"
-#include "fep3/native_components/service_bus/service_bus.h"
-#include "fep3/native_components/service_bus/testing/service_bus_testing.hpp"
-#include "fep3/rpc_services/logging/logging_service_rpc_intf_def.h"
-#include "fep3/rpc_services/logging/logging_rpc_sink_client_service_stub.h"
-#include "fep3/rpc_services/logging/logging_client_stub.h"
-#include "fep3/rpc_services/logging/logging_rpc_sink_service_client_stub.h"
+#include <fep3/native_components/logging/logging_service.h>
+#include <fep3/native_components/logging/sinks/logging_formater_fep.hpp>
+#include <fep3/native_components/service_bus/testing/service_bus_testing.hpp>
+#include <fep3/rpc_services/logging/logging_client_stub.h>
+#include <fep3/rpc_services/logging/logging_rpc_sink_client_service_stub.h>
+#include <fep3/rpc_services/logging/logging_rpc_sink_service_client_stub.h>
 
 #include <a_util/system/system.h>
-#include <iostream>
 
 // RPC Sink Client Client to send configurations to the logging service
-typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingClientStub, fep3::rpc::IRPCLoggingServiceDef> LoggingServiceClient;
-typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkServiceClientStub, fep3::rpc::IRPCLoggingSinkServiceDef> LoggingSinkServiceClient;
-
+typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingClientStub,
+                                    fep3::rpc::IRPCLoggingServiceDef>
+    LoggingServiceClient;
+typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkServiceClientStub,
+                                    fep3::rpc::IRPCLoggingSinkServiceDef>
+    LoggingSinkServiceClient;
 
 // RPC Sink Client Service to receive logs from the logging service
-struct TestRPCSinkClient : public fep3::rpc::RPCService<fep3::rpc_stubs::RPCLoggingRPCSinkClientServiceStub, fep3::rpc::IRPCLoggingSinkClientDef>
-{
+struct TestRPCSinkClient
+    : public fep3::rpc::RPCService<fep3::rpc_stubs::RPCLoggingRPCSinkClientServiceStub,
+                                   fep3::rpc::IRPCLoggingSinkClientDef> {
     int onLog(const std::string& description,
-                const std::string& logger_name,
-                const std::string& participant,
-                int severity,
-        const std::string& timestamp) override
+              const std::string& logger_name,
+              const std::string& participant,
+              int severity,
+              const std::string& timestamp) override
     {
-        fep3::LogMessage log_message = {
-            timestamp,
-            static_cast<fep3::LoggerSeverity>(severity),
-            participant,
-            logger_name,
-            description };
-        std::string log_msg;
-        fep3::native::formatLoggingString(log_msg, log_message);
+        fep3::LogMessage log_message = {timestamp,
+                                        static_cast<fep3::LoggerSeverity>(severity),
+                                        participant,
+                                        logger_name,
+                                        description};
+        const auto log_msg = _logging_formatter.formatLogMessage(log_message);
         std::cout << log_msg << std::endl;
         _messages.push_back(log_msg);
         return fep3::ERR_NOERROR.getCode();
     }
     std::vector<std::string> _messages;
+    fep3::native::LoggingFormaterFep _logging_formatter;
 };
 
-struct TestLoggingServiceRPC : public ::testing::Test
-{
-    std::shared_ptr<fep3::native::LoggingService> _logging{ std::make_shared<fep3::native::LoggingService>() };
-    std::shared_ptr<fep3::native::ServiceBus> _service_bus{ std::make_shared<fep3::native::ServiceBus>() };
-    std::shared_ptr<fep3::ComponentRegistry> _component_registry{ std::make_shared<fep3::ComponentRegistry>() };
+struct TestLoggingServiceRPC : public ::testing::Test {
+    std::shared_ptr<fep3::native::LoggingService> _logging{
+        std::make_shared<fep3::native::LoggingService>()};
+    std::shared_ptr<fep3::native::ServiceBus> _service_bus{
+        std::make_shared<fep3::native::ServiceBus>()};
+    std::shared_ptr<fep3::ComponentRegistry> _component_registry{
+        std::make_shared<fep3::ComponentRegistry>()};
     std::unique_ptr<LoggingServiceClient> _logging_service_client;
     std::shared_ptr<TestRPCSinkClient> _test_sink_client;
     std::shared_ptr<LoggingSinkServiceClient> _sink_service;
     std::string _address;
+
 private:
-    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
+    const fep3::ComponentVersionInfo _dummy_component_version_info{
+        FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
+
 public:
     TestLoggingServiceRPC()
     {
-
     }
 
     void SetUp()
     {
         ASSERT_TRUE(fep3::native::testing::prepareServiceBusForTestingDefault(*_service_bus));
-        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(_service_bus, _dummy_component_version_info), fep3::ERR_NOERROR);
-        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(_logging, _dummy_component_version_info), fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::IServiceBus>(
+                      _service_bus, _dummy_component_version_info),
+                  fep3::ERR_NOERROR);
+        ASSERT_EQ(_component_registry->registerComponent<fep3::ILoggingService>(
+                      _logging, _dummy_component_version_info),
+                  fep3::ERR_NOERROR);
         ASSERT_EQ(_component_registry->create(), fep3::ERR_NOERROR);
 
-        _logging_service_client = std::make_unique<LoggingServiceClient>(fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),
+        _logging_service_client = std::make_unique<LoggingServiceClient>(
+            fep3::rpc::IRPCLoggingServiceDef::getRPCDefaultName(),
             _service_bus->getRequester(fep3::native::testing::participant_name_default));
 
         auto rpc_server = _service_bus->getServer();
-        if (rpc_server)
-        {
+        if (rpc_server) {
             _test_sink_client = std::make_shared<TestRPCSinkClient>();
-            ASSERT_EQ(rpc_server->registerService(::fep3::rpc::IRPCLoggingSinkClientDef::getRPCDefaultName(),
-                _test_sink_client), fep3::ERR_NOERROR);
-            _sink_service = std::make_shared<LoggingSinkServiceClient>
-                (fep3::rpc::IRPCLoggingSinkServiceDef::getRPCDefaultName(),
-                    _service_bus->getRequester(fep3::native::testing::participant_name_default));
+            ASSERT_EQ(
+                rpc_server->registerService(
+                    ::fep3::rpc::IRPCLoggingSinkClientDef::getRPCDefaultName(), _test_sink_client),
+                fep3::ERR_NOERROR);
+            _sink_service = std::make_shared<LoggingSinkServiceClient>(
+                fep3::rpc::IRPCLoggingSinkServiceDef::getRPCDefaultName(),
+                _service_bus->getRequester(fep3::native::testing::participant_name_default));
             _address = _service_bus->getServer()->getUrl();
         }
-        else
-        {
+        else {
             ADD_FAILURE();
         }
     }
@@ -112,24 +109,27 @@ public:
     void TearDown()
     {
         // The Service Bus object will be destroyed by the component registry during destruction
-
+        ASSERT_EQ(_component_registry->destroy(), fep3::ERR_NOERROR);
     }
 };
 
 /**
-* Logs can be send to other participants via RPC and the receiver can also configure a filter for received logs
-* @req_id ???
-*/
+ * Logs can be send to other participants via RPC and the receiver can also configure a filter for
+ * received logs
+ * @req_id ???
+ */
 TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
 {
-    std::shared_ptr<fep3::ILogger> logger = _logging->createLogger("RPCLogger.LoggingService.Tester");
-    try
-    {
-        _logging_service_client->setLoggerFilter("rpc", "RPCLogger.LoggingService.Tester", static_cast<int>(fep3::LoggerSeverity::info));
-        _sink_service->registerRPCLoggingSinkClient(_address, "RPCLogger.LoggingService.Tester", static_cast<int>(fep3::LoggerSeverity::info));
+    std::shared_ptr<fep3::ILogger> logger =
+        _logging->createLogger("RPCLogger.LoggingService.Tester");
+    try {
+        _logging_service_client->setLoggerFilter(
+            "rpc", "RPCLogger.LoggingService.Tester", static_cast<int>(fep3::LoggerSeverity::info));
+        _sink_service->registerRPCLoggingSinkClient(_address,
+                                                    "RPCLogger.LoggingService.Tester",
+                                                    static_cast<int>(fep3::LoggerSeverity::info));
     }
-    catch(jsonrpc::JsonRpcException e)
-    {
+    catch (jsonrpc::JsonRpcException e) {
         ASSERT_TRUE(false) << e.what();
     }
 
@@ -140,8 +140,7 @@ TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
 
     // wait until the logs are executed from queue
     auto try_count = 10;
-    while (_test_sink_client->_messages.size() < 2 && try_count > 0)
-    {
+    while (_test_sink_client->_messages.size() < 2 && try_count > 0) {
         a_util::system::sleepMilliseconds(300);
         try_count--;
     }
@@ -160,12 +159,10 @@ TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
 
     _test_sink_client->_messages.clear();
 
-    try
-    {
+    try {
         _sink_service->unregisterRPCLoggingSinkClient(_address);
     }
-    catch (jsonrpc::JsonRpcException e)
-    {
+    catch (jsonrpc::JsonRpcException e) {
         ASSERT_TRUE(false) << e.what();
     }
 
@@ -176,13 +173,11 @@ TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
 
     // wait until the logs are executed from queue
     try_count = 5;
-    while (_test_sink_client->_messages.size() < 2 && try_count > 0)
-    {
+    while (_test_sink_client->_messages.size() < 2 && try_count > 0) {
         a_util::system::sleepMilliseconds(300);
         try_count--;
     }
 
-    //it is still empty, because we unregistered
+    // it is still empty, because we unregistered
     ASSERT_EQ(_test_sink_client->_messages.size(), 0);
-
 }

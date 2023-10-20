@@ -4,47 +4,38 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/sample/data_sample.h>
-#include <fep3/base/sample/raw_memory.h>
+#include <fep3/base/stream_type/default_stream_type.h>
 
 #include <random>
 
 using namespace fep3;
 
 /**
- * @brief Data sample helper template to wrap a non standard layout type T and support time and counter
+ * @brief Data sample helper template to wrap a non standard layout type T and support time and
+ * counter
  * @tparam T the non standard layout type
  */
 template <typename T>
-class TimeDataSampleType
-    : public IDataSample, public base::RawMemoryStandardType<T> {
+class TimeDataSampleType : public IDataSample, public base::RawMemoryStandardType<T> {
 public:
     /// value type of DataSampleType
-    typedef T                        ValueType;
+    typedef T ValueType;
     /// super type of DataSampleType
     typedef base::RawMemoryStandardType<T> BaseType;
+
 public:
     /**
      * CTOR
      * @param value reference to the value type
      */
-    TimeDataSampleType(ValueType& value)
-        : BaseType(value)
+    TimeDataSampleType(ValueType& value) : BaseType(value)
     {
     }
 
@@ -54,8 +45,7 @@ public:
      * @param time initial timestamp
      */
     TimeDataSampleType(ValueType& value, const fep3::arya::Timestamp& time)
-        : BaseType(value)
-        , _timestamp(time)
+        : BaseType(value), _timestamp(time)
     {
     }
 
@@ -88,7 +78,7 @@ public:
         return writeable_memory.set(BaseType::cdata(), BaseType::size());
     }
 
-    void setTime(const Timestamp & time) override
+    void setTime(const Timestamp& time) override
     {
         _timestamp = time;
     }
@@ -101,19 +91,18 @@ public:
     {
         _counter = counter;
     }
+
 private:
     fep3::arya::Timestamp _timestamp;
     uint32_t _counter = 0;
 };
 
-class RandomSample : public base::DataSample
-{
+class RandomSample : public base::DataSample {
 private:
     size_t _size;
+
 public:
-    RandomSample(size_t size) :
-        DataSample(size, true),
-        _size(size)
+    RandomSample(size_t size) : DataSample(size, true), _size(size)
     {
         fillRandom();
     }
@@ -125,16 +114,16 @@ public:
         std::random_device rd;
         std::mt19937 mt(rd());
         // standard does not allow uint8_t distribution
-        std::uniform_int_distribution<uint16_t> dist(0,  static_cast<uint16_t>(std::numeric_limits<uint8_t>::max()));
+        std::uniform_int_distribution<uint16_t> dist(
+            0, static_cast<uint16_t>(std::numeric_limits<uint8_t>::max()));
         // we are sure that the random number is inside the numberical limits of uint8_t
-        std::generate(data.begin(), data.end(), [&]() {return  static_cast<uint8_t>(dist(mt));});
+        std::generate(data.begin(), data.end(), [&]() { return static_cast<uint8_t>(dist(mt)); });
         set(data.data(), data.size());
     }
 
-    bool compare(const base::DataSample & sample) const
+    bool compare(const base::DataSample& sample) const
     {
-        if (getSize() != sample.getSize())
-        {
+        if (getSize() != sample.getSize()) {
             return false;
         }
 
@@ -142,19 +131,13 @@ public:
         auto own_data = reinterpret_cast<const uint8_t*>(cdata());
         return std::equal(data, std::next(data, sample.getSize()), own_data);
     }
-
 };
 
-class RawDataSample
-    : public IRawMemory
-{
-
+class RawDataSample : public IRawMemory {
 public:
-
     RawDataSample()
     {
     }
-
 
 public:
     size_t capacity() const
@@ -187,6 +170,7 @@ public:
     {
         return _data;
     }
+
 private:
     std::string _data;
 };

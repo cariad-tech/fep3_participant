@@ -4,16 +4,9 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
@@ -21,18 +14,17 @@ You may add additional accurate notices of copyright ownership.
 
 #include <fep3/components/service_bus/service_bus_intf.h>
 
-#include <algorithm>
+namespace fep3 {
+namespace native {
 
-
-namespace fep3
-{
-namespace native
-{
-
-std::shared_ptr<IPropertyNode> getPropertyNodeByPath(const IConfigurationService& config_service, const std::string & property_path);
-std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNode> node, const std::string & property_path);
-std::vector<std::string> collectAllChildPropertyNames(const IPropertyNode& property, const std::string& parent_path);
-std::vector<std::string> collectChildPropertyNames(const IPropertyNode& property, const std::string& parent_path);
+std::shared_ptr<IPropertyNode> getPropertyNodeByPath(const IConfigurationService& config_service,
+                                                     const std::string& property_path);
+std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNode> node,
+                                                     const std::string& property_path);
+std::vector<std::string> collectAllChildPropertyNames(const IPropertyNode& property,
+                                                      const std::string& parent_path);
+std::vector<std::string> collectChildPropertyNames(const IPropertyNode& property,
+                                                   const std::string& parent_path);
 std::shared_ptr<base::arya::IPropertyWithExtendedAccess> setPropertyNodeByPath(
     const std::shared_ptr<base::arya::IPropertyWithExtendedAccess>& node,
     const std::string& property_path,
@@ -47,38 +39,33 @@ ConfigurationService::ConfigurationService()
 fep3::Result ConfigurationService::create()
 {
     const auto components = _components.lock();
-    if (!components)
-    {
+    if (!components) {
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "Component pointer is invalid");
     }
 
     auto service_bus = components->getComponent<fep3::IServiceBus>();
-    if (!service_bus)
-    {
+    if (!service_bus) {
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "Service Bus is not registered");
     }
 
     auto rpc_server = service_bus->getServer();
-    if (!rpc_server)
-    {
+    if (!rpc_server) {
         RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, "RPC Server not found");
     }
 
-    if (!_rpc_service)
-    {
+    if (!_rpc_service) {
         _rpc_service = std::make_shared<RPCConfigurationService>(*this);
         const auto rpc_name = ::fep3::rpc::IRPCConfigurationDef::getRPCDefaultName();
         FEP3_RETURN_IF_FAILED(rpc_server->registerService(rpc_name, _rpc_service));
     }
 
-    return{};
+    return {};
 }
 
 fep3::Result ConfigurationService::destroy()
 {
     const auto components = _components.lock();
-    if (!components)
-    {
+    if (!components) {
         RETURN_ERROR_DESCRIPTION(ERR_POINTER, "Component pointer is invalid");
     }
 
@@ -90,11 +77,9 @@ fep3::Result ConfigurationService::destroy()
 fep3::Result ConfigurationService::unregisterService(const IComponents& components)
 {
     const auto service_bus = components.getComponent<IServiceBus>();
-    if (service_bus)
-    {
+    if (service_bus) {
         auto rpc_server = service_bus->getServer();
-        if (rpc_server)
-        {
+        if (rpc_server) {
             rpc_server->unregisterService(rpc::IRPCConfigurationDef::getRPCDefaultName());
         }
     }
@@ -102,64 +87,57 @@ fep3::Result ConfigurationService::unregisterService(const IComponents& componen
     return {};
 }
 
-
 fep3::Result ConfigurationService::registerNode(std::shared_ptr<fep3::IPropertyNode> property_node)
 {
     const auto name = property_node->getName();
-    if (_root_node->isChild(name))
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_RESOURCE_IN_USE,
-            "Registering property node failed. Node with the name '%s' is already registered.", name.c_str());
+    if (_root_node->isChild(name)) {
+        RETURN_ERROR_DESCRIPTION(
+            ERR_RESOURCE_IN_USE,
+            "Registering property node failed. Node with the name '%s' is already registered.",
+            name.c_str());
     }
 
     _root_node->setChild(property_node);
     return {};
 }
 
-
 fep3::Result ConfigurationService::unregisterNode(const std::string& name)
 {
-    if (!_root_node->isChild(name))
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND,
-            "Unregisterung property node failed. Node with the name '%s' is not registered.", name.c_str());
+    if (!_root_node->isChild(name)) {
+        RETURN_ERROR_DESCRIPTION(
+            ERR_NOT_FOUND,
+            "Unregisterung property node failed. Node with the name '%s' is not registered.",
+            name.c_str());
     }
 
     _root_node->removeChild(name);
     return {};
 }
 
-
 std::shared_ptr<fep3::IPropertyNode> ConfigurationService::getNode(const std::string& path) const
 {
-    if (path.empty())
-    {
+    if (path.empty()) {
         return {};
     }
-    try
-    {
+    try {
         return getPropertyNodeByPath(_root_node, path);
     }
-    catch (...)
-    {
+    catch (...) {
         return {};
     }
 }
 
-
-std::shared_ptr<const fep3::arya::IPropertyNode> ConfigurationService::getConstNode(const std::string& path) const
+std::shared_ptr<const fep3::arya::IPropertyNode> ConfigurationService::getConstNode(
+    const std::string& path) const
 {
-    if (path.empty())
-    {
+    if (path.empty()) {
         return _root_node;
     }
 
-    try
-    {
+    try {
         return getPropertyNodeByPath(_root_node, path);
     }
-    catch (...)
-    {
+    catch (...) {
         return {};
     }
 }
@@ -170,12 +148,9 @@ bool ConfigurationService::isNodeRegistered(const std::string& path) const
     return node != nullptr;
 }
 
-class PropertyPath
-{
+class PropertyPath {
 public:
-    PropertyPath(const std::string value)
-        : _value(std::move(value))
-        , _path_separator('/')
+    PropertyPath(const std::string value) : _value(std::move(value)), _path_separator('/')
     {
         normalize();
         validate();
@@ -188,13 +163,11 @@ public:
     void validate() const
     {
         const auto splits = splitPath();
-        if (splits.empty())
-        {
+        if (splits.empty()) {
             throw std::invalid_argument("property path has no main node");
         }
 
-        for (const auto& split : splits)
-        {
+        for (const auto& split: splits) {
             base::validatePropertyName(split);
         }
     }
@@ -202,12 +175,10 @@ public:
     PropertyPath& removeLastProperty()
     {
         const auto last_separator = _value.rfind(_path_separator);
-        if (std::string::npos == last_separator)
-        {
-           _value = "";
+        if (std::string::npos == last_separator) {
+            _value = "";
         }
-        else
-        {
+        else {
             _value = _value.substr(0, last_separator);
         }
 
@@ -217,13 +188,11 @@ public:
     PropertyPath& removeFirstProperty()
     {
         const auto first_separator = _value.find(_path_separator);
-        if (std::string::npos == first_separator)
-        {
+        if (std::string::npos == first_separator) {
             _value = "";
         }
-        else
-        {
-            _value = _value.substr(first_separator, _value.length()-1);
+        else {
+            _value = _value.substr(first_separator, _value.length() - 1);
         }
 
         return *this;
@@ -231,12 +200,10 @@ public:
 
     PropertyPath& appendProperty(const std::string& property_name)
     {
-        if (_value.empty())
-        {
+        if (_value.empty()) {
             _value = property_name;
         }
-        else
-        {
+        else {
             _value = _value + _path_separator + property_name;
         }
         return *this;
@@ -249,14 +216,12 @@ public:
 
     size_t getPathElementCount() const
     {
-        if (_value.empty())
-        {
+        if (_value.empty()) {
             return 0;
         }
 
         const size_t separator_count = std::count(_value.begin(), _value.end(), _path_separator);
-        if (separator_count == 0)
-        {
+        if (separator_count == 0) {
             return 1;
         }
 
@@ -271,28 +236,26 @@ public:
 private:
     void normalize()
     {
-        if (_value.empty())
-        {
+        if (_value.empty()) {
             return;
         }
 
-        if (_value.back() == _path_separator)
-        {
+        if (_value.back() == _path_separator) {
             _value.pop_back();
         }
 
-        if (!_value.empty() && _value.front() == _path_separator)
-        {
+        if (!_value.empty() && _value.front() == _path_separator) {
             _value = _value.substr(1, _value.size());
         }
     }
+
 private:
     std::string _value;
     char _path_separator;
 };
 
-
-std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNode> node, const std::string & property_path)
+std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNode> node,
+                                                     const std::string& property_path)
 {
     const PropertyPath path(property_path);
 
@@ -302,9 +265,7 @@ std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNo
     auto current_property = node;
 
     auto iter = split_path.begin();
-    while (iter != split_path.end()
-        && current_property != nullptr)
-    {
+    while (iter != split_path.end() && current_property != nullptr) {
         current_property = current_property->getChild(*iter);
         ++iter;
     }
@@ -312,8 +273,8 @@ std::shared_ptr<IPropertyNode> getPropertyNodeByPath(std::shared_ptr<IPropertyNo
     return current_property;
 }
 
-std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(std::shared_ptr<const IPropertyNode> node,
-    const std::string & property_path)
+std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(
+    std::shared_ptr<const IPropertyNode> node, const std::string& property_path)
 {
     const PropertyPath path(property_path);
 
@@ -323,9 +284,7 @@ std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(std::shared_ptr<
     auto current_property = node;
 
     auto iter = split_path.begin();
-    while (iter != split_path.end()
-        && current_property != nullptr)
-    {
+    while (iter != split_path.end() && current_property != nullptr) {
         current_property = current_property->getChild(*iter);
         ++iter;
     }
@@ -334,7 +293,7 @@ std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(std::shared_ptr<
 }
 
 std::shared_ptr<IPropertyNode> getPropertyNodeByPath(const IConfigurationService& config_service,
-    const std::string & property_path)
+                                                     const std::string& property_path)
 {
     using namespace a_util::strings;
 
@@ -342,16 +301,14 @@ std::shared_ptr<IPropertyNode> getPropertyNodeByPath(const IConfigurationService
 
     const auto root_requested = path.getPathElementCount() == 1;
     const auto split_path = path.splitPath();
-    const auto first_node =  *(split_path.begin());
+    const auto first_node = *(split_path.begin());
 
     auto current_property = config_service.getNode(first_node);
-    if (!current_property)
-    {
-       return current_property;
+    if (!current_property) {
+        return current_property;
     }
 
-    if (root_requested)
-    {
+    if (root_requested) {
         return current_property;
     }
 
@@ -361,8 +318,8 @@ std::shared_ptr<IPropertyNode> getPropertyNodeByPath(const IConfigurationService
     return getPropertyNodeByPath(current_property, path_without_root);
 }
 
-std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(const IConfigurationService& config_service,
-    const std::string & property_path)
+std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(
+    const IConfigurationService& config_service, const std::string& property_path)
 {
     using namespace a_util::strings;
 
@@ -373,13 +330,11 @@ std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(const IConfigura
     const auto first_node = *(split_path.begin());
 
     auto current_property = config_service.getConstNode(first_node);
-    if (!current_property)
-    {
+    if (!current_property) {
         return current_property;
     }
 
-    if (root_requested)
-    {
+    if (root_requested) {
         return current_property;
     }
 
@@ -398,22 +353,21 @@ std::shared_ptr<base::arya::IPropertyWithExtendedAccess> setPropertyNodeByPath(
     const PropertyPath path(property_path);
     auto split_path = path.splitPath();
 
-    if (1 == split_path.size())
-    {
+    if (1 == split_path.size()) {
         auto property = node->getChildImpl(split_path.front());
-        if (property)
-        {
+        if (property) {
             property->setValue(value, type);
             return property;
         }
 
-        return node->setChild(std::make_shared<base::NativePropertyNode>(split_path.front(), value, type));
+        return node->setChild(
+            std::make_shared<base::NativePropertyNode>(split_path.front(), value, type));
     }
 
     auto child_node = node->getChildImpl(split_path.front());
-    if (!child_node)
-    {
-        child_node = node->setChild(std::make_shared<base::NativePropertyNode>(split_path.front(), "", "node"));
+    if (!child_node) {
+        child_node = node->setChild(
+            std::make_shared<base::NativePropertyNode>(split_path.front(), "", "node"));
     }
 
     auto path_without_root = path;
@@ -423,7 +377,7 @@ std::shared_ptr<base::arya::IPropertyWithExtendedAccess> setPropertyNodeByPath(
 }
 
 std::vector<std::string> collectAllChildPropertyNames(const IPropertyNode& property,
-    PropertyPath parent_path)
+                                                      PropertyPath parent_path)
 {
     std::vector<std::string> names{};
 
@@ -431,12 +385,10 @@ std::vector<std::string> collectAllChildPropertyNames(const IPropertyNode& prope
 
     const auto& properties = property.getChildren();
 
-    for (const auto& iter : properties)
-    {
+    for (const auto& iter: properties) {
         names.push_back(PropertyPath(parent_path).appendProperty(iter->getName()));
         auto iter_names = collectAllChildPropertyNames(*iter, parent_path);
-        for (const auto& current : iter_names)
-        {
+        for (const auto& current: iter_names) {
             names.push_back(current);
         }
     }
@@ -449,8 +401,7 @@ std::vector<std::string> collectChildPropertyNames(const IPropertyNode& property
 
     const auto& properties = property.getChildren();
 
-    for (const auto& iter : properties)
-    {
+    for (const auto& iter: properties) {
         names.push_back(iter->getName());
     }
 
@@ -459,20 +410,15 @@ std::vector<std::string> collectChildPropertyNames(const IPropertyNode& property
 
 std::string RPCConfigurationService::getProperties(const std::string& property_path)
 {
-    try
-    {
-        if (property_path.empty() || property_path == "/")
-        {
-            return a_util::strings::join(
-                collectChildPropertyNames(
-                *_service.getConstNode("")), ",");
+    try {
+        if (property_path.empty() || property_path == "/") {
+            return a_util::strings::join(collectChildPropertyNames(*_service.getConstNode("")),
+                                         ",");
         }
-        else
-        {
+        else {
             const PropertyPath path(property_path);
             const auto property = getConstPropertyNodeByPath(_service, path);
-            if (nullptr == property)
-            {
+            if (nullptr == property) {
                 return {};
             }
 
@@ -480,28 +426,23 @@ std::string RPCConfigurationService::getProperties(const std::string& property_p
             return a_util::strings::join(names, ",");
         }
     }
-    catch (...)
-    {
+    catch (...) {
         return {};
     }
 }
 
-
 std::string RPCConfigurationService::getAllProperties(const std::string& property_path)
 {
-    try
-    {
+    try {
         const PropertyPath path(property_path);
 
         const auto property = getPropertyNodeByPath(_service, path);
-        if (nullptr == property)
-        {
+        if (nullptr == property) {
             return {};
         }
 
         auto path_of_found_property = path;
-        if (path_of_found_property.getPathElementCount() > 0)
-        {
+        if (path_of_found_property.getPathElementCount() > 0) {
             /// remove the property we just searched for from path, to make property names absolute
             path_of_found_property.removeLastProperty();
         }
@@ -509,30 +450,25 @@ std::string RPCConfigurationService::getAllProperties(const std::string& propert
         const auto names = collectAllChildPropertyNames(*property, path_of_found_property);
         return a_util::strings::join(names, ",");
     }
-    catch (...)
-    {
+    catch (...) {
         return {};
     }
- }
+}
 
-bool RPCConfigurationService::exists(const std::string & property_path)
+bool RPCConfigurationService::exists(const std::string& property_path)
 {
-    try
-    {
-        if (property_path.empty() || property_path == "/")
-        {
+    try {
+        if (property_path.empty() || property_path == "/") {
             return true;
         }
-        else
-        {
+        else {
             const PropertyPath path(property_path);
 
             const auto property = getPropertyNodeByPath(_service, property_path);
             return property != nullptr;
         }
     }
-    catch (...)
-    {
+    catch (...) {
         return false;
     }
 }
@@ -543,28 +479,23 @@ Json::Value RPCConfigurationService::getProperty(const std::string& property_pat
     property_to_return["value"] = "";
     property_to_return["type"] = "";
 
-    try
-    {
+    try {
         std::shared_ptr<const IPropertyNode> property_node;
-        if (property_path.empty() || property_path == "/")
-        {
+        if (property_path.empty() || property_path == "/") {
             property_node = _service.getConstNode("");
         }
-        else
-        {
+        else {
             const PropertyPath path(property_path);
             property_node = getConstPropertyNodeByPath(_service, property_path);
         }
-        if (nullptr == property_node)
-        {
+        if (nullptr == property_node) {
             return property_to_return;
         }
 
         property_to_return["value"] = property_node->getValue();
         property_to_return["type"] = property_node->getTypeName();
     }
-    catch (...)
-    {
+    catch (...) {
         property_to_return["value"] = "";
         property_to_return["type"] = "";
     }
@@ -572,33 +503,30 @@ Json::Value RPCConfigurationService::getProperty(const std::string& property_pat
     return property_to_return;
 }
 
-int RPCConfigurationService::setProperty(const std::string& property_path, const std::string& type, const std::string& value)
+int RPCConfigurationService::setProperty(const std::string& property_path,
+                                         const std::string& type,
+                                         const std::string& value)
 {
-    if (property_path.empty())
-    {
+    if (property_path.empty()) {
         return fep3::ResultType_ERR_INVALID_ARG::getCode();
     }
-    try
-    {
+    try {
         const PropertyPath path(property_path);
 
         auto property = getPropertyNodeByPath(_service, property_path);
-        if (nullptr == property)
-        {
+        if (nullptr == property) {
             return fep3::ResultType_ERR_NOT_FOUND::getCode();
         }
         const auto result = property->setValue(value, type);
         return result.getErrorCode();
     }
-    catch (std::invalid_argument& /*ex*/)
-    {
+    catch (std::invalid_argument& /*ex*/) {
         return fep3::ResultType_ERR_INVALID_ARG::getCode();
     }
-    catch (...)
-    {
+    catch (...) {
         return fep3::ResultType_ERR_UNKNOWN::getCode();
     }
- }
+}
 
-} // namespace detail
+} // namespace native
 } // namespace fep3

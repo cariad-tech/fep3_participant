@@ -4,37 +4,25 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #include "simbus_datawriter.h"
 
-#include "fep3/base/sample/data_sample.h"
-#include "fep3/base/stream_type/stream_type.h"
+#include <fep3/base/sample/data_sample.h>
 
-namespace fep3
-{
-namespace native
-{
+namespace fep3 {
+namespace native {
 
 template <class TYPE>
-void SimulationBus::Transmitter::transmit(const std::string& name, const data_read_ptr<const TYPE>& sample)
+void SimulationBus::Transmitter::transmit(const std::string& name,
+                                          const data_read_ptr<const TYPE>& sample)
 {
-    for (auto elem : _receiver_queues)
-    {
-        if (elem.first == name)
-        {
+    for (auto elem: _receiver_queues) {
+        if (elem.first == name) {
             elem.second->push(sample);
         }
     }
@@ -45,7 +33,10 @@ void SimulationBus::Transmitter::add(const std::string& name, DataItemQueuePtr r
     _receiver_queues.emplace(std::make_pair(name, receive_queue));
 }
 
-SimulationBus::DataWriter::DataWriter(const std::string& name, size_t transmit_buffer_capacity, const std::shared_ptr<SimulationBus::Transmitter>& transmitter)
+SimulationBus::DataWriter::DataWriter(
+    const std::string& name,
+    size_t transmit_buffer_capacity,
+    const std::shared_ptr<SimulationBus::Transmitter>& transmitter)
 {
     _name = name;
     _transmit_buffer = std::make_unique<DataItemQueue<>>(transmit_buffer_capacity);
@@ -63,7 +54,6 @@ fep3::Result SimulationBus::DataWriter::write(const IDataSample& data_sample)
 
 fep3::Result SimulationBus::DataWriter::write(const IStreamType& stream_type)
 {
-
     auto current = std::make_shared<base::StreamType>(stream_type);
 
     _transmit_buffer->push(current);
@@ -73,22 +63,20 @@ fep3::Result SimulationBus::DataWriter::write(const IStreamType& stream_type)
 
 fep3::Result SimulationBus::DataWriter::transmit()
 {
-    for (auto items = _transmit_buffer->pop(); std::get<0>(items) != nullptr || std::get<1>(items) != nullptr; items = _transmit_buffer->pop())
-    {
-        if (std::get<0>(items) != nullptr)
-        {
+    for (auto items = _transmit_buffer->pop();
+         std::get<0>(items) != nullptr || std::get<1>(items) != nullptr;
+         items = _transmit_buffer->pop()) {
+        if (std::get<0>(items) != nullptr) {
             _transmitter->transmit(_name, std::get<0>(items));
         }
 
-        if (std::get<1>(items) != nullptr)
-        {
+        if (std::get<1>(items) != nullptr) {
             _transmitter->transmit(_name, std::get<1>(items));
         }
     }
 
     return {};
 }
-
 
 } // namespace native
 } // namespace fep3

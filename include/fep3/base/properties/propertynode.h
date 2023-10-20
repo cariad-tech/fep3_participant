@@ -4,32 +4,28 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
+#include <fep3/base/properties/propertynode_helper.h>
 #include <fep3/components/configuration/propertynode_intf.h>
-#include "propertynode_helper.h"
 #include <fep3/fep3_errors.h>
 
+#include <a_util/preprocessor/deprecated.h> // DEV_ESSENTIAL_DEPRECATED()
+
+#include <algorithm>
+#include <iterator>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <algorithm>
-#include <iterator>
-#include <shared_mutex>
 
 namespace fep3 {
 namespace base {
@@ -38,8 +34,7 @@ namespace arya {
 /**
  * @brief Interface for receiving notifications about changes of a property node.
  */
-class IPropertyObserver
-{
+class IPropertyObserver {
 protected:
     /// DTOR
     ~IPropertyObserver() = default;
@@ -56,10 +51,8 @@ public:
 
 /**
  * @brief Interface for registration of a @ref fep3::base::arya::IPropertyObserver.
- *
  */
-class IPropertyObservable
-{
+class IPropertyObservable {
 protected:
     /// DTOR
     ~IPropertyObservable() = default;
@@ -84,12 +77,9 @@ public:
 
 /**
  * @brief Extends @ref fep3::arya::IPropertyNode with additional functionality.
- *
  */
-class IPropertyWithExtendedAccess
-    : public fep3::arya::IPropertyNode
-    , public arya::IPropertyObservable
-{
+class IPropertyWithExtendedAccess : public fep3::arya::IPropertyNode,
+                                    public arya::IPropertyObservable {
 protected:
     /// DTOR
     ~IPropertyWithExtendedAccess() = default;
@@ -102,12 +92,14 @@ public:
      * @param[in] property_to_add Property to be set as child
      * @return The child that was just set
      */
-    virtual std::shared_ptr<IPropertyWithExtendedAccess> setChild(std::shared_ptr<IPropertyWithExtendedAccess> property_to_add) = 0;
+    virtual std::shared_ptr<IPropertyWithExtendedAccess> setChild(
+        std::shared_ptr<IPropertyWithExtendedAccess> property_to_add) = 0;
 
     /**
      * @brief Get the child with this @p name.
      * In contrary to @ref fep3::arya::IPropertyNode::getChild() this method will return
-     * the interface @ref fep3::base::arya::IPropertyWithExtendedAccess(), which allows some more modification to the child.
+     * the interface @ref fep3::base::arya::IPropertyWithExtendedAccess(), which allows some more
+     * modification to the child.
      *
      * @param[in] name Name of the child
      * @return Child as shared_ptr or
@@ -132,20 +124,21 @@ public:
 
     /**
      * @brief Register an observer to this node.
-     * All observers are notified when the method @ref fep3::base::arya::IPropertyWithExtendedAccess::updateObservers() is called.
+     * All observers are notified when the method @ref
+     * fep3::base::arya::IPropertyWithExtendedAccess::updateObservers() is called.
      *
      * @param[in] observer Observer to register
      */
     void registerObserver(std::weak_ptr<arya::IPropertyObserver> observer) override = 0;
 
-     /**
+    /**
      * @brief Unregister an observer from this node.
      *
      * @param[in] observer Observer to unregister
      */
     void unregisterObserver(std::weak_ptr<arya::IPropertyObserver> observer) override = 0;
 
-     /**
+    /**
      * @brief Remove the child with @p name.
      *
      * @param[in] name Name of the child to remove
@@ -153,34 +146,29 @@ public:
     virtual void removeChild(const std::string& name) = 0;
 };
 
-
 /**
  * @brief PropertyValue that can be registered as an @ref fep3::base::arya::IPropertyObserver
  *
  * @tparam T Type of the PropertyValue
  */
 template <typename T>
-class PropertyValueWithObserver
-    : public base::arya::PropertyValue<T>
-    , public arya::IPropertyObserver
-{
+class PropertyValueWithObserver : public base::arya::PropertyValue<T>,
+                                  public arya::IPropertyObserver {
 public:
     /**
-     * @brief Forwarder that is used to forward calls to a reference of type @ref fep3::base::arya::IPropertyObserver
-     * Is used if an observer cannot be instantiated as shared_ptr directly
+     * @brief Forwarder that is used to forward calls to a reference of type @ref
+     * fep3::base::arya::IPropertyObserver Is used if an observer cannot be instantiated as
+     * shared_ptr directly
      */
-    class ObserverForwarder : public arya::IPropertyObserver
-    {
+    class ObserverForwarder : public arya::IPropertyObserver {
     public:
         /**
          * @brief CTOR
          *
          * @param[in] forward_to Reference to forward calls to
          */
-        ObserverForwarder(arya::IPropertyObserver& forward_to)
-            : _forward_to(forward_to)
+        ObserverForwarder(arya::IPropertyObserver& forward_to) : _forward_to(forward_to)
         {
-
         }
 
         //! @copydoc fep3::base::arya::IPropertyObserver::onUpdate()
@@ -195,10 +183,8 @@ public:
 
     /**
      * @brief Default CTOR
-     *
      */
-    PropertyValueWithObserver()
-        : PropertyValue<T>()
+    PropertyValueWithObserver() : PropertyValue<T>()
     {
         _forwarder = std::make_shared<ObserverForwarder>(*this);
     }
@@ -208,11 +194,43 @@ public:
      *
      * @param[in] value The initial value of the property
      */
-    PropertyValueWithObserver(T value)
-        : PropertyValue<T>(std::move(value))
+    PropertyValueWithObserver(T value) : PropertyValue<T>(std::move(value))
     {
         _forwarder = std::make_shared<ObserverForwarder>(*this);
     }
+
+    /**
+     * @brief Deleted Copy CTOR
+     * This class is non-copyable.
+     * Copying the object can lead to unexpected behavior.
+     */
+    PropertyValueWithObserver(const PropertyValueWithObserver& value) = delete;
+
+    /**
+     * @brief Deleted Copy assignment
+     * This class is non-copyable.
+     * Copying the object can lead to unexpected behavior.
+     */
+    PropertyValueWithObserver& operator=(const PropertyValueWithObserver& value) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     * This class is non-movable.
+     * Moving the object can lead to unexpected behavior.
+     */
+    PropertyValueWithObserver(PropertyValueWithObserver&& value) = delete;
+
+    /**
+     * @brief Deleted Move Assignment Operator
+     * This class is non-movable.
+     * Moving the object can lead to unexpected behavior.
+     */
+    PropertyValueWithObserver& operator=(PropertyValueWithObserver&& value) = delete;
+
+    /**
+     * @brief DTOR
+     */
+    ~PropertyValueWithObserver() = default;
 
     /**
      * @brief Update the PropertyValue with @p updated
@@ -221,7 +239,8 @@ public:
      */
     void onUpdate(fep3::arya::IPropertyNode& updated) override
     {
-        PropertyValue<T>::setValue(DefaultPropertyTypeConversion<T>::fromString(updated.getValue()));
+        PropertyValue<T>::setValue(
+            DefaultPropertyTypeConversion<T>::fromString(updated.getValue()));
     }
 
     /**
@@ -234,9 +253,9 @@ public:
         return _forwarder;
     }
 
-    private:
-        /// Observer for this property variable
-        std::shared_ptr<ObserverForwarder> _forwarder;
+private:
+    /// Observer for this property variable
+    std::shared_ptr<ObserverForwarder> _forwarder;
 };
 
 /**
@@ -247,15 +266,13 @@ public:
 template <typename T>
 using PropertyVariable = arya::PropertyValueWithObserver<T>;
 
-
 /**
  * @brief Implementation class to represent a property tree node
- * T can either be @ref fep3::arya::IPropertyNode or @ref fep3::base::arya::IPropertyWithExtendedAccess
+ * T can either be @ref fep3::arya::IPropertyNode or @ref
+ * fep3::base::arya::IPropertyWithExtendedAccess
  */
 template <typename T>
-class PropertyNode
-    : public T
-{
+class PropertyNode : public T {
 public:
     /**
      * @brief CTOR
@@ -266,23 +283,22 @@ public:
      *                  * See @ref fep3::base::arya::PropertyType<T>::getTypeName for default types.
      */
     PropertyNode(const std::string& name, const std::string& value, const std::string& type)
-        : _name(name)
-        , _value(value)
-        , _type(type)
+        : _name(name), _value(value), _type(type)
     {
         validatePropertyName(_name);
     }
 
     /**
-     * @brief CTOR for a property Node of type @ref fep3::base::arya::NodePropertyType which represents a node without value.
+     * @brief CTOR for a property Node of type @ref fep3::base::arya::NodePropertyType which
+     * represents a node without value.
      *
      *
      * @param[in] name Name of the property node
      */
-    PropertyNode(std::string  name)
-        : _name(std::move(name))
-        , _value("")
-        , _type(base::arya::PropertyType<base::arya::NodePropertyType>::getTypeName())
+    PropertyNode(std::string name)
+        : _name(std::move(name)),
+          _value(""),
+          _type(base::arya::PropertyType<base::arya::NodePropertyType>::getTypeName())
     {
         validatePropertyName(_name);
     }
@@ -306,6 +322,24 @@ public:
     }
 
     /**
+     * @brief Move CTOR
+     *
+     * @param[in] other Node to move
+     */
+    PropertyNode(PropertyNode&& other)
+    {
+        std::unique_lock<std::shared_timed_mutex> other_children_lock(other._mutex_children);
+        std::unique_lock<std::shared_timed_mutex> other_observer_lock(other._mutex_observer);
+        std::unique_lock<std::shared_timed_mutex> other_member_lock(other._mutex_strings);
+
+        _children = std::move(other._children);
+        _observers = std::move(other._observers);
+        _value = std::move(other._value);
+        _type = std::move(other._type);
+        _name = std::move(other._name);
+    }
+
+    /**
      * @brief Copy assignment operator
      *
      * @param[in] other Node to copy from
@@ -313,22 +347,76 @@ public:
      */
     PropertyNode& operator=(const PropertyNode& other)
     {
-        std::shared_lock<std::shared_timed_mutex> other_children_lock(other._mutex_children);
-        std::shared_lock<std::shared_timed_mutex> other_observer_lock(other._mutex_observer);
-        std::shared_lock<std::shared_timed_mutex> other_member_lock(other._mutex_strings);
+        if (this != &other) {
+            std::shared_lock<std::shared_timed_mutex> other_children_lock(other._mutex_children,
+                                                                          std::defer_lock);
+            std::shared_lock<std::shared_timed_mutex> other_observer_lock(other._mutex_observer,
+                                                                          std::defer_lock);
+            std::shared_lock<std::shared_timed_mutex> other_member_lock(other._mutex_strings,
+                                                                        std::defer_lock);
 
-        std::unique_lock<std::shared_timed_mutex> children_lock(_mutex_children);
-        std::unique_lock<std::shared_timed_mutex> observer_lock(_mutex_observer);
-        std::unique_lock<std::shared_timed_mutex> member_lock(_mutex_strings);
+            std::unique_lock<std::shared_timed_mutex> children_lock(_mutex_children,
+                                                                    std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> observer_lock(_mutex_observer,
+                                                                    std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> member_lock(_mutex_strings, std::defer_lock);
+            std::lock(other_children_lock,
+                      other_observer_lock,
+                      other_member_lock,
+                      children_lock,
+                      observer_lock,
+                      member_lock);
 
-        _children = other._children;
-        _observers = other._observers;
-        _value = other._value;
-        _type = other._type;
-        _name = other._name;
+            _children = other._children;
+            _observers = other._observers;
+            _value = other._value;
+            _type = other._type;
+            _name = other._name;
+        }
+        return *this;
     }
 
-     //! @copydoc fep3::base::arya::IPropertyWithExtendedAccess::copyDeepFrom()
+    /**
+     * @brief Move assignment operator
+     *
+     * @param[in] other Node to move
+     * @return PropertyNode&
+     */
+    PropertyNode& operator=(PropertyNode&& other)
+    {
+        if (this != &other) {
+            std::unique_lock<std::shared_timed_mutex> other_children_lock(other._mutex_children,
+                                                                          std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> other_observer_lock(other._mutex_observer,
+                                                                          std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> other_member_lock(other._mutex_strings,
+                                                                        std::defer_lock);
+
+            std::unique_lock<std::shared_timed_mutex> children_lock(_mutex_children,
+                                                                    std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> observer_lock(_mutex_observer,
+                                                                    std::defer_lock);
+            std::unique_lock<std::shared_timed_mutex> member_lock(_mutex_strings, std::defer_lock);
+            std::lock(other_children_lock,
+                      other_observer_lock,
+                      other_member_lock,
+                      children_lock,
+                      observer_lock,
+                      member_lock);
+
+            _children = std::move(other._children);
+            _observers = std::move(other._observers);
+            _value = std::move(other._value);
+            _type = std::move(other._type);
+            _name = std::move(other._name);
+        }
+        return *this;
+    }
+
+    /// DTOR
+    virtual ~PropertyNode() = default;
+
+    //! @copydoc fep3::base::arya::IPropertyWithExtendedAccess::copyDeepFrom()
     void copyDeepFrom(const fep3::arya::IPropertyNode& other)
     {
         {
@@ -342,8 +430,7 @@ public:
         _children.clear();
 
         const auto other_childs = other.getChildren();
-        for (const auto& other_child : other_childs)
-        {
+        for (const auto& other_child: other_childs) {
             auto new_child = std::make_shared<PropertyNode>("some_temp_name");
             new_child->copyDeepFrom(*other_child);
 
@@ -372,17 +459,16 @@ public:
         return _type;
     }
 
-     //! @copydoc fep3::arya::IPropertyNode::setValue()
+    //! @copydoc fep3::arya::IPropertyNode::setValue()
     fep3::Result setValue(const std::string& value, const std::string& type_name = "") override
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_strings);
-        if (!type_name.empty()
-            && type_name != _type)
-        {
-            RETURN_ERROR_DESCRIPTION(ERR_INVALID_TYPE
-                , "Type of node and provided type are not matching. Node type = %s; Provided type = %s"
-                , _type.c_str()
-                , type_name.c_str());
+        if (!type_name.empty() && type_name != _type) {
+            RETURN_ERROR_DESCRIPTION(ERR_INVALID_TYPE,
+                                     "Type of node and provided type are not matching. Node type = "
+                                     "%s; Provided type = %s",
+                                     _type.c_str(),
+                                     type_name.c_str());
         }
 
         _value = value;
@@ -394,11 +480,9 @@ public:
     void updateObservers()
     {
         std::shared_lock<std::shared_timed_mutex> lock(_mutex_observer);
-        for (const auto& observer : _observers)
-        {
+        for (const auto& observer: _observers) {
             auto shared = observer.lock();
-            if (shared)
-            {
+            if (shared) {
                 shared->onUpdate(*this);
             }
         }
@@ -409,8 +493,7 @@ public:
             children = _children;
         }
 
-        for (const auto& child : children)
-        {
+        for (const auto& child: children) {
             child->updateObservers();
         }
     }
@@ -418,34 +501,28 @@ public:
     //! @copydoc fep3::arya::IPropertyNode::isEqual()
     bool isEqual(const fep3::arya::IPropertyNode& other) const override
     {
-       {
+        {
             std::shared_lock<std::shared_timed_mutex> children_lock(_mutex_children);
             std::shared_lock<std::shared_timed_mutex> member_lock(_mutex_strings);
 
-            const auto equal_values =
-                _name == other.getName()
-                && _value == other.getValue()
-                && _type == other.getTypeName();
+            const auto equal_values = _name == other.getName() && _value == other.getValue() &&
+                                      _type == other.getTypeName();
 
             const auto equal_child_size = other.getChildren().size() == _children.size();
 
-            if (!equal_values || !equal_child_size)
-            {
+            if (!equal_values || !equal_child_size) {
                 return false;
             }
         }
 
         const auto other_childs = other.getChildren();
-        for (const auto& other_child : other_childs)
-        {
+        for (const auto& other_child: other_childs) {
             const auto this_child = getChild(other_child->getName());
-            if (!this_child)
-            {
+            if (!this_child) {
                 return false;
             }
 
-            if (!(this_child->isEqual(*other_child)))
-            {
+            if (!(this_child->isEqual(*other_child))) {
                 return false;
             }
         }
@@ -464,9 +541,10 @@ public:
         std::shared_lock<std::shared_timed_mutex> lock(_mutex_children);
 
         std::vector<std::shared_ptr<fep3::arya::IPropertyNode>> props;
-        std::transform(_children.begin(), _children.end(), std::back_inserter(props), [](auto& iter) {
-            return iter;
-        });
+        std::transform(_children.begin(),
+                       _children.end(),
+                       std::back_inserter(props),
+                       [](auto& iter) { return iter; });
 
         return props;
     }
@@ -476,12 +554,12 @@ public:
     {
         std::shared_lock<std::shared_timed_mutex> lock(_mutex_children);
 
-        auto find_result = std::find_if(_children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
-            return iter->getName() == name;
-        });
+        auto find_result = std::find_if(
+            _children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
+                return iter->getName() == name;
+            });
 
-        if (find_result != _children.end())
-        {
+        if (find_result != _children.end()) {
             return *find_result;
         }
 
@@ -493,12 +571,12 @@ public:
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_observer);
 
-        const auto find_iter = std::find_if(_observers.begin(), _observers.end(), [&observer](auto& iter) {
-            return (iter.lock() == observer.lock()) && observer.lock() != nullptr;
-        });
+        const auto find_iter =
+            std::find_if(_observers.begin(), _observers.end(), [&observer](auto& iter) {
+                return (iter.lock() == observer.lock()) && observer.lock() != nullptr;
+            });
 
-        if (find_iter == _observers.end())
-        {
+        if (find_iter == _observers.end()) {
             _observers.push_back(std::move(observer));
         }
     }
@@ -508,12 +586,12 @@ public:
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_observer);
 
-        const auto find_iter = std::find_if(_observers.begin(), _observers.end(), [&observer](auto& iter) {
-            return (iter.lock() == observer.lock()) && observer.lock() != nullptr;
-        });
+        const auto find_iter =
+            std::find_if(_observers.begin(), _observers.end(), [&observer](auto& iter) {
+                return (iter.lock() == observer.lock()) && observer.lock() != nullptr;
+            });
 
-        if (find_iter != _observers.end())
-        {
+        if (find_iter != _observers.end()) {
             _observers.erase(find_iter);
         }
     }
@@ -537,12 +615,12 @@ public:
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_children);
 
-        auto find_result = std::find_if(_children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
-            return iter->getName() == name;
-        });
+        auto find_result = std::find_if(
+            _children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
+                return iter->getName() == name;
+            });
 
-        if (find_result != _children.end())
-        {
+        if (find_result != _children.end()) {
             _children.erase(find_result);
         }
     }
@@ -552,12 +630,12 @@ public:
     {
         std::shared_lock<std::shared_timed_mutex> lock(_mutex_children);
 
-        auto find_result = std::find_if(_children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
-            return iter->getName() == name;
-        });
+        auto find_result = std::find_if(
+            _children.begin(), _children.end(), [&name](const std::shared_ptr<T>& iter) {
+                return iter->getName() == name;
+            });
 
-        if (find_result != _children.end())
-        {
+        if (find_result != _children.end()) {
             return *find_result;
         }
 
@@ -569,12 +647,12 @@ public:
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_children);
 
-        auto find_result = std::find_if(_children.begin(), _children.end(), [&property_to_add](const std::shared_ptr<T>& iter) {
-            return iter->getName() == property_to_add->getName();
-        });
+        auto find_result = std::find_if(
+            _children.begin(), _children.end(), [&property_to_add](const std::shared_ptr<T>& iter) {
+                return iter->getName() == property_to_add->getName();
+            });
 
-        if (find_result != _children.end())
-        {
+        if (find_result != _children.end()) {
             _children.erase(find_result);
         }
 
@@ -585,53 +663,52 @@ public:
     /**
      * @brief Register a property variable for this property node.
      * The property variable allows typed read access to this property.
-     * It is updated on every call of @ref fep3::base::arya::IPropertyWithExtendedAccess::updateObservers().
-     * Changing the property variable does not lead to a change to the actual property,
-     * except for the time of registration, when the property will be set to the value of @p property_variable.
+     * It is updated on every call of @ref
+     * fep3::base::arya::IPropertyWithExtendedAccess::updateObservers(). Changing the property
+     * variable does not lead to a change to the actual property, except for the time of
+     * registration, when the property will be set to the value of @p property_variable.
      *
      * @tparam variable_type Type of the property_variable
      * @param[in] property_variable The property variable to register as observer for the property
      * @param[in] name The name of the property to register to.
-     *              If empty the property variable will register to this node, otherwise to a child with this @p name.
-     *              If a child with @p name does not exist, it will be created
+     *              If empty the property variable will register to this node, otherwise to a child
+     * with this @p name. If a child with @p name does not exist, it will be created
      * @return fep3::Result
-     * @retval ERR_INVALID_TYPE if the property to register to already exist and has a different type than the property variable
+     * @retval ERR_INVALID_TYPE if the property to register to already exist and has a different
+     * type than the property variable
      */
     template <typename variable_type>
-    fep3::Result registerVariable(PropertyVariable<variable_type>& property_variable, const std::string& name = "")
+    fep3::Result registerVariable(PropertyVariable<variable_type>& property_variable,
+                                  const std::string& name = "")
     {
-       const auto register_to_this = name.empty();
+        const auto register_to_this = name.empty();
 
-       if (!register_to_this && !isChild(name))
-       {
-           setChild(std::make_shared<PropertyNode>(name
-                , property_variable.toString()
-                , property_variable.getTypeName()));
-       }
+        if (!register_to_this && !isChild(name)) {
+            setChild(std::make_shared<PropertyNode>(
+                name, property_variable.toString(), property_variable.getTypeName()));
+        }
 
-       T* node_to_register = nullptr;
-       if (register_to_this)
-       {
-           node_to_register = this;
-       }
-       else
-       {
+        T* node_to_register = nullptr;
+        if (register_to_this) {
+            node_to_register = this;
+        }
+        else {
             node_to_register = getChildImpl(name).get();
-       }
+        }
 
-       if (node_to_register->getTypeName() != property_variable.getTypeName())
-       {
+        if (node_to_register->getTypeName() != property_variable.getTypeName()) {
             return CREATE_ERROR_DESCRIPTION(ERR_INVALID_TYPE,
-                "Type of node and property variable are not matching. Node = %s; property variable = %s"
-                , node_to_register->getTypeName().c_str()
-                , property_variable.getTypeName().c_str());
-       }
+                                            "Type of node and property variable are not matching. "
+                                            "Node = %s; property variable = %s",
+                                            node_to_register->getTypeName().c_str(),
+                                            property_variable.getTypeName().c_str());
+        }
 
-       FEP3_RETURN_IF_FAILED(node_to_register->setValue(property_variable.toString()));
+        FEP3_RETURN_IF_FAILED(node_to_register->setValue(property_variable.toString()));
 
-       node_to_register->registerObserver(property_variable.getObserver());
+        node_to_register->registerObserver(property_variable.getObserver());
 
-       return {};
+        return {};
     }
 
     /**
@@ -639,29 +716,29 @@ public:
      *
      * @tparam variable_type Type of the property_variable
      * @param[in] property_variable Property variable to unregister
-     * @param[in] name Name of the property variable
-     *              If empty the property variable will unregister from this node, otherwise from a child with this @p name.
+     * @param[in] name Name of the property variable.
+     *                 If empty the property variable will unregister from this node, otherwise
+     *                 from a child with this @p name.
      * @return fep3::Result
      * @retval ERR_NOT_FOUND if property with @p name was not found
      */
     template <typename variable_type>
-    fep3::Result unregisterVariable(PropertyVariable<variable_type>& property_variable, const std::string& name ="")
+    fep3::Result unregisterVariable(PropertyVariable<variable_type>& property_variable,
+                                    const std::string& name = "")
     {
         const auto unregister_from_this = name.empty();
 
         T* node_to_unregister_from = nullptr;
-        if (unregister_from_this)
-        {
+        if (unregister_from_this) {
             node_to_unregister_from = this;
         }
-        else
-        {
+        else {
             node_to_unregister_from = getChildImpl(name).get();
         }
 
-        if (!node_to_unregister_from)
-        {
-            return CREATE_ERROR_DESCRIPTION(ERR_NOT_FOUND, "Node with name '%s' to unregister was not found", name.c_str());
+        if (!node_to_unregister_from) {
+            return CREATE_ERROR_DESCRIPTION(
+                ERR_NOT_FOUND, "Node with name '%s' to unregister was not found", name.c_str());
         }
 
         node_to_unregister_from->unregisterObserver(property_variable.getObserver());
@@ -692,7 +769,6 @@ protected:
 
 /**
  * @brief Native implementation of @ref fep3::arya::IPropertyNode
- *
  */
 using NativePropertyNode = arya::PropertyNode<base::arya::IPropertyWithExtendedAccess>;
 
@@ -707,33 +783,62 @@ using NativePropertyNode = arya::PropertyNode<base::arya::IPropertyWithExtendedA
 template <typename T>
 std::shared_ptr<arya::NativePropertyNode> makeNativePropertyNode(const std::string& name, T value)
 {
-    return std::make_shared<arya::NativePropertyNode>(name,
+    return std::make_shared<arya::NativePropertyNode>(
+        name,
         fep3::base::arya::DefaultPropertyTypeConversion<T>::toString(value),
         fep3::base::arya::PropertyType<T>::getTypeName());
 }
 
 /**
-* @brief Component configuration base class
-*/
-class Configuration
-{
-    public:
+ * @brief Component configuration base class
+ */
+class Configuration {
+protected:
     /**
-    * @brief CTOR
-    *
-    * @param[in] root_node_name Name of the configuration root property node
-    */
+     * @brief Default DTOR
+     */
+    ~Configuration() = default;
+
+public:
+    /**
+     * @brief CTOR
+     *
+     * @param[in] root_node_name Name of the configuration root property node
+     */
     Configuration(const std::string& root_node_name)
         : _root_property_node(std::make_shared<arya::NativePropertyNode>(root_node_name))
     {
     }
 
     /**
-    * @brief DTOR
-    */
-    virtual ~Configuration()
-    {
-    }
+     * @brief Deleted Copy CTOR
+     *
+     * This class is non-copyable.
+     * Copying the object can lead to unexpected behavior.
+     */
+    Configuration(const Configuration&) = delete;
+
+    /**
+     * @brief Deleted Copy Assignment Operator
+     * This class is non-copyable.
+     * Copying the object can lead to unexpected behavior.
+     */
+    Configuration& operator=(const Configuration&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     * This class is non-movable.
+     * Moving the object can lead to unexpected behavior.
+     */
+
+    Configuration(Configuration&&) = delete;
+
+    /**
+     * @brief Deleted Move Assignment Operator
+     * This class is non-movable.
+     * Moving the object can lead to unexpected behavior.
+     */
+    Configuration& operator=(Configuration&&) = delete;
 
     /**
      * @brief Update all registered property variables of the root property node.
@@ -744,27 +849,24 @@ class Configuration
     }
 
     /**
-     * @brief Inittializes the configuration by calling the convenience function @ref registerPropertyVariables
-     *        and adding the local property node to the configuration service
-     * @remark this function will store a local pointer to the given \p configuration_service to call
-     *         unregistering while @ref deinitConfiguration
+     * @brief Inittializes the configuration by calling the convenience function @ref
+     * registerPropertyVariables and adding the local property node to the configuration service
+     * @remark this function will store a local pointer to the given @p configuration_service to
+     * call unregistering while @ref deinitConfiguration
      * @param[in] configuration_service the configuration service to register the property node to
      * @return fep3::Result
      */
     fep3::Result initConfiguration(fep3::arya::IConfigurationService& configuration_service)
     {
-        if (_configuration_service)
-        {
+        if (_configuration_service) {
             deinitConfiguration();
         }
         auto res = registerPropertyVariables();
-        if (fep3::isFailed(res))
-        {
+        if (!res) {
             return res;
         }
         res = configuration_service.registerNode(_root_property_node);
-        if (fep3::isOk(res))
-        {
+        if (res) {
             _configuration_service = &configuration_service;
         }
         return res;
@@ -773,12 +875,10 @@ class Configuration
      * @brief deinitializes the configuration by unregistering the property node from the
      *        local pointer given in configuration_service while @ref initConfiguration
      *        it will also call the unregisterPropertyVariables
-     * @return fep3::Result
      */
     void deinitConfiguration()
     {
-        if (_configuration_service && _root_property_node)
-        {
+        if (_configuration_service && _root_property_node) {
             _configuration_service->unregisterNode(_root_property_node->getName());
             _configuration_service = nullptr;
             unregisterPropertyVariables();
@@ -788,36 +888,38 @@ class Configuration
     /**
      * @copydoc fep3::base::arya::PropertyNode::registerVariable
      */
-    template<typename variable_type>
+    template <typename variable_type>
     fep3::Result registerPropertyVariable(PropertyVariable<variable_type>& property_variable,
-        const std::string& name = "")
+                                          const std::string& name = "")
     {
         return getNode()->registerVariable(property_variable, name);
     }
     /**
      * @copydoc fep3::base::arya::PropertyNode::unregisterVariable
      */
-    template<typename variable_type>
+    template <typename variable_type>
     fep3::Result unregisterPropertyVariable(PropertyVariable<variable_type>& property_variable,
-        const std::string& name = "")
+                                            const std::string& name = "")
     {
         return getNode()->unregisterVariable(property_variable, name);
     }
 
     /**
      * @brief Register property variables at the root property node.
-     * Override this add properties and property variables to the root node by calling registerPropertyVariable
+     * Override this add properties and property variables to the root node by calling
+     * registerPropertyVariable
      *
      * @return fep3::Result
      */
     virtual fep3::Result registerPropertyVariables()
     {
-        //return no error
+        // return no error
         return {};
     }
     /**
      * @brief Unregister property variables at the root property node.
-     * Override this to unregister property variables from the root node by calling  registerPropertyVariable
+     * Override this to unregister property variables from the root node by calling
+     * registerPropertyVariable
      *
      * @return fep3::Result
      */
@@ -838,7 +940,7 @@ class Configuration
 private:
     /// The root property node which will be registered at the configuration service
     std::shared_ptr<NativePropertyNode> _root_property_node{};
-    fep3::arya::IConfigurationService* _configuration_service{ nullptr };
+    fep3::arya::IConfigurationService* _configuration_service{nullptr};
 };
 
 } // namespace arya

@@ -4,43 +4,29 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <string>
-#include <memory>
-
-#include <fep3/fep3_participant_types.h>
-#include <fep3/fep3_errors.h>
 #include <fep3/core/participant.h>
 
-namespace fep3
-{
-namespace core
-{
-namespace arya
-{
+namespace fep3 {
+namespace base {
+class Participant; // forward declaration
+} // namespace base
+
+namespace core {
 
 /**
-* @brief helper class to change a participant's state from system side
-* Since the participant does not have another possibility to change the state than from service bus
-* this testing helper will add state machine change functionality for you.
-*/
-class ParticipantStateChanger
-{
+ * @brief helper class to change a participant's state from system side
+ * Since the participant does not have another possibility to change the state than from service bus
+ * this testing helper will add state machine change functionality for you.
+ */
+class ParticipantStateChanger {
 public:
     /**
      * @brief CTOR
@@ -48,10 +34,10 @@ public:
      * @param[in] part participant to manage
      * @remark the participants service bus will be used to obtain the participant requester
      */
-    ParticipantStateChanger(fep3::arya::Participant& part);
+    ParticipantStateChanger(fep3::base::Participant& part);
+
     /**
      * @brief DTOR
-     *
      */
     virtual ~ParticipantStateChanger();
 
@@ -61,6 +47,7 @@ public:
      * @param[in] other the other to copy from
      */
     ParticipantStateChanger(const ParticipantStateChanger& other);
+
     /**
      * @brief Copy operator
      *
@@ -68,82 +55,93 @@ public:
      * @return the copied ParticipantStateChanger
      */
     ParticipantStateChanger& operator=(const ParticipantStateChanger& other);
+
     /**
-     * @brief move CTOR
-     *
-     * @param[in] other the other to move from
+     * @brief Deleted Move CTOR
      */
-    ParticipantStateChanger(ParticipantStateChanger&& other) = default;
+    ParticipantStateChanger(ParticipantStateChanger&&) = delete;
+
     /**
-     * @brief move operator
+     * @brief Deleted Move operator
      *
-     * @param[in] other the other to move from
      * @return the moved ParticipantStateChanger
      */
-    ParticipantStateChanger& operator=(ParticipantStateChanger&& other) = default;
+    ParticipantStateChanger& operator=(ParticipantStateChanger&&) = delete;
 
     /**
      * @brief sends a load request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool load();
+    fep3::Result load();
+
     /**
      * @brief sends an unload request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool unload();
+    fep3::Result unload();
+
     /**
      * @brief sends a initialize request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool initialize();
+    fep3::Result initialize();
+
     /**
      * @brief sends a deinitialize request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool deinitialize();
+    fep3::Result deinitialize();
+
     /**
      * @brief sends a start request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool start();
+    fep3::Result start();
+
     /**
      * @brief sends a pause request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool pause();
+    fep3::Result pause();
+
     /**
      * @brief sends a stop request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool stop();
+    fep3::Result stop();
+
     /**
      * @brief sends an exit request
      *
-     * @return @c true if the request reached participant, @c false otherwise
+     * @return fep3::Result ERR_NOERROR if succeeded, otherwise error code indicating occurred error
      */
-    bool shutdown();
+    fep3::Result shutdown();
 
 private:
     /**
      * @cond no_documentation
-     *
      */
     class Impl;
     std::unique_ptr<Impl> _impl;
     /**
      * @endcond no_documentation
-     *
      */
 };
 
+/// @cond nodoc
+namespace arya {
+using ParticipantStateChanger
+    [[deprecated("Since 3.1, fep3::arya::core::ParticipantStateChanger is deprecated. Please use "
+                 "fep3::core::ParticipantStateChanger")]] = fep3::core::ParticipantStateChanger;
 } // namespace arya
+/// @endcond nodoc
+
 } // namespace core
 } // namespace fep3

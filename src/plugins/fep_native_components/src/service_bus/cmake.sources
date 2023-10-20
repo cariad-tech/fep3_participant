@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
 #
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-#
-# You may add additional accurate notices of copyright ownership.
-#
-#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(SERVICE_BUS_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus)
 
@@ -19,16 +11,32 @@ set(SERVICE_BUS_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus
 #  native service bus
 ########################################################
 
-set(SERVICE_BUS_SOURCES_PRIVATE
-    ${SERVICE_BUS_DIR}/service_bus.h
-    ${SERVICE_BUS_DIR}/service_bus.cpp
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.h
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/url/cxx_url.cpp
-)
-
 set(SERVICE_BUS_SOURCES ${SERVICE_BUS_SOURCES_PRIVATE})
 source_group(components\\service_bus FILES ${SERVICE_BUS_SOURCES})
 
+########################################################
+#  PARTICIPANT INFO RPC
+########################################################
+set(RPC_SERVICES_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services)
+set(RPC_SERVICES_INCLUDE_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services)
+
+add_custom_target(service_bus_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET service_bus_rpc_stub_generator
+    INPUT_FILE "${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json"
+    OUTPUT_DIR "${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCParticipantInfoClientStub
+    CLIENT_FILE_NAME participant_info_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCParticipantInfoServiceStub
+    SERVER_FILE_NAME participant_info_service_stub.h
+)
+
+set(SERVICE_BUS_SOURCES_GENERATED
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_client_stub.h
+    ${RPC_SERVICES_INCLUDE_DIR}/participant_info/participant_info.json
+)
+source_group(components\\service_bus\\generated FILES ${SERVICE_BUS_SOURCES_GENERATED})
 
 ##################################################################
 # RPC
@@ -37,26 +45,57 @@ source_group(components\\service_bus FILES ${SERVICE_BUS_SOURCES})
 set(SERVICE_BUS_RPC_DIR ${SERVICE_BUS_DIR}/rpc)
 set(SERVICE_BUS_RPC_INCLUDE_DIR ${SERVICE_BUS_INCLUDE_DIR}/rpc)
 
-set(SERVICE_BUS_RPC_SOURCES_PRIVATE
-    ${SERVICE_BUS_RPC_DIR}/http/http_server.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_server.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/http_client.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_client.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.h
-    ${SERVICE_BUS_RPC_DIR}/http/http_systemaccess.cpp
-    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.h
-    ${SERVICE_BUS_RPC_DIR}/http/find_free_port.cpp
-    ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.h
-    ${PROJECT_SOURCE_DIR}/src/fep3/base/environment_variable/environment_variable.cpp
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.h
-    ${PROJECT_SOURCE_DIR}/3rdparty/lssdp-cpp/src/lssdpcpp/lssdpcpp.cpp
+set(RPC_SERVICES_BASE_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/base)
+
+set(SERVICE_BUS_RPC_SOURCES_PUBLIC
+    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_json_rpc.h
+    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc.h
+    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc_stubs_client.h
+    ${SERVICE_BUS_RPC_INCLUDE_DIR}/fep_rpc_stubs_service.h
+    ${SERVICE_BUS_RPC_INCLUDE_DIR}/rpc_intf.h
 )
 
-set(SERVICE_BUS_RPC_SOURCES ${SERVICE_BUS_RPC_SOURCES_PRIVATE} )
+set(SERVICE_BUS_RPC_SOURCES ${SERVICE_BUS_RPC_SOURCES_PUBLIC})
 source_group(components\\service_bus\\rpc FILES ${SERVICE_BUS_RPC_SOURCES})
 
+##################################################################
+# Http Server RPC
+##################################################################
+set(COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/service_bus)
+set(COMPONENTS_SERVICE_BUS_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/service_bus)
+
+fep_generate_rpc_stubs_before_target(
+    TARGET service_bus_rpc_stub_generator
+    INPUT_FILE "${COMPONENTS_SERVICE_BUS_RPC_INCLUDE_DIR}/http_server.json"
+    OUTPUT_DIR "${COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCHttpServerClientStub
+    CLIENT_FILE_NAME http_server_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCHttpServerServiceStub
+    SERVER_FILE_NAME http_server_service_stub.h
+)
+
+set(COMPONENTS_SERVICE_BUS_RPC_SOURCES
+    ${COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR}/http_server_service_stub.h
+    ${COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR}/http_server_client_stub.h
+    ${COMPONENTS_SERVICE_BUS_RPC_INCLUDE_DIR}/http_server.json
+    ${COMPONENTS_SERVICE_BUS_RPC_INCLUDE_DIR}/http_server_rpc_intf_def.h
+)
+
+source_group(components\\service_bus\\rpc FILES ${COMPONENTS_SERVICE_BUS_RPC_SOURCES})
+
+
 ######################################
-# Set up the variable
+# install the generated
 ######################################
-list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${SERVICE_BUS_SOURCES})
-list(APPEND FEP_COMPONENT_PLUGIN_SOURCES ${SERVICE_BUS_RPC_SOURCES})
+
+install(FILES
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_service_stub.h
+    ${RPC_SERVICES_INCLUDE_BINARY_DIR}/participant_info/participant_info_client_stub.h
+    DESTINATION
+    include/fep3/rpc_services/participant_info)
+
+install(FILES
+    ${COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR}/http_server_service_stub.h
+    ${COMPONENTS_SERVICE_BUS_RPC_BINARY_DIR}/http_server_client_stub.h
+    DESTINATION
+    include/fep3/rpc_services/service_bus)

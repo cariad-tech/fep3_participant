@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(NATIVE_COMPONENTS_CLOCK_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/clock)
 set(NATIVE_COMPONENTS_CLOCK_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/clock)
@@ -31,15 +23,16 @@ source_group(components\\clock FILES ${NATIVE_COMPONENTS_CLOCK_SOURCES})
 set(NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/clock)
 set(NATIVE_COMPONENTS_CLOCK_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/clock)
 
-# subtle difference: on unix the jsonrpc_generate_stub command silently fails if the output directory does not exist...
-file(MAKE_DIRECTORY ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR})
-
-jsonrpc_generate_server_stub(${NATIVE_COMPONENTS_CLOCK_RPC_INCLUDE_DIR}/clock.json
-                             fep3::rpc_stubs::RPCClockServiceStub
-                             ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}/clock_service_stub.h)
-jsonrpc_generate_client_stub(${NATIVE_COMPONENTS_CLOCK_RPC_INCLUDE_DIR}/clock.json
-                             fep3::rpc_stubs::RPCClockClientStub
-                             ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}/clock_client_stub.h)
+add_custom_target(clock_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET clock_rpc_stub_generator
+    INPUT_FILE "${NATIVE_COMPONENTS_CLOCK_RPC_INCLUDE_DIR}/clock.json"
+    OUTPUT_DIR "${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCClockClientStub
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCClockServiceStub
+    CLIENT_FILE_NAME clock_client_stub.h
+    SERVER_FILE_NAME clock_service_stub.h
+    )
 
 set(NATIVE_COMPONENTS_CLOCK_RPC_SOURCES
     ${NATIVE_COMPONENTS_CLOCK_RPC_BINARY_DIR}/clock_service_stub.h
@@ -61,3 +54,4 @@ install(FILES
 ######################################
 set(FEP3_SOURCES ${FEP3_SOURCES} ${NATIVE_COMPONENTS_CLOCK_SOURCES})
 set(FEP3_SOURCES ${FEP3_SOURCES} ${NATIVE_COMPONENTS_CLOCK_RPC_SOURCES})
+list(APPEND FEP_NATIVE_COMPONENTS_STUB_GENERATORS clock_rpc_stub_generator)

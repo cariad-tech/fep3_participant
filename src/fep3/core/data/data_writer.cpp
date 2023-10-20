@@ -4,82 +4,51 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <fep3/core/data/data_writer.h>
 #include <fep3/base/data_registry/data_registry.h>
+#include <fep3/base/stream_type/default_stream_type.h>
+#include <fep3/core/data/data_writer.h>
+#include <fep3/native_components/clock/variant_handling/clock_service_handling.h>
 
-namespace fep3
-{
-namespace core
-{
-namespace arya
-{
+namespace fep3 {
+namespace core {
+namespace arya {
 
-DataWriter::DataWriter() :
-    _stream_type(fep3::base::arya::meta_type_raw),
-    _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
+DataWriter::DataWriter()
+    : _stream_type(fep3::base::arya::meta_type_raw), _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
 {
 }
 
-DataWriter::DataWriter(std::string name, const base::StreamType & stream_type) :
-    _name(std::move(name)),
-    _stream_type(stream_type),
-    _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
+DataWriter::DataWriter(std::string name, const base::StreamType& stream_type)
+    : _name(std::move(name)), _stream_type(stream_type), _queue_size(DATA_WRITER_QUEUE_SIZE_DYNAMIC)
 {
 }
 
-DataWriter::DataWriter(std::string name, const base::StreamType & stream_type, size_t queue_size) :
-    _name(std::move(name)),
-    _stream_type(stream_type),
-    _queue_size(queue_size)
+DataWriter::DataWriter(std::string name, const base::StreamType& stream_type, size_t queue_size)
+    : _name(std::move(name)), _stream_type(stream_type), _queue_size(queue_size)
 {
-}
-
-DataWriter::DataWriter(const DataWriter& other) :
-    _name(other._name),
-    _stream_type(other._stream_type),
-    _connected_writer(),
-    _queue_size(other._queue_size)
-{
-}
-
-DataWriter& DataWriter::operator=(const DataWriter& other)
-{
-    _name = other._name;
-    _stream_type = other._stream_type;
-    _queue_size = other._queue_size;
-    _connected_writer.reset();
-    return *this;
 }
 
 fep3::Result DataWriter::addToDataRegistry(IDataRegistry& data_registry)
 {
-    if (DATA_WRITER_QUEUE_SIZE_DYNAMIC == _queue_size)
-    {
-        return base::addDataOut(data_registry, _connected_writer, _name.c_str(), _stream_type );
+    if (DATA_WRITER_QUEUE_SIZE_DYNAMIC == _queue_size) {
+        return base::addDataOut(data_registry, _connected_writer, _name.c_str(), _stream_type);
     }
-    else
-    {
-        return base::addDataOut(data_registry, _connected_writer, _name.c_str(), _stream_type, _queue_size);
+    else {
+        return base::addDataOut(
+            data_registry, _connected_writer, _name.c_str(), _stream_type, _queue_size);
     }
 }
 
-fep3::Result DataWriter::addClock(IClockService& clock)
+fep3::Result DataWriter::addClockTimeGetter(
+    std::function<fep3::Timestamp()> clock_service_time_getter)
 {
-    _clock = &clock;
+    _clock_service_time_getter = clock_service_time_getter;
     return {};
 }
 
@@ -95,40 +64,36 @@ fep3::Result DataWriter::removeFromDataRegistry(IDataRegistry& data_registry)
     return base::removeDataOut(data_registry, _name);
 }
 
-fep3::Result DataWriter::removeClock()
+fep3::Result DataWriter::removeClockTimeGetter()
 {
-    _clock = nullptr;
+    _clock_service_time_getter = {};
     return {};
 }
 
-struct SampleWithAddedTimeAndCounter
-    : public IDataSample
-{
-    const IDataSample&         _data_sample;
-    const uint32_t             _counter;
-    fep3::Optional<Timestamp>  _time;
-    explicit SampleWithAddedTimeAndCounter(const fep3::IClockService* clock,
+struct SampleWithAddedTimeAndCounter : public IDataSample {
+    const IDataSample& _data_sample;
+    const uint32_t _counter;
+    fep3::Optional<Timestamp> _time;
+    explicit SampleWithAddedTimeAndCounter(std::function<fep3::Timestamp()> time_getter,
                                            const IDataSample& data_sample,
-                                           const uint32_t counter) : _data_sample(data_sample),
-                                                                     _counter(counter)
+                                           const uint32_t counter)
+        : _data_sample(data_sample), _counter(counter)
     {
-        if (clock)
-        {
-            _time = clock->getTime();
+        if (time_getter) {
+            _time = time_getter();
         }
     }
+
     Timestamp getTime() const override
     {
-        if (_time)
-        {
-            if (_data_sample.getTime().count() == 0)
-            {
+        if (_time) {
+            if (_data_sample.getTime().count() == 0) {
                 return *_time;
             }
         }
         return _data_sample.getTime();
-
     }
+
     size_t getSize() const override
     {
         return _data_sample.getSize();
@@ -146,57 +111,54 @@ struct SampleWithAddedTimeAndCounter
 
     void setTime(const Timestamp&) override
     {
-        //invalid call
+        // invalid call
     }
+
     void setCounter(uint32_t) override
     {
-        //invalid call
+        // invalid call
     }
 
     size_t write(const IRawMemory&) override
     {
-        //invalid call
+        // invalid call
         return 0;
     }
 };
 
 fep3::Result DataWriter::write(const IDataSample& data_sample)
 {
-    if (_connected_writer)
-    {
-        SampleWithAddedTimeAndCounter sample_wrap(_clock, data_sample, _counter++);
+    if (_connected_writer) {
+        SampleWithAddedTimeAndCounter sample_wrap(
+            _clock_service_time_getter, data_sample, _counter++);
         return _connected_writer->write(sample_wrap);
     }
-    else
-    {
+    else {
         RETURN_ERROR_DESCRIPTION(ERR_NOT_CONNECTED, "not connected");
     }
 }
 
-fep3::Result DataWriter::write(const IStreamType & stream_type)
+fep3::Result DataWriter::write(const IStreamType& stream_type)
 {
-    if (_connected_writer)
-    {
+    if (_connected_writer) {
         _stream_type = stream_type;
         return _connected_writer->write(_stream_type);
     }
-    else
-    {
+    else {
         RETURN_ERROR_DESCRIPTION(ERR_NOT_CONNECTED, "not connected");
     }
 }
 
-fep3::Result DataWriter::write(Timestamp time, const void * data, size_t data_size)
+fep3::Result DataWriter::write(Timestamp time, const void* data, size_t data_size)
 {
     base::DataSampleRawMemoryRef ref_sample(time, data, data_size);
     return write(ref_sample);
 }
 
-fep3::Result DataWriter::flushNow(Timestamp )
+fep3::Result DataWriter::flushNow(Timestamp)
 {
     return _connected_writer->flush();
 }
-
 
 std::string DataWriter::getName() const
 {
@@ -206,47 +168,36 @@ std::string DataWriter::getName() const
 fep3::Result addToComponents(DataWriter& writer, const IComponents& components)
 {
     auto data_registry = components.getComponent<IDataRegistry>();
-    if (data_registry)
-    {
+    if (data_registry) {
         auto res = writer.addToDataRegistry(*data_registry);
-        if (isOk(res))
-        {
-            auto clock = components.getComponent<IClockService>();
-            if (clock)
-            {
-                return writer.addClock(*clock);
-            }
-            else
-            {
-                return {};
-            }
+        if (res) {
+            auto [result, clock] = fep3::native::getClockServiceAdapter(components, nullptr);
+            return result ? writer.addClockTimeGetter(clock->getTimeGetter()) : fep3::Result{};
         }
-        else
-        {
+        else {
             return res;
         }
     }
-    else
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, "%s is not part of the given component registry", getComponentIID<IDataRegistry>().c_str());
+    else {
+        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND,
+                                 "%s is not part of the given component registry",
+                                 getComponentIID<IDataRegistry>().c_str());
     }
 }
 
 fep3::Result removeFromComponents(DataWriter& writer, const IComponents& components)
 {
     auto data_registry = components.getComponent<IDataRegistry>();
-    if (data_registry)
-    {
+    if (data_registry) {
         return writer.removeFromDataRegistry(*data_registry);
     }
-    else
-    {
-        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND, "%s is not part of the given component registry", getComponentIID<IDataRegistry>().c_str());
+    else {
+        RETURN_ERROR_DESCRIPTION(ERR_NOT_FOUND,
+                                 "%s is not part of the given component registry",
+                                 getComponentIID<IDataRegistry>().c_str());
     }
 }
 
-}
-}
-}
-
-
+} // namespace arya
+} // namespace core
+} // namespace fep3

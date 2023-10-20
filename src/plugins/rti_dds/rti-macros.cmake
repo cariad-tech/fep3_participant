@@ -1,35 +1,27 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 ################################################################################
-## \page page_cmake_commands
+## @page page_cmake_commands
 # <hr>
 # <b>rti_install(\<destination\>)</b>
 #
-# This macro installs the rti libraries and the 'USER_QOS_PROFILES.xml' to the
+# This function installs the rti libraries and the 'USER_QOS_PROFILES.xml' to the
 #   folder \<destination\>. The macro expects the 'USER_QOS_PROFILES.xml' to lay
 #   next the the 'CMakeLists.txt' calling this macro.
 #
 # Arguments:
-# \li \<destination\>:
+# @li \<destination\>:
 # The relative path to the install subdirectory
 ################################################################################
-macro(rti_install DESTINATION)
+function(rti_install DESTINATION)
     if(MSVC)
-        set(RTI_CONNEXT_FILES_PATH ${CONAN_BIN_DIRS_RTI_CONNEXT_DDS})
+        file(TO_CMAKE_PATH "${CONNEXTDDS_DIR}/bin" RTI_CONNEXT_FILES_PATH)
         set(FILE_WILDCARD "*")
     else()
         if(NOT CONNEXTDDS_ARCH)
@@ -37,42 +29,40 @@ macro(rti_install DESTINATION)
                 "forget a 'find_package(RTIConnextDDS ...)' before "
                 "calling 'rti_install'?")
         endif()
-        set(RTI_CONNEXT_FILES_PATH
-            ${CONAN_LIB_DIRS_RTI_CONNEXT_DDS}/${CONNEXTDDS_ARCH})
+        file(TO_CMAKE_PATH "${CONNEXTDDS_DIR}/lib/${CONNEXTDDS_ARCH}" RTI_CONNEXT_FILES_PATH)
         set(FILE_WILDCARD "*.so")
     endif()
 
-    install(DIRECTORY ${RTI_CONNEXT_FILES_PATH}/ DESTINATION ${DESTINATION}
+    install(DIRECTORY "${RTI_CONNEXT_FILES_PATH}/" DESTINATION "${DESTINATION}"
         FILES_MATCHING PATTERN ${FILE_WILDCARD})
-    install(FILES USER_QOS_PROFILES.xml DESTINATION ${DESTINATION})
+    install(FILES USER_QOS_PROFILES.xml DESTINATION "${DESTINATION}")
 
-endmacro(rti_install DESTINATION)
+endfunction(rti_install DESTINATION)
 
 
 ################################################################################
-## \page page_cmake_commands
+## @page page_cmake_commands
 # <hr>
 # <b>rti_deploy(\<name\>)</b>
 #
-# This macro copies the rti libraries to the location next to the target
+# This function copies the rti libraries to the location next to the target
 #   \<name\>. Furthermore it copies the 'USER_QOS_PROFILES.xml' which is
 #   expected to lay next to the 'CMakeLists.txt' which called that macro.
 #
 # Arguments:
-# \li \<name\>:
+# @li \<name\>:
 # The name of the target that needs the rti libraries.
 ################################################################################
-macro(rti_deploy NAME)
+function(rti_deploy NAME)
     if(MSVC)
-        set(RTI_CONNEXT_FILES_PATH ${CONAN_BIN_DIRS_RTI_CONNEXT_DDS})
+        file(TO_CMAKE_PATH "${CONNEXTDDS_DIR}/bin" RTI_CONNEXT_FILES_PATH)
     else()
         if(NOT CONNEXTDDS_ARCH)
             message(FATAL_ERROR "CONNEXTDDS_ARCH variable is empty. "
                 "Did you forget a 'find_package(RTIConnextDDS ...)' "
                 "for the target '${NAME}'?")
         endif()
-        set(RTI_CONNEXT_FILES_PATH
-            ${CONAN_LIB_DIRS_RTI_CONNEXT_DDS}/${CONNEXTDDS_ARCH})
+        file(TO_CMAKE_PATH "${CONNEXTDDS_DIR}/lib/${CONNEXTDDS_ARCH}" RTI_CONNEXT_FILES_PATH)
         set(FILE_WILDCARD "*.so")
     endif()
 
@@ -105,14 +95,14 @@ macro(rti_deploy NAME)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_SOURCE_DIR}/USER_QOS_PROFILES.xml
                 $<TARGET_FILE_DIR:${NAME}>)
-endmacro(rti_deploy NAME)
+endfunction(rti_deploy NAME)
 
 ################################################################################
-## \page page_cmake_commands
+## @page page_cmake_commands
 # <hr>
 # <b>changeHostSystemIfArm()</b>
 #
-# This sets the target host system to x86_64 if target host system is arm, 
+# This sets the target host system to x86_64 if target host system is arm,
 # to bypass an issue in FindRTIConnextDDS.cmake
 #
 ################################################################################
@@ -125,7 +115,7 @@ macro(changeHostSystemIfArm)
 endmacro(changeHostSystemIfArm)
 
 ################################################################################
-## \page page_cmake_commands
+## @page page_cmake_commands
 # <hr>
 # <b>changeHostSystemIfArm()</b>
 #

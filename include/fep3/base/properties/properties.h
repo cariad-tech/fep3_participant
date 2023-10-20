@@ -4,31 +4,20 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-//Guideline - FEP System Library API Exception
+// Guideline - FEP System Library API Exception
 #ifndef _FEP3_BASE_PROPERTIES_H_
 #define _FEP3_BASE_PROPERTIES_H_
 
+// very important to have this relative! system library!
 #include "properties_intf.h"
 
 #include <map>
-#include <string>
-#include <tuple>
-#include <vector>
-#include <algorithm>
-#include <iterator>
 
 namespace fep3 {
 namespace base {
@@ -50,17 +39,19 @@ public:
      * @param[in] name  name of the property (this is not a path, a single name)
      * @param[in] value the value as string
      * @param[in] type the string description of the type
-     *             There are more types possible than the default types: @ref fep3::base::arya::PropertyType
+     *             There are more types possible than the default types: @ref
+     * fep3::base::arya::PropertyType
      * @return @c true if the value could be set, @c false otherwise
      */
     bool setProperty(const std::string& name,
-        const std::string& value,
-        const std::string& type) override
+                     const std::string& value,
+                     const std::string& type) override
     {
         std::tuple<std::string, std::string> tuple_to_add(value, type);
         _properties[name] = tuple_to_add;
         return true;
     }
+
     /**
      * @brief gets the property value as string
      *
@@ -71,12 +62,10 @@ public:
     std::string getProperty(const std::string& name) const override
     {
         auto val = _properties.find(name);
-        if (val != _properties.end())
-        {
+        if (val != _properties.end()) {
             return std::get<0>(val->second);
         }
-        else
-        {
+        else {
             return std::string();
         }
     }
@@ -91,29 +80,27 @@ public:
     std::string getPropertyType(const std::string& name) const override
     {
         auto val = _properties.find(name);
-        if (val != _properties.end())
-        {
+        if (val != _properties.end()) {
             return std::get<1>(val->second);
         }
-        else
-        {
+        else {
             return std::string();
         }
     }
+
     /**
      * @brief compares this key value list with the given properties instance
-     * the properties are equal if each property of this will have the same value within \p properties
+     * the properties are equal if each property of this will have the same value within @p
+     properties
      *
      * @param[in] properties the properties instance to compare to
-     * @return @c true if each property of this have the same value within \p properties,
+     * @return @c true if each property of this have the same value within @p properties,
                @c false otherweise
      */
     bool isEqual(const fep3::arya::IProperties& properties) const override
     {
-        for (const auto& current : _properties)
-        {
-            if (std::get<0>(current.second) != properties.getProperty(current.first))
-            {
+        for (const auto& current: _properties) {
+            if (std::get<0>(current.second) != properties.getProperty(current.first)) {
                 return false;
             }
         }
@@ -127,11 +114,9 @@ public:
      */
     void copyTo(fep3::arya::IProperties& properties) const override
     {
-        for (const auto& current : _properties)
-        {
-            properties.setProperty(current.first,
-                std::get<0>(current.second),
-                std::get<1>(current.second));
+        for (const auto& current: _properties) {
+            properties.setProperty(
+                current.first, std::get<0>(current.second), std::get<1>(current.second));
         }
     }
 
@@ -144,8 +129,7 @@ public:
     {
         std::vector<std::string> retval;
         retval.reserve(_properties.size());
-        for (const auto& current : _properties)
-        {
+        for (const auto& current: _properties) {
             retval.push_back(current.first);
         }
         return retval;
@@ -160,8 +144,7 @@ public:
     {
         std::vector<std::string> retval;
         retval.reserve(_properties.size());
-        for (const auto& current : _properties)
-        {
+        for (const auto& current: _properties) {
             retval.push_back(std::get<0>(current.second));
         }
         return retval;
@@ -176,15 +159,14 @@ public:
     {
         std::vector<std::string> retval;
         retval.reserve(_properties.size());
-        for (const auto& current : _properties)
-        {
+        for (const auto& current: _properties) {
             retval.push_back(std::get<1>(current.second));
         }
         return retval;
     }
 
 protected:
-    ///key value map
+    /// key value map
     std::map<std::string, std::tuple<std::string, std::string>> _properties;
 };
 } // namespace arya

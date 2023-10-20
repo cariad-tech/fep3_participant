@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<mapping>
+    <header>
+        <language_version>1.00</language_version>
+        <author>fep_team</author>
+        <date_creation>2020-Feb-10</date_creation>
+        <date_change>2020-Feb-10</date_change>
+        <description>Simple mapping description for testing purposes</description>
+    </header>
+
+    <sources>
+        <source name="source_signal_a" type="tTestStructA" />
+        <source name="source_signal_b" type="tTestStructB" />
+        <source name="source_signal_c" type="tTestStructC" />
+        <source name="source_signal_d" type="tTestStructD" />
+        <source name="source_signal_e" type="tTestStructE" />
+        <source name="source_signal_f" type="tTestStructF" />
+        <source name="source_signal_g" type="tTestStructG" />
+        <source name="source_signal_h" type="tTestStructH" />
+        <source name="source_signal_i" type="tTestStructI" />
+        <source name="source_signal_j" type="tTestStructJ" />
+    </sources>
+
+    <targets>
+        <target name="target_signal_k" type="tTestStructK">
+            <assignment to="ui8First" from="source_signal_d.ui8First" />
+            <assignment to="ui8Second" from="source_signal_d.ui8Second" />
+            <trigger type="signal" variable="source_signal_d" />
+        </target>
+    </targets>
+
+    <transformations>
+    </transformations>
+</mapping>

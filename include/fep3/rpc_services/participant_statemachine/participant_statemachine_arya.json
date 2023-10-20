@@ -1,0 +1,53 @@
+// Copyright @ 2021 VW Group. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License, v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+[
+    // triggers the loading process of the participant's statemachine
+    {
+        "name": "load",
+        "returns": false
+    },
+    // triggers the unloading process of the participant's statemachine
+    {
+        "name": "unload",
+        "returns": false
+    },
+    // triggers the participant to exit
+    {
+        "name": "exit",
+        "returns": false
+    },
+    // triggers the initialization of the participant's statemachine
+    {
+        "name": "initialize",
+        "returns": false
+    },
+    // triggers the deinitialization of the participant's statemachine
+    {
+        "name": "deinitialize",
+        "returns": false
+    },
+    // triggers start of synchronization of the participant's statemachine
+    {
+        "name": "start",
+        "returns": false
+    },
+    // triggers stop of the participant's statemachine
+    {
+        "name": "stop",
+        "returns": false
+    },
+    // triggers pause of the participant's statemachine
+    // currently returns an error as pause mode is not implemented by the native participant components yet (see FEPSDK-2857)
+    {
+        "name": "pause",
+        "returns": false
+    },
+    // gets the string representation of the current state of the participant's statemachine
+    {
+        "name": "getCurrentStateName",
+        "returns": "state_name"
+    }
+]

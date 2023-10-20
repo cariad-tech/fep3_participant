@@ -4,128 +4,100 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <functional>
-#include <memory>
-
 #include "element_manager.h"
 
-namespace fep3
-{
-namespace arya
-{
+namespace fep3 {
+namespace arya {
 
-ElementManager::ElementManager(const std::shared_ptr<const IElementFactory>& element_factory)
+ElementManager::ElementManager(const std::shared_ptr<const base::IElementFactory>& element_factory)
     : _element_factory(element_factory)
-{}
+{
+}
 
 ElementManager::~ElementManager()
-{}
+{
+}
 
 Result ElementManager::loadElement(const IComponents& components)
 {
-    try
-    {
-        if (_element_factory)
-        {
+    try {
+        if (_element_factory) {
             _element = _element_factory->createElement(components);
-            if (_element)
-            {
+            if (_element) {
                 return _element->loadElement(components);
             }
-            else
-            {
+            else {
                 RETURN_ERROR_DESCRIPTION(ERR_POINTER, "creating element failed");
             }
         }
-        else
-        {
+        else {
             RETURN_ERROR_DESCRIPTION(ERR_POINTER, "the element factory is invalid");
         }
     }
-    catch (const std::exception& ex)
-    {
+    catch (const std::exception& ex) {
         RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
 }
 
 void ElementManager::unloadElement()
 {
-    try
-    {
+    try {
         _element->unloadElement();
     }
-    catch (const std::exception&)
-    {
-        //this should be transformed to a error to get a good message out there
-        //RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
+    catch (const std::exception&) {
+        // this should be transformed to a error to get a good message out there
+        // RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
     _element.reset();
 }
 
 Result ElementManager::initializeElement()
 {
-    try
-    {
+    try {
         return _element->initialize();
     }
-    catch (const std::exception& ex)
-    {
+    catch (const std::exception& ex) {
         RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
 }
 
 void ElementManager::deinitializeElement()
 {
-    try
-    {
+    try {
         _element->deinitialize();
     }
-    catch (const std::exception&)
-    {
-        //this should be transformed to a error to get a good message out there
-        //RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
+    catch (const std::exception&) {
+        // this should be transformed to a error to get a good message out there
+        // RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
 }
 
 Result ElementManager::runElement()
 {
-    try
-    {
+    try {
         return _element->run();
     }
-    catch (const std::exception& ex)
-    {
+    catch (const std::exception& ex) {
         RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
 }
 
 void ElementManager::stopElement()
 {
-    try
-    {
+    try {
         _element->stop();
     }
-    catch (const std::exception&)
-    {
-        //this should be transformed to a error to get a good message out there
-        //RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
+    catch (const std::exception&) {
+        // this should be transformed to a error to get a good message out there
+        // RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
     }
 }
-
 
 } // namespace arya
 } // namespace fep3

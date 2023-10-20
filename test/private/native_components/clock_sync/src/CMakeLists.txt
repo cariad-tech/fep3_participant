@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 ##################################################################
@@ -51,6 +43,7 @@ target_link_libraries(tester_clock_sync_service PRIVATE
     GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_sync_service PROPERTIES FOLDER "test/private/native_components/clock_sync/unit")
@@ -60,6 +53,7 @@ set_target_properties(tester_clock_sync_service PROPERTIES FOLDER "test/private/
 ##################################################################
 add_executable(tester_clock_sync_client
                tester_clock_sync_client.cpp
+               tester_system_clock_client_reset.cpp
 )
 
 add_test(NAME tester_clock_sync_client
@@ -72,6 +66,8 @@ target_link_libraries(tester_clock_sync_client PRIVATE
     GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
+    participant_test_utils
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_sync_client PROPERTIES FOLDER "test/private/native_components/clock_sync/unit")
@@ -93,6 +89,8 @@ target_link_libraries(tester_clock_sync_master PRIVATE
     GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_participant_core
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_sync_master PROPERTIES FOLDER "test/private/native_components/clock_sync/unit")
@@ -106,14 +104,16 @@ add_executable(tester_clock_synchronization
 
 add_test(NAME tester_clock_synchronization
     COMMAND tester_clock_synchronization
-    TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
+set_tests_properties(tester_clock_synchronization PROPERTIES TIMEOUT 30)
 target_link_libraries(tester_clock_synchronization PRIVATE
     GTest::gtest_main
     GTest::gmock
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_participant_core
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_synchronization PROPERTIES FOLDER "test/private/native_components/clock_sync")

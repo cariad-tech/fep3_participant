@@ -4,60 +4,51 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <fep3/components/base/component.h>
-#include <fep3/components/clock/clock_service_intf.h>
-#include <fep3/components/logging/logging_service_intf.h>
 #include "logging_config.h"
 #include "logging_rpc_service.h"
-#include <fep3/base/properties/propertynode.h>
-#include <fep3/components/configuration/configuration_service_intf.h>
 #include "sinks/logging_sink_rpc.hpp"
 
-namespace fep3
-{
-namespace native
-{
-namespace arya
-{
+#include <fep3/base/properties/propertynode.h>
+#include <fep3/components/base/component.h>
+#include <fep3/components/clock/clock_service_intf.h>
+
+#include <a_util/concurrency/mutex.h>
+
+#include <functional>
+
+namespace fep3 {
+namespace native {
+
 class LoggingServer;
 class LoggingQueue;
+class ClockServiceAdapter;
 
-class LoggingService : public base::Component<ILoggingService>,
-                              base::Configuration
-{
+class LoggingService : public base::Component<ILoggingService>, base::Configuration {
 public:
-    class Logger : public ILogger
-    {
+    class Logger : public ILogger {
         friend class LoggingService;
+
     public:
         explicit Logger(LoggingService& logging_service, const std::string& logger_name);
 
-        fep3::Result logInfo(const std::string& message) const override;
-        fep3::Result logWarning(const std::string& message) const override;
-        fep3::Result logError(const std::string& message) const override;
-        fep3::Result logFatal(const std::string& message) const override;
-        fep3::Result logDebug(const std::string& message) const override;
-        bool isInfoEnabled() const override;
-        bool isWarningEnabled() const override;
-        bool isErrorEnabled() const override;
-        bool isFatalEnabled() const override;
-        bool isDebugEnabled() const override;
+        fep3::Result logInfo(const std::string& message) const override final;
+        fep3::Result logWarning(const std::string& message) const override final;
+        fep3::Result logError(const std::string& message) const override final;
+        fep3::Result logFatal(const std::string& message) const override final;
+        fep3::Result logDebug(const std::string& message) const override final;
+        bool isInfoEnabled() const override final;
+        bool isWarningEnabled() const override final;
+        bool isErrorEnabled() const override final;
+        bool isFatalEnabled() const override final;
+        bool isDebugEnabled() const override final;
 
     private:
         fep3::Result log(const std::string& message, LoggerSeverity severity) const;
@@ -114,9 +105,9 @@ private:
     /// Configuration which logs should be filtered
     LoggingFilterTree _configuration;
     mutable a_util::concurrency::mutex _sync_config;
-    /// Pointer to the clock service to get the current timestamp for the log
-    IClockService* _clock_service;
-    std::string    _participant_name;
+    /// Pointer to function for getting the current timestamp for the log
+    std::function<fep3::Timestamp()> _time_getter;
+    std::string _participant_name;
 
     std::vector<std::shared_ptr<Logger>> _loggers;
     mutable std::recursive_mutex _sync_loggers;
@@ -125,13 +116,12 @@ private:
     std::map<std::string, std::shared_ptr<ILoggingSink>> _sinks;
     mutable std::recursive_mutex _sync_sinks;
 
-    base::PropertyVariable<std::string> _default_sinks{ std::string("console") };
+    base::PropertyVariable<std::string> _default_sinks{std::string("console")};
     base::PropertyVariable<std::string> _default_file_sink_file{};
-    base::PropertyVariable<int32_t> _default_severity{ static_cast<int32_t>(LoggerSeverity::info) };
+    base::PropertyVariable<int32_t> _default_severity;
 
     bool _default_sinks_changed{false};
 };
-} // namespace arya
-using arya::LoggingService;
+
 } // namespace native
 } // namespace fep3

@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+Copyright @ 2021 VW Group. All rights reserved.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<mapping>
+    <header>
+        <language_version>1.00</language_version>
+        <author>fep_team</author>
+        <date_creation>2020-Feb-10</date_creation>
+        <date_change>2020-Feb-10</date_change>
+        <description>Simple mapping description for testing purposes with Spelling Error</description>
+    </header>
+
+    <sources>
+        <source name="source_signal_in" type="tTestStruct" />
+    </sources>
+
+    <targets>
+        <target name="target_signal_in" type="tTestStruct">
+            <assignment to="ui8First" from="source_signal_in.ui8First" transformation="polynom1" />
+            <assignment to="ui8Second" from="source_signal_in.ui8SpellingError" />
+            <trigger type="signal" variable="source_signal_in" />
+        </target>
+    </targets>
+
+    <transformations>
+        <polynomial name="polynom1" a="0" b="2" />
+    </transformations>
+</mapping>

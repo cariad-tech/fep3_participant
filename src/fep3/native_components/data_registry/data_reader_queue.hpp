@@ -4,28 +4,16 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
-#include <cstddef>
+
 #include <fep3/base/queue/data_item_queue.h>
 #include <fep3/components/data_registry/data_registry_intf.h>
-#include <fep3/fep3_errors.h>
-#include <fep3/fep3_optional.h>
-#include <fep3/fep3_timestamp.h>
-#include <memory>
-#include <mutex>
 
 namespace fep3 {
 namespace native {
@@ -48,7 +36,6 @@ struct WrappedDataItemReceiver : public base::arya::detail::DataItemQueueBase<>:
 
 /**
  * @brief A data reader queue implementation
- *
  */
 class DataReaderQueue : public fep3::arya::IDataRegistry::IDataReceiver,
                         public fep3::arya::IDataRegistry::IDataReader {
@@ -61,9 +48,9 @@ public:
     explicit DataReaderQueue(size_t capa) : _queue(capa)
     {
     }
+
     /**
      * @brief DTOR
-     *
      */
     ~DataReaderQueue() = default;
 
@@ -72,16 +59,17 @@ public:
      *
      * @return size_t the size in item count.
      */
-    size_t size() const override
+    size_t size() const override final
     {
         return _queue.size();
     }
+
     /**
      * @brief retrieves the capacity if the queue
      *
      * @return size_t the capacity
      */
-    size_t capacity() const override
+    size_t capacity() const override final
     {
         return _queue.capacity();
     }
@@ -91,16 +79,17 @@ public:
      *
      * @param[in] type The received stream type
      */
-    void operator()(const data_read_ptr<const fep3::arya::IStreamType>& type) override
+    void operator()(const data_read_ptr<const fep3::arya::IStreamType>& type) override final
     {
         _queue.pushType(type, std::chrono::milliseconds(0));
     }
+
     /**
      * @brief Receives a data sample item
      *
      * @param[in] sample The received data sample
      */
-    void operator()(const data_read_ptr<const fep3::arya::IDataSample>& sample) override
+    void operator()(const data_read_ptr<const fep3::arya::IDataSample>& sample) override final
     {
         _queue.pushSample(sample, sample->getTime());
     }
@@ -112,7 +101,7 @@ public:
      * @retval valid time queue is not empty
      * @retval invalid time queue is empty
      */
-    fep3::arya::Optional<fep3::arya::Timestamp> getFrontTime() const override
+    fep3::arya::Optional<fep3::arya::Timestamp> getFrontTime() const override final
     {
         return _queue.nextTime();
     }
@@ -125,14 +114,14 @@ public:
      * @retval ERR_NOERROR received successfully
      * @retval ERR_EMPTY queue is empty
      */
-    ::fep3::Result pop(fep3::arya::IDataRegistry::IDataReceiver& receiver) override
+    ::fep3::Result pop(fep3::arya::IDataRegistry::IDataReceiver& receiver) override final
     {
         WrappedDataItemReceiver wrap(receiver);
         return _queue.popFront(wrap) ? fep3::Result() : fep3::ERR_EMPTY;
     }
+
     /**
      * @brief empty the queue
-     *
      */
     void clear()
     {

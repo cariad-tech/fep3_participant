@@ -4,25 +4,15 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
-#include "component_iid.h"
-#include "components_intf.h"
-
-#include <memory>
+#include <fep3/components/base/components_intf.h>
 
 namespace fep3 {
 namespace base {
@@ -30,22 +20,50 @@ namespace arya {
 
 /**
  * @brief default helper implementation for component
- *
  */
 class ComponentImpl : public fep3::arya::IComponent {
 protected:
     /// CTOR
     ComponentImpl() = default;
-    /// DTOR
-    ~ComponentImpl() override = default;
+    /**
+     * @brief Deleted Copy CTOR
+     */
+    ComponentImpl(const ComponentImpl&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    ComponentImpl(ComponentImpl&&) = delete;
+
+    /**
+     * @brief Deleted Copy assignment operator
+     *
+     * @return ComponentImpl&
+     */
+    ComponentImpl& operator=(const ComponentImpl&) = delete;
+
+    /**
+     * @brief Deleted Move assignment operator
+     *
+     * @return ComponentImpl&
+     */
+    ComponentImpl& operator=(ComponentImpl&&) = delete;
+
+    /**
+     * @brief Default DTOR
+     */
 
 public:
+    ~ComponentImpl() override = default;
+
     /// @copydoc fep3::IComponent::createComponent
-    fep3::Result createComponent(const std::weak_ptr<const fep3::arya::IComponents>& components) override
+    fep3::Result createComponent(
+        const std::weak_ptr<const fep3::arya::IComponents>& components) override
     {
         _components = components;
         return create();
     }
+
     /// @copydoc fep3::IComponent::destroyComponent
     fep3::Result destroyComponent() override
     {
@@ -53,30 +71,37 @@ public:
         _components.reset();
         return res;
     }
+
     fep3::Result initialize() override
     {
         return Result();
     }
+
     fep3::Result tense() override
     {
         return Result();
     }
+
     fep3::Result relax() override
     {
         return Result();
     }
+
     Result deinitialize() override
     {
         return Result();
     }
+
     fep3::Result start() override
     {
         return Result();
     }
+
     fep3::Result stop() override
     {
         return Result();
     }
+
     fep3::Result pause() override
     {
         return Result();
@@ -93,6 +118,7 @@ protected:
     {
         return Result();
     }
+
     /**
      * @brief destroy the base component.
      * if this destroy method is called the _components pointer is still valid
@@ -110,20 +136,46 @@ protected:
      */
     std::weak_ptr<const fep3::arya::IComponents> _components;
 };
+
 /**
  * @brief default helper implementation for component
- *
  */
 template <typename... component_interface_types>
-class Component : public arya::ComponentImpl, public component_interface_types... {
+class Component : public arya::ComponentImpl, virtual public component_interface_types... {
 protected:
     /// CTOR
-    Component() : ComponentImpl()
-    {
-    }
+    Component() = default;
 
+    /**
+     * @brief Deleted Copy CTOR
+     */
+    Component(const Component&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    Component(Component&&) = delete;
+
+    /**
+     * @brief Deleted Copy assignment operator
+     *
+     * @return Component&
+     */
+    Component& operator=(const Component&) = delete;
+
+    /**
+     * @brief Deleted Move assignment operator
+     *
+     * @return Component&
+     */
+    Component& operator=(Component&&) = delete;
+
+public:
     /// DTOR
     ~Component() override = default;
+
+    /// Tuple whose element types are the interfaces this component supports
+    using Interfaces = std::tuple<component_interface_types...>;
 
 protected:
     /// @copydoc fep3::arya::IComponent::getInterface
@@ -144,6 +196,7 @@ private:
             return {};
         }
     };
+
     /**
      * Specialization of above functor for more than zero interface types
      */
@@ -164,8 +217,7 @@ private:
 } // namespace arya
 
 /**
- * @brief extracting \ref fep3::base::arya::Component from version namespace
- *
+ * @brief extracting @ref fep3::base::catelyn::Component from version namespace
  */
 using arya::Component;
 } // namespace base

@@ -4,29 +4,20 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include <atomic>
-#include <memory>
+#include <fep3/base/sample/data_sample_intf.h>
+#include <fep3/base/stream_type/stream_type_intf.h>
+#include <fep3/fep3_optional.h>
 
-namespace fep3
-{
-namespace native
-{
+namespace fep3 {
+namespace native {
 /**
  * @brief Data Item queue base
  * Base class for data item queue implementations
@@ -34,13 +25,11 @@ namespace native
  * @tparam IDataSample class for samples
  * @tparam IStreamType class for types
  */
-template<class SAMPLE_TYPE = const arya::IDataSample, class STREAM_TYPE = const arya::IStreamType>
-class DataItemQueueBase
-{
+template <class SAMPLE_TYPE = const arya::IDataSample, class STREAM_TYPE = const arya::IStreamType>
+class DataItemQueueBase {
 protected:
     /**
      * @brief Internal queue type
-     *
      */
     enum class QueueType
     {
@@ -50,10 +39,8 @@ protected:
 
     /**
      * @brief Internal data item
-     *
      */
-    class DataItem
-    {
+    class DataItem {
     public:
         enum class Type
         {
@@ -63,8 +50,7 @@ protected:
         };
 
     public:
-        DataItem()
-        : _item_type(Type::none)
+        DataItem() : _item_type(Type::none)
         {
         }
 
@@ -74,7 +60,7 @@ protected:
          * @param[in] sample The sample to be stored in the data item
          */
         DataItem(const data_read_ptr<SAMPLE_TYPE>& sample)
-                : _item_type(Type::sample), _sample(sample)
+            : _item_type(Type::sample), _sample(sample)
         {
         }
 
@@ -84,14 +70,15 @@ protected:
          * @param[in] stream_type the stream_type to be stored in the data item
          */
         DataItem(const data_read_ptr<STREAM_TYPE>& stream_type)
-                : _item_type(Type::type), _stream_type(stream_type)
+            : _item_type(Type::type), _stream_type(stream_type)
         {
         }
 
     public:
         /**
          * @brief Setter for a new data sample
-         * Resets the stream type member of the data item and handles the remaining members accordingly
+         * Resets the stream type member of the data item and handles the remaining members
+         * accordingly
          *
          * @param[in] sample The sample to be stored in the data item
          */
@@ -162,7 +149,6 @@ public:
 
     /**
      * @brief DTOR
-     *
      */
     virtual ~DataItemQueueBase() = default;
 
@@ -195,7 +181,7 @@ public:
      * @return {nullptr, nullptr} if queue is empty
      * @remark This is threadsafe against push and pop calls
      */
-    virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE> > pop() = 0;
+    virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> pop() = 0;
 
     /**
      * @brief Return the maximum capacity of the queue

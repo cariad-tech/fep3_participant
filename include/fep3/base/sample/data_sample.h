@@ -4,27 +4,18 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
+
 #pragma once
 
-#include <a_util/memory.h>
-#include <fep3/fep3_participant_types.h>
-#include <fep3/fep3_timestamp.h>
-#include <fep3/fep3_optional.h>
-#include "data_sample_intf.h"
-#include "raw_memory.h"
+#include <fep3/base/sample/data_sample_intf.h>
+#include <fep3/base/sample/raw_memory.h>
 
+#include <a_util/memory.h>
 
 namespace fep3 {
 namespace base {
@@ -32,10 +23,8 @@ namespace arya {
 
 /**
  * Abstract base class for a data sample providing time and counter functionality
- *
  */
-class DataSampleBase : public fep3::arya::IDataSample
-{
+class DataSampleBase : public fep3::arya::IDataSample {
 public:
     /**
      * @brief Constructor
@@ -46,7 +35,10 @@ public:
      */
     DataSampleBase(fep3::arya::Timestamp time = fep3::arya::Timestamp(0), uint32_t counter = 0)
         : _time(time), _counter(counter)
-    {}
+    {
+    }
+
+protected:
     /// @brief Copy constructor
     DataSampleBase(const DataSampleBase&) = default;
     /// @brief Move constructor
@@ -63,20 +55,6 @@ public:
      * @return Reference to this data sample
      */
     DataSampleBase& operator=(DataSampleBase&&) = default;
-
-    /**
-     * @brief Constructor
-     * Constructs a data sample base from another data sample
-     *
-     * @param[in] other The data sample to take the timestamp and the counter from
-     */
-    DataSampleBase(const fep3::arya::IDataSample& other)
-        : _time(other.getTime()), _counter(other.getCounter())
-    {}
-
-    /// @brief Destructor
-    virtual ~DataSampleBase() = default;
-
     /**
      * Assigns another data sample to this
      * @param[in] other The data sample to take the timestamp and the counter from
@@ -88,6 +66,20 @@ public:
         setCounter(other.getCounter());
         return *this;
     }
+    /**
+     * @brief Constructor
+     * Constructs a data sample base from another data sample
+     *
+     * @param[in] other The data sample to take the timestamp and the counter from
+     */
+    DataSampleBase(const fep3::arya::IDataSample& other)
+        : _time(other.getTime()), _counter(other.getCounter())
+    {
+    }
+
+public:
+    /// @brief Destructor
+    virtual ~DataSampleBase() = default;
 
     /**
      * @brief Gets the timestamp
@@ -111,7 +103,7 @@ public:
      * @brief Sets the timestamp
      * @param[in] time The timestamp to be set
      */
-    void setTime(const fep3::arya::Timestamp& time ) override
+    void setTime(const fep3::arya::Timestamp& time) override
     {
         _time = time;
     }
@@ -124,6 +116,7 @@ public:
     {
         _counter = counter;
     }
+
 private:
     fep3::arya::Timestamp _time;
     uint32_t _counter;
@@ -131,29 +124,32 @@ private:
 
 /**
  * Implementation helper class for a data sample used within ISimulationBus or IDataRegistry
- *
  */
-class DataSample : public arya::DataSampleBase,
-                   public fep3::arya::IRawMemory
-{
+class DataSample : public arya::DataSampleBase, public fep3::arya::IRawMemory {
 private:
     using super = arya::DataSampleBase;
+
 public:
     /**
      * @brief Construct a new data sample
-     *
      */
     DataSample() : _fixed_size(false), _current_size(0)
-    {}
+    {
+    }
+
     /**
      * @brief Construct a new data sample
      *
-     * @param[in] pre_allocated_capacity will preallocate the raw memory data area of the data sample
-     * @param[in] fixed_size marks the sample to have no dynamic memory. if capacity size is reached no reallocation is possible.
+     * @param[in] pre_allocated_capacity will preallocate the raw memory data area of the data
+     * sample
+     * @param[in] fixed_size marks the sample to have no dynamic memory. if capacity size is reached
+     * no reallocation is possible.
      */
     DataSample(size_t pre_allocated_capacity, bool fixed_size)
         : _fixed_size(fixed_size), _current_size(0), _buffer(pre_allocated_capacity)
-    {}
+    {
+    }
+
     /**
      * @brief Construct a new data sample
      *
@@ -161,7 +157,9 @@ public:
      * @param[in] counter preset counter
      * @param[in] from_memory the memory to copy the content from
      */
-    DataSample(fep3::arya::Timestamp time, uint32_t counter, const fep3::arya::IRawMemory& from_memory)
+    DataSample(fep3::arya::Timestamp time,
+               uint32_t counter,
+               const fep3::arya::IRawMemory& from_memory)
         : super(time, counter), _fixed_size(false)
     {
         write(from_memory);
@@ -172,35 +170,33 @@ public:
      *
      * @param[in] other the sample to copy from
      */
-    DataSample(const DataSample& other)
-        : super(other), _fixed_size(false)
+    DataSample(const DataSample& other) : super(other), _fixed_size(false)
     {
         other.read(*this);
     }
+
     /**
      * @brief copy construct a new data sample
      *
      * @param[in] other the sample interface to copy from
      */
-    DataSample(const fep3::arya::IDataSample& other)
-        : super(other), _fixed_size(false)
+    DataSample(const fep3::arya::IDataSample& other) : super(other), _fixed_size(false)
     {
         other.read(*this);
     }
+
     /**
      * @brief move construct a new data sample
      *
      * @param[in,out] other the sample to move from
      */
     DataSample(DataSample&& other)
-        : super(other)
-        , _fixed_size(other._fixed_size)
-        , _current_size(other._current_size)
-        , _buffer(std::move(other._buffer))
-    {}
-
-    /// @brief Destructor
-    ~DataSample() override = default;
+        : super(other),
+          _fixed_size(other._fixed_size),
+          _current_size(other._current_size),
+          _buffer(std::move(other._buffer))
+    {
+    }
 
     /**
      * @brief copy the content of the given data sample
@@ -214,6 +210,7 @@ public:
         other.read(*this);
         return *this;
     }
+
     /**
      * @brief copy the content of the given data sample interface
      *
@@ -227,6 +224,7 @@ public:
         other.read(*this);
         return *this;
     }
+
     /**
      * @brief move the content of the given data sample
      *
@@ -242,6 +240,10 @@ public:
         return *this;
     }
 
+public:
+    /// @brief Destructor
+    ~DataSample() override = default;
+
     /**
      * @brief set the content of the sample
      *
@@ -250,7 +252,9 @@ public:
      * @param[in] from_memory the memory to copy from
      * @return size_t the size copied
      */
-    size_t update(const fep3::arya::Timestamp& time, uint32_t counter, const fep3::arya::IRawMemory& from_memory)
+    size_t update(const fep3::arya::Timestamp& time,
+                  uint32_t counter,
+                  const fep3::arya::IRawMemory& from_memory)
     {
         setTime(time);
         setCounter(counter);
@@ -262,10 +266,12 @@ public:
     {
         return _buffer.getSize();
     }
+
     const void* cdata() const override
     {
         return _buffer.getPtr();
     }
+
     size_t size() const override
     {
         return _current_size;
@@ -273,13 +279,11 @@ public:
 
     size_t set(const void* data, size_t data_size) override
     {
-        if (_fixed_size && capacity() < data_size)
-        {
+        if (_fixed_size && capacity() < data_size) {
             a_util::memory::copy(_buffer, data, capacity());
             _current_size = capacity();
         }
-        else
-        {
+        else {
             a_util::memory::copy(_buffer, data, data_size);
             _current_size = data_size;
         }
@@ -287,19 +291,17 @@ public:
     }
     size_t resize(size_t data_size) override
     {
-        if (_fixed_size && capacity() < data_size)
-        {
+        if (_fixed_size && capacity() < data_size) {
             _current_size = capacity();
         }
-        else
-        {
+        else {
             _current_size = data_size;
         }
         return _current_size;
     }
 
 public:
-    size_t   getSize() const override
+    size_t getSize() const override
     {
         return _current_size;
     }
@@ -313,25 +315,27 @@ public:
     }
 
 private:
-    bool        _fixed_size;
-    size_t      _current_size;
+    bool _fixed_size;
+    size_t _current_size;
     a_util::memory::MemoryBuffer _buffer;
 };
 
 /**
- * @brief Data sample helper class to wrap a raw memory pointer \p data and a size \p data_size in bytes.
+ * @brief Data sample helper class to wrap a raw memory pointer @p data and a size @p data_size in
+ * bytes.
  */
-struct DataSampleRawMemoryRef : public fep3::arya::IDataSample
-{
+struct DataSampleRawMemoryRef : public fep3::arya::IDataSample {
     /**
      * CTOR
      * @param[in,out] time the timestamp to preset
      * @param[in] data the data pointer to reference to
-     * @param[in] data_size the size of the memory given in \p data
+     * @param[in] data_size the size of the memory given in @p data
      */
     explicit DataSampleRawMemoryRef(fep3::arya::Timestamp& time, const void* data, size_t data_size)
         : _time(time), _raw_memory_ref(data, data_size)
-    {}
+    {
+    }
+
 private:
     fep3::arya::Timestamp& _time;
     arya::RawMemoryRef _raw_memory_ref;
@@ -364,7 +368,6 @@ private:
     void setCounter(uint32_t /*counter*/) override
     {
     }
-
 };
 
 /**
@@ -372,27 +375,36 @@ private:
  * @tparam T the non-standard layout type
  * @tparam is_standard_layout_type the standard layout type check
  */
-template<typename T, typename is_standard_layout_type = void>
-class DataSampleType : public arya::DataSampleBase,
-    public arya::RawMemoryClassType<T>
-{
+template <typename T, typename is_standard_layout_type = void>
+class DataSampleType : public arya::DataSampleBase, public arya::RawMemoryClassType<T> {
 private:
     using super = arya::DataSampleBase;
-public:
-    ///the value type is T
-    typedef T                     value_type;
-    ///the base type is the super class
-    typedef arya::RawMemoryClassType<T> base_type;
 
 public:
+    /// the value type is T
+    typedef T value_type;
+    /// the base type is the super class
+    typedef arya::RawMemoryClassType<T> base_type;
+
     /**
      * CTOR
      * @param[in] other the other to copy from
      */
-    explicit DataSampleType(value_type& other)
-        : base_type(other)
+    explicit DataSampleType(value_type& other) : base_type(other)
     {
     }
+
+protected:
+    /**
+     * @brief Deleted Copy CTOR
+     */
+    DataSampleType(const DataSampleType&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    DataSampleType(DataSampleType&&) = delete;
+
     /**
      * Copy assignment
      * @param[in] other the other to copy from
@@ -404,8 +416,16 @@ public:
         other.read(*this);
         return *this;
     }
+
     /**
-     * Assignment from another sample
+     * @brief Deleted Move assignment operator
+     *
+     * @return DataSampleType&
+     */
+    DataSampleType& operator=(DataSampleType&&) = delete;
+
+    /**
+     * Assignment from other sample
      * @param[in] other the other to copy from
      * @return this type of sample
      */
@@ -415,7 +435,13 @@ public:
         other.read(*this);
         return *this;
     }
+
 public:
+    /**
+     * @brief Default DTOR
+     */
+    ~DataSampleType() = default;
+
     size_t getSize() const override
     {
         return base_type::size();
@@ -425,36 +451,49 @@ public:
     {
         return writeable_memory.set(base_type::cdata(), base_type::size());
     }
+
     size_t write(const fep3::arya::IRawMemory& from_memory) override
     {
         return base_type::set(from_memory.cdata(), from_memory.size());
     }
 };
 
+/// @cond nodoc
 /**
  * @brief Data sample helper template to wrap a standard layout type T by default
  * @tparam T the standard layout type
  */
 template <typename T>
 class DataSampleType<T, typename std::enable_if<std::is_standard_layout<T>::value>::type>
-    : public arya::DataSampleBase, public arya::RawMemoryStandardType<T>
-{
+    : public arya::DataSampleBase, public arya::RawMemoryStandardType<T> {
 private:
     using super = arya::DataSampleBase;
+
 public:
     /// value type of DataSampleType
-    typedef T                        value_type;
+    typedef T value_type;
     /// super type of DataSampleType
     typedef arya::RawMemoryStandardType<T> base_type;
-public:
+
     /**
      * CTOR
      * @param[in] value reference to the value type
      */
-    explicit DataSampleType(value_type& value)
-        : base_type(value)
+    explicit DataSampleType(value_type& value) : base_type(value)
     {
     }
+
+protected:
+    /**
+     * @brief Deleted Copy CTOR
+     */
+    DataSampleType(const DataSampleType&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    DataSampleType(DataSampleType&&) = delete;
+
     /**
      * Copy assignment
      * @param[in] other reference to the value type to copy from
@@ -466,6 +505,14 @@ public:
         other.read(*this);
         return *this;
     }
+
+    /**
+     * @brief Deleted Move assignment
+     *
+     * @return DataSampleType&
+     */
+    DataSampleType& operator=(DataSampleType&&) = delete;
+
     /**
      * Assignment from other sample
      * @param[in] other the other to copy from
@@ -479,42 +526,61 @@ public:
     }
 
 public:
+    /**
+     * @brief Default DTOR
+     */
+    ~DataSampleType() = default;
+
     size_t getSize() const override
     {
         return base_type::size();
     }
+
     size_t read(fep3::arya::IRawMemory& writeable_memory) const override
     {
         return writeable_memory.set(base_type::cdata(), base_type::size());
     }
+
     size_t write(const fep3::arya::IRawMemory& from_memory) override
     {
         return base_type::set(from_memory.cdata(), from_memory.size());
     }
 };
+/// @endcond
 
 /**
  * @brief Data sample helper template to wrap a std vector of type T
  */
 template <typename T>
-class StdVectorSampleType : public arya::RawMemoryClassType<std::vector<T>>, public arya::DataSampleBase
-{
+class StdVectorSampleType : public arya::RawMemoryClassType<std::vector<T>>,
+                            public arya::DataSampleBase {
 private:
     using super = DataSampleBase;
+
 public:
     /// value type of DataSampleType
-    typedef T                                 value_type;
+    typedef T value_type;
     /// super type of DataSampleType
     typedef arya::RawMemoryClassType<std::vector<T>> base_type;
-public:
+
     /**
      * CTOR
      * @param[in] array the data pointer to reference to
      */
-    explicit StdVectorSampleType(std::vector<value_type>& array)
-        : base_type(array)
+    explicit StdVectorSampleType(std::vector<value_type>& array) : base_type(array)
     {
     }
+
+protected:
+    /**
+     * @brief Deleted Copy CTOR
+     */
+    StdVectorSampleType(const StdVectorSampleType&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    StdVectorSampleType(StdVectorSampleType&&) = delete;
 
     /**
      * copy assignment
@@ -527,6 +593,19 @@ public:
         other.read(*this);
         return *this;
     }
+
+    /**
+     * @brief Deleted Move assignment
+     *
+     * @return StdVectorSampleType&
+     */
+    StdVectorSampleType& operator=(StdVectorSampleType&&) = delete;
+
+public:
+    /**
+     * @brief Default DTOR
+     */
+    ~StdVectorSampleType() = default;
 
     size_t getSize() const override
     {
@@ -543,7 +622,6 @@ public:
         base_type::set(from_memory.cdata(), from_memory.size());
         return getSize();
     }
-
 };
 
 } // namespace arya

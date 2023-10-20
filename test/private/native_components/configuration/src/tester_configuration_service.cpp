@@ -4,44 +4,32 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <common/gtest_asserts.h>
-#include <common/properties_test_helper.h>
-
+#include <fep3/base/component_registry/component_registry.h>
+#include <fep3/components/service_bus/mock_service_bus.h>
 #include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/configuration/configuration_service.h>
-#include <fep3/rpc_services/configuration/configuration_rpc_intf_def.h>
-#include <fep3/base/properties/properties.h>
-#include <fep3/components/base/component_registry.h>
-#include <fep3/components/service_bus/mock/mock_service_bus.h>
+
+#include <common/gtest_asserts.h>
+#include <common/properties_test_helper.h>
 
 using namespace ::testing;
 using namespace fep3;
 
-using ServiceBusComponentMock = NiceMock<fep3::mock::ServiceBusComponent>;
+using ServiceBusComponentMock = NiceMock<fep3::mock::ServiceBus>;
 using RPCServerMock = NiceMock<fep3::mock::RPCServer>;
 
-struct NativeConfigurationService : public testing::Test
-{
+struct NativeConfigurationService : public testing::Test {
     NativeConfigurationService()
-        : _component_registry(std::make_shared<fep3::ComponentRegistry>())
-        , _service_bus(std::make_shared<ServiceBusComponentMock>())
-        , _rpc_server(std::make_shared<RPCServerMock>())
-        , _configuration_service_impl(std::make_shared<native::ConfigurationService>())
+        : _component_registry(std::make_shared<fep3::ComponentRegistry>()),
+          _service_bus(std::make_shared<ServiceBusComponentMock>()),
+          _rpc_server(std::make_shared<RPCServerMock>()),
+          _configuration_service_impl(std::make_shared<native::ConfigurationService>())
     {
     }
 
@@ -54,9 +42,10 @@ struct NativeConfigurationService : public testing::Test
 
         EXPECT_CALL(*_service_bus, getServer()).Times(1).WillOnce(::testing::Return(_rpc_server));
         EXPECT_CALL(*_rpc_server,
-            registerService(fep3::rpc::arya::IRPCConfigurationDef::getRPCDefaultName(),
-                _)).Times(1).WillOnce(::testing::Return(fep3::Result()));
-                ::testing::Return(Result());
+                    registerService(fep3::rpc::arya::IRPCConfigurationDef::getRPCDefaultName(), _))
+            .Times(1)
+            .WillOnce(::testing::Return(fep3::Result()));
+        ::testing::Return(Result());
 
         ASSERT_FEP3_NOERROR(_component_registry->create());
 
@@ -64,17 +53,18 @@ struct NativeConfigurationService : public testing::Test
     }
 
     std::shared_ptr<fep3::ComponentRegistry> _component_registry{nullptr};
-    std::shared_ptr<ServiceBusComponentMock> _service_bus{ nullptr };
+    std::shared_ptr<ServiceBusComponentMock> _service_bus{nullptr};
     std::shared_ptr<RPCServerMock> _rpc_server{nullptr};
-    std::shared_ptr<fep3::native::ConfigurationService> _configuration_service_impl{ nullptr };
-    fep3::IConfigurationService* _configuration_service_intf{ nullptr };
+    std::shared_ptr<fep3::native::ConfigurationService> _configuration_service_impl{nullptr};
+    fep3::IConfigurationService* _configuration_service_intf{nullptr};
+
 private:
-    const fep3::ComponentVersionInfo _dummy_component_version_info{FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
+    const fep3::ComponentVersionInfo _dummy_component_version_info{
+        FEP3_PARTICIPANT_LIBRARY_VERSION_STR, "dummyPath", FEP3_PARTICIPANT_LIBRARY_VERSION_STR};
 };
 
 /**
  * @brief The method registerNode of the configuration service is tested
- *
  */
 TEST(ConfigurationService, registerNode)
 {
@@ -91,7 +81,6 @@ TEST(ConfigurationService, registerNode)
 
 /**
  * @brief It is tested that with registerNode a node can not be registered twice
- *
  */
 TEST(ConfigurationService, registerNodeTwiceFails)
 {
@@ -104,7 +93,6 @@ TEST(ConfigurationService, registerNodeTwiceFails)
 
 /**
  * @brief The method unregisterNode of the configuration service is tested
- *
  */
 TEST(ConfigurationService, unregisterNode)
 {
@@ -118,8 +106,8 @@ TEST(ConfigurationService, unregisterNode)
 }
 
 /**
- * @brief It is tested that unregisterNode returns an error if the property to unregister does not exist
- *
+ * @brief It is tested that unregisterNode returns an error if the property to unregister does not
+ * exist
  */
 TEST(ConfigurationService, unregisterNodeNotExisting)
 {
@@ -129,7 +117,6 @@ TEST(ConfigurationService, unregisterNodeNotExisting)
 
 /**
  * @brief The method getNode of the configuration service is tested for a property name
- *
  */
 TEST(ConfigurationService, getNode)
 {
@@ -144,7 +131,6 @@ TEST(ConfigurationService, getNode)
 
 /**
  * @brief The method getNode of the configuration service is tested for a property path
- *
  */
 TEST(ConfigurationService, getNodeByPath)
 {
@@ -164,7 +150,6 @@ TEST(ConfigurationService, getNodeByPath)
 /**
  * @brief It is tested that getConstNode returns the root node if no path is provided
  * and that getNode returns a nulltpr if no path is provided
- *
  */
 TEST(ConfigurationService, getNodeRoot)
 {
@@ -172,7 +157,8 @@ TEST(ConfigurationService, getNodeRoot)
     auto properties_clock = createTestProperties();
 
     ASSERT_FEP3_NOERROR(service.registerNode(properties_clock));
-    ASSERT_FEP3_NOERROR(service.registerNode(std::make_shared<base::NativePropertyNode>("some_node")));
+    ASSERT_FEP3_NOERROR(
+        service.registerNode(std::make_shared<base::NativePropertyNode>("some_node")));
 
     {
         auto root_node = service.getConstNode();
@@ -188,10 +174,8 @@ TEST(ConfigurationService, getNodeRoot)
     }
 }
 
-
 /**
  * @brief The method isNodeRegistered of the configuration service is tested
- *
  */
 TEST(ConfigurationService, isNodeRegistered)
 {
@@ -222,7 +206,6 @@ TEST(ConfigurationService, isNodeRegistered)
 
 /**
  * @brief The helper function getPropertyValue taking the configuration service is tested
- *
  */
 TEST(PropertiesHelper, getPropertyValue)
 {
@@ -241,27 +224,28 @@ TEST(PropertiesHelper, getPropertyValue)
 
 /**
  * @brief The helper function fep3::base::setPropertyValue for a node is tested
- *
  */
 TEST(PropertiesHelper, setPropertyValue)
 {
-   fep3::native::ConfigurationService service;
-   auto properties_clock = createTypeTestProperties();
-   service.registerNode(properties_clock);
+    fep3::native::ConfigurationService service;
+    auto properties_clock = createTypeTestProperties();
+    service.registerNode(properties_clock);
 
-   EXPECT_FEP3_NOERROR(fep3::base::setPropertyValue<int32_t>(service, "types/int", 3));
-   EXPECT_EQ(service.getConstNode("types/int")->getValue(), base::DefaultPropertyTypeConversion<int32_t>::toString(3));
+    EXPECT_FEP3_NOERROR(fep3::base::setPropertyValue<int32_t>(service, "types/int", 3));
+    EXPECT_EQ(service.getConstNode("types/int")->getValue(),
+              base::DefaultPropertyTypeConversion<int32_t>::toString(3));
 
-   EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "types/int", 3), ERR_INVALID_TYPE);
+    EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "types/int", 3),
+                       ERR_INVALID_TYPE);
 
-   EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "types/not_existing", 3), ERR_NOT_FOUND);
-   EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "/", 3), ERR_NOT_FOUND);
-   EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "", 3), ERR_NOT_FOUND);
+    EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "types/not_existing", 3),
+                       ERR_NOT_FOUND);
+    EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "/", 3), ERR_NOT_FOUND);
+    EXPECT_FEP3_RESULT(fep3::base::setPropertyValue<double>(service, "", 3), ERR_NOT_FOUND);
 }
 
 /**
  * @brief The helper function makeNativePropertyNode is tested
- *
  */
 TEST(PropertiesHelper, makeNativePropertyNode)
 {

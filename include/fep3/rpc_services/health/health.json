@@ -1,38 +1,83 @@
 // Copyright @ 2021 VW Group. All rights reserved.
 //
-//     This Source Code Form is subject to the terms of the Mozilla
-//     Public License, v. 2.0. If a copy of the MPL was not distributed
-//     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// If it is not possible or desirable to put the notice in a particular file, then
-// You may include the notice in a location (such as a LICENSE file in a
-// relevant directory) where a recipient would be likely to look for such a notice.
-//
-// You may add additional accurate notices of copyright ownership.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License, v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 [
-    // gets the participant health state
-    // ok = 0
-    // error = 1
-    // unknown = 2
-    {
-        "name": "getHealth",
-        "returns": 0 // health state
-    },
 
-    // resets the participant health state to 'ok'
-    // indicating all errors have been fixed and
-    // logging a message why the health state has been reset
-    {
-        "name": "resetHealth",
-        "params": {
-            "message": "message"
-        },
-        "returns": {
-            "ErrorCode": 0, // error code
-            "Description": "error_description", // error description
-            "Line": "line", // line
-            "File": "file", // file
-            "Function": "function" // function
+  // resets the jobs health state to 'ok'
+  // indicating all errors have been fixed and
+  // logging a message why the health state has been reset
+  {
+    "name": "resetHealth",
+    "returns": {
+      "error": // always returned error code
+      {
+        "error_code": 0, // error code
+        "description": "error_description", // error description
+        "line": "line", // line
+        "file": "file", // file
+        "function": "function" // function
+      }
+    }
+  },
+
+  // returns the jobs health structs
+  {
+    "name": "getHealth",
+    "returns": {
+      "jobs_healthiness": [
+        {
+          "job_name": "job1", // job name
+          "cycle_time": 100, // cycle time in ns, only in clock triggered job
+          "trigger_signals": "signal1, signal2", // trigger signals, only in data triggered job
+          "simulation_timestamp": 2, // simutlation time in ns
+          "last_execute_data_in_error": {
+            "error_count": 1000, // times executeDataIn execution returned an error
+            "simulation_timestamp": 2,
+            "last_error": //  last error returned
+            {
+              "error_code": 0, // error code
+              "description": "error_description", // error description
+              "line": "line", // line
+              "file": "file", // file
+              "function": "function" // function
+            }
+          },
+          "last_execute_error": {
+            "error_count": 1000, // times execute execution returned an error
+            "simulation_timestamp": 2,
+            "last_error": //  last error returned
+            {
+              "error_code": 0, // error code
+              "description": "error_description", // error description
+              "line": "line", // line
+              "file": "file", // file
+              "function": "function" // function
+            }
+          },
+          "last_execute_data_out_error": {
+            "error_count": 1000, // times executeDataOut execution returned an error
+            "simulation_timestamp": 2,
+            "last_error": // last error returned
+            {
+              "error_code": 0, // error code
+              "description": "error_description", // error description
+              "line": "line", // line
+              "file": "file", // file
+              "function": "function" // function
+            }
+          }
+        }
+      ],
+       "error" : // error if getHealth failed
+        {
+            "error_code": 0, // error code
+            "description": "error_description", // error description
+            "line": "line", // line
+            "file": "file", // file
+            "function": "function" // function
         }
     }
+  }
 ]

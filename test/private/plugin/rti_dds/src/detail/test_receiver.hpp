@@ -4,40 +4,26 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
-#include <fep3/base/sample/data_sample.h>
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
-#include <iostream>
-#include <chrono>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 
 #include <gtest/gtest.h>
+
+#include <condition_variable>
 
 using namespace fep3;
 
 #define NO_CHECK -1
 
 /**
-* @brief Basic receiver collecting all stream_types and samples
-*/
-struct BaseBlockingTestReceiver
-    : public ISimulationBus::IDataReceiver
-{
+ * @brief Basic receiver collecting all stream_types and samples
+ */
+struct BaseBlockingTestReceiver : public ISimulationBus::IDataReceiver {
 public:
     std::condition_variable _reception_condition;
     std::mutex _reception_mutex;
@@ -49,24 +35,16 @@ public:
     bool waitFor(std::chrono::seconds timeout = std::chrono::seconds(5))
     {
         std::unique_lock<std::mutex> reception_lock(_reception_mutex);
-        return _reception_condition.wait_for
-            (reception_lock
-            , timeout
-            , [this]()
-                {
-                    return hasReceivedAllExpected();
-                }
-            );
+        return _reception_condition.wait_for(
+            reception_lock, timeout, [this]() { return hasReceivedAllExpected(); });
     }
 };
 
-
-struct BlockingTestReceiver : public BaseBlockingTestReceiver
-{
+struct BlockingTestReceiver : public BaseBlockingTestReceiver {
 public:
-    BlockingTestReceiver(ISimulationBus& /*simulation_bus*/)
-        : BaseBlockingTestReceiver()
-    {}
+    BlockingTestReceiver(ISimulationBus& /*simulation_bus*/) : BaseBlockingTestReceiver()
+    {
+    }
 
     void operator()(const data_read_ptr<const IStreamType>& stream_type) override
     {
@@ -79,45 +57,39 @@ public:
         _reception_condition.notify_all();
     }
 
-
-    void waitFor(int32_t wait_for_samples
-        , int32_t wait_for_stream_types
-        , std::chrono::seconds timeout = std::chrono::seconds(5)
-        , bool /*stop_receiving*/ = true
-        , bool /*expect_timeout*/ = false
-    )
+    void waitFor(int32_t wait_for_samples,
+                 int32_t wait_for_stream_types,
+                 std::chrono::seconds timeout = std::chrono::seconds(5),
+                 bool /*stop_receiving*/ = true,
+                 bool /*expect_timeout*/ = false)
     {
         _wait_for_samples = wait_for_samples;
         _wait_for_stream_types = wait_for_stream_types;
 
         BaseBlockingTestReceiver::waitFor(timeout);
 
-        if (_wait_for_samples != -1)
-        {
+        if (_wait_for_samples != -1) {
             EXPECT_EQ(_samples.size(), _wait_for_samples);
         }
 
-        if (_wait_for_stream_types != -1)
-        {
+        if (_wait_for_stream_types != -1) {
             EXPECT_EQ(_stream_types.size(), _wait_for_stream_types);
         }
     }
 
     bool hasReceivedAllExpected() override
     {
-
         if (_wait_for_samples == NO_CHECK &&
-            _wait_for_stream_types == NO_CHECK)
-        { // if no check shall be done at all, at least one item must have been received
-            if (_samples.size() > 0 ||
-                _stream_types.size() > 0)
-            {
+            _wait_for_stream_types == NO_CHECK) { // if no check shall be done at all, at least one
+                                                  // item must have been received
+            if (_samples.size() > 0 || _stream_types.size() > 0) {
                 return true;
             }
         }
-        else if ((_wait_for_samples <= NO_CHECK || _samples.size() == static_cast<uint32_t>(_wait_for_samples)) &&
-            (_wait_for_stream_types <= NO_CHECK || _stream_types.size() == static_cast<uint32_t>(_wait_for_stream_types)))
-        {
+        else if ((_wait_for_samples <= NO_CHECK ||
+                  _samples.size() == static_cast<uint32_t>(_wait_for_samples)) &&
+                 (_wait_for_stream_types <= NO_CHECK ||
+                  _stream_types.size() == static_cast<uint32_t>(_wait_for_stream_types))) {
             return true;
         }
         return false;
@@ -130,18 +102,16 @@ public:
     }
 
 public:
-    std::vector< data_read_ptr<const IStreamType> > _stream_types;
-    std::vector< data_read_ptr<const IDataSample> > _samples;
+    std::vector<data_read_ptr<const IStreamType>> _stream_types;
+    std::vector<data_read_ptr<const IDataSample>> _samples;
     int32_t _wait_for_samples = 1;
     int32_t _wait_for_stream_types = 0;
-
 };
 
-class TestReceiver : public ISimulationBus::IDataReceiver
-{
+class TestReceiver : public ISimulationBus::IDataReceiver {
 public:
-    std::vector< data_read_ptr<const IStreamType> > _stream_types;
-    std::vector< data_read_ptr<const IDataSample> > _samples;
+    std::vector<data_read_ptr<const IStreamType>> _stream_types;
+    std::vector<data_read_ptr<const IDataSample>> _samples;
 
     int32_t _wait_for_samples = 1;
     int32_t _wait_for_streamtypes = 0;
@@ -167,8 +137,7 @@ public:
     }
 };
 
-class OrderTestReceiver : public TestReceiver
-{
+class OrderTestReceiver : public TestReceiver {
 private:
     bool _last_stream_type = false;
 
@@ -185,8 +154,7 @@ public:
     }
 };
 
-class CountSampleTestReceiver : public TestReceiver
-{
+class CountSampleTestReceiver : public TestReceiver {
 private:
     uint32_t _count_samples = 0;
     uint32_t _count_stream_type = 0;

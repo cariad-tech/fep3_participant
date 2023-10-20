@@ -21,7 +21,7 @@
 *
 ******************************************************************************************/
 #include "lssdpcpp.h"
-#include <../3rdparty/lssdp-cpp/src/url/cxx_url.h>
+#include <cxx_url.h>
 #include <string.h>
 #include <string>
 #include <iostream>
@@ -1099,7 +1099,7 @@ struct Service::Impl : public ServiceDescription
         }
         _address = inet_addr(url.host().c_str());
 
-        if (!network_interface.empty()) 
+        if (!network_interface.empty())
         {
             _interface = inet_addr(network_interface.c_str());
         }
@@ -1207,7 +1207,7 @@ struct Service::Impl : public ServiceDescription
 
             // If network interface is set
             // It should skip other interface, except for the localhost
-            if (_interface != 0 && 
+            if (_interface != 0 &&
                 current_interface.getAddrIp4() != _interface &&
                 current_interface.getIp4() != LSSDP_ADDR_LOCALHOST)
             {
@@ -1328,7 +1328,7 @@ private:
 Service::Service(std::string discover_url,
                  std::string network_interface,
                  std::chrono::seconds max_age,
-                 std::string location_url,
+                 std::pair<std::string, bool> location_url,
                  std::string unique_service_name,
                  std::string search_target,
                  std::string product_name,
@@ -1338,7 +1338,7 @@ Service::Service(std::string discover_url,
     _impl(std::make_unique<Impl>(discover_url,
         network_interface,
         max_age,
-        location_url,
+        location_url.first,
         unique_service_name,
         search_target,
         product_name,
@@ -1554,7 +1554,7 @@ public:
 
             // If network interface is set
             // It should skip other interface, except for the localhost
-            if (_interface != 0 && 
+            if (_interface != 0 &&
                 current_interface.getAddrIp4() != _interface &&
                 current_interface.getIp4() != LSSDP_ADDR_LOCALHOST)
             {

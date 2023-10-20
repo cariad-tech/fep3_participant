@@ -4,36 +4,24 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
 
-#include <fep3/components/simulation_bus/simulation_bus_intf.h>
-#include <fep3/components/simulation_bus/simulation_data_access.h>
-#include <fep3/components/logging/logging_service_intf.h>
-#include <plugins/rti_dds/simulation_bus/rti_conext_dds_include.h>
-#include <plugins/rti_dds/simulation_bus/stream_item_topic/stream_item_topic.h>
-#include <plugins/rti_dds/simulation_bus/reader_item_queue.h>
+#include "stream_item_topic.h"
 
-class StreamItemDataReader
-    : public fep3::arya::ISimulationBus::IDataReader
-{
+class StreamItemDataReader : public fep3::arya::ISimulationBus::IDataReader {
 public:
-    StreamItemDataReader(const std::shared_ptr<StreamItemTopic> & topic
-                        , size_t queue_capacity
-                        , const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>& data_access_collection
-                        , const std::shared_ptr<fep3::ILogger>& logger);
+    StreamItemDataReader(
+        const std::shared_ptr<StreamItemTopic>& topic,
+        size_t queue_capacity,
+        const std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>&
+            data_access_collection,
+        const std::shared_ptr<fep3::ILogger>& logger);
     ~StreamItemDataReader() override;
 
     size_t size() const override;
@@ -46,11 +34,13 @@ public:
 
 protected:
     const std::shared_ptr<fep3::ILogger> _logger;
+
 private:
     std::shared_ptr<StreamItemTopic> _topic;
     const std::shared_ptr<ReaderItemQueue> _item_queue;
     // the reader does not take (permanent) ownership of the data access collection -> weak_ptr
-    std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>> _data_access_collection;
-    fep3::Optional<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>::const_iterator> _data_access_iterator;
-
+    std::weak_ptr<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>>
+        _data_access_collection;
+    fep3::Optional<fep3::base::SimulationDataAccessCollection<ReaderItemQueue>::const_iterator>
+        _data_access_iterator;
 };

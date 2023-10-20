@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 set(CORE_DIR ${PROJECT_SOURCE_DIR}/src/fep3/core)
@@ -32,6 +24,11 @@ set(CORE_SOURCES_PRIVATE
     ${CORE_DIR}/commandline_parser/commandline_parser_impl.cpp
 
     ${CORE_DIR}/create_participant.cpp
+
+    #job element
+    ${CORE_DIR}/data_io_container.cpp
+    ${CORE_DIR}/default_job_config_visitor.h
+    ${CORE_DIR}/default_job_config_visitor.cpp
 )
 
 set(CORE_SOURCES_PUBLIC
@@ -49,6 +46,11 @@ set(CORE_SOURCES_PUBLIC
 
     #job helper
     ${CORE_INCLUDE_DIR}/job.h
+    ${CORE_INCLUDE_DIR}/data_io_container.h
+    ${CORE_INCLUDE_DIR}/data_io_container_intf.h
+    ${CORE_INCLUDE_DIR}/default_job.h
+    ${CORE_INCLUDE_DIR}/default_job_element.h
+    ${CORE_INCLUDE_DIR}/custom_job_element.h
 
     #easy include for the user
     ${PROJECT_SOURCE_DIR}/include/fep3/core.h

@@ -4,22 +4,18 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
 #pragma once
-#include "./../service_bus.h"
-#include "a_util/result/result_util.h"
+#include "../include/service_bus.h"
+
+#include <a_util/result/result_util.h>
+
+#include <gtest/gtest.h>
 
 namespace fep3 {
 namespace native {
@@ -36,7 +32,7 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
     const std::string system_name = "test_with_service_bus_default";
 
     auto res = service_bus.createSystemAccess(system_name, "", true);
-    if (fep3::isFailed(res)) {
+    if (!res) {
         return ::testing::AssertionFailure()
                << __FILE__ << ":" << __LINE__
                << " createSystemAccess: " + a_util::result::toString(res);
@@ -51,7 +47,7 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
     auto participant_url = participant_host + a_util::strings::toString(test_participant_port);
     res = sysaccess->createServer(test_participant_name, participant_url);
 
-    if (fep3::isFailed(res)) {
+    if (!res) {
         return ::testing::AssertionFailure()
                << __FILE__ << ":" << __LINE__ << " createServer: " + a_util::result::toString(res);
     }
@@ -60,4 +56,4 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
 
 } // namespace testing
 } // namespace native
-} // namespac
+} // namespace fep3

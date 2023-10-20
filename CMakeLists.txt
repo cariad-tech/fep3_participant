@@ -1,22 +1,13 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 cmake_minimum_required(VERSION 3.17.0 FATAL_ERROR)
 cmake_policy(SET CMP0011 NEW)
 
-# Disable extensions here and require the chosen CMAKE_CXX_STANDARD (coming from Conan)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (NOT DEFINED CMAKE_CXX_STANDARD)
@@ -54,39 +45,6 @@ else()
     add_compile_options(-Wall -Wno-unknown-pragmas -Wno-reorder -Werror -Wextra -pedantic -Wno-comment)
 endif()
 
-# check for conan
-if(NOT CONAN_COMPILER)
-    message(WARNING "Very good hint: FEP3 Participant Library should not be built without conan!")
-else()
-    message(STATUS "Including Conan build info")
-    if ( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-        include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-    elseif ( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../conanbuildinfo.cmake)
-        include(${CMAKE_CURRENT_BINARY_DIR}/../conanbuildinfo.cmake)
-    elseif ( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo_multi.cmake)
-        include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo_multi.cmake)
-    elseif ( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../conanbuildinfo_multi.cmake)
-        include(${CMAKE_CURRENT_BINARY_DIR}/../conanbuildinfo_multi.cmake)
-    else()
-        message(FATAL_ERROR "Conan build info can't be found.")
-    endif()
-
-    if(CORTEX_WORKSPACE)
-        conan_basic_setup(TARGETS)
-    else()
-        conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
-    endif()
-
-    set(DOXYGEN_ROOT ${CONAN_DOXYGEN_ROOT})
-    set(gtest_search_mode CONFIG)
-endif()
-
-# -Og is needed for ABI Dumper
-IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options("$<$<CONFIG:DEBUG>:-Og>")
-    message("Disable optimization")
-ENDIF(CMAKE_COMPILER_IS_GNUCC)
-
 include(scripts/cmake/enable_multicore_compilation.cmake)
 include(scripts/cmake/use_integrated_debug_symbols.cmake)
 
@@ -97,7 +55,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS true)
 set(fep3_participant_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(BUILD_FEP3_PARTICIPANT_LIBRARY true)
 set(BETA_BUILD false CACHE BOOL "Mark as beta")
-set(REFERENCE_VERSION ${CONAN_PACKAGE_VERSION})
 
 # some settings need to be set explicitly for QNX
 if (UNIX)
@@ -118,6 +75,21 @@ option(fep3_participant_cmake_enable_documentation
 option(fep3_participant_cmake_enable_tests
        "Enable functional tests - requires googletest (default: OFF)" OFF)
 
+# -Og is needed for ABI Dumper
+if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+    add_compile_options("$<$<CONFIG:DEBUG>:-Og>")
+    message(STATUS "Disable optimizations")
+
+    option(fep3_participant_enable_code_coverage
+           "Enable code coverage report with gcov (default: OFF)" OFF)
+    if(fep3_participant_enable_code_coverage)
+        message(STATUS "Enabling gcov flags")
+        # See: https://gcc.gnu.org/onlinedocs/gcc-7.5.0/gcc/Instrumentation-Options.html
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    endif()
+endif()
+   
 ################################################################################
 ### Setting up packages
 ################################################################################
@@ -132,25 +104,31 @@ endif(NOT DEFINED PLATFORM)
 set(fep3_participant_pdb_version_str ${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR})
 include(src/fep3/fep3_participant-macros.cmake)
 add_subdirectory(src)
+add_subdirectory(3rdparty/lssdp-cpp)
 if (fep3_participant_cmake_enable_documentation)
     add_subdirectory(doc)
 endif()
 
-install(FILES README.md
-        DESTINATION .
+install(
+    FILES
+        README.md
+    DESTINATION
+        .
 )
-install(FILES LICENSE.md
-        DESTINATION doc/license
+install(
+    FILES
+        LICENSE.md
+        doc/license/license_notes_from_aosd.txt
+    DESTINATION
+        doc/license
 )
 
-install(FILES doc/license/license_notes_from_aosd.txt
-        DESTINATION doc/license
-)
-
-if(fep3_participant_cmake_enable_tests)
-    # we have private tests that are built/run during the product build
-    enable_testing()
-    set(fep3_participant_cmake_integrated_tests ON)
+if(fep3_participant_cmake_enable_tests OR fep3_participant_export_test_targets)
+    if(fep3_participant_cmake_enable_tests)
+        # we have private tests that are built/run during the product build
+        enable_testing()
+        set(fep3_participant_cmake_integrated_tests ON)
+    endif()
     add_subdirectory(test)
 endif()
 

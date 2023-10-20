@@ -1,20 +1,12 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
 
 add_library(test_cpp_plugin_1 SHARED
             test_plugins/test_plugin_1.cpp
@@ -31,6 +23,15 @@ add_library(test_cpp_plugin_2 SHARED
             test_plugins/test_component_b_intf.h)
 set_target_properties(test_cpp_plugin_2 PROPERTIES FOLDER "test/private/foreign_components/cpp/test_plugins")
 target_link_libraries(test_cpp_plugin_2 PRIVATE fep3_participant_cpp_plugin)
+
+# plugin 3 implements a FEP Super Component
+add_library(test_cpp_plugin_3 SHARED
+    test_plugins/test_plugin_3.cpp
+    test_plugins/test_component_a_intf.h
+    test_plugins/test_component_b_intf.h
+)
+set_target_properties(test_cpp_plugin_3 PROPERTIES FOLDER "test/private/foreign_components/cpp/test_plugins")
+target_link_libraries(test_cpp_plugin_3 PRIVATE fep3_participant_cpp_plugin)
 
 ##################################################################
 #  the test itself
@@ -54,5 +55,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test/private/foreign_co
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PLUGIN_1="$<TARGET_FILE:test_cpp_plugin_1>"
     PLUGIN_2="$<TARGET_FILE:test_cpp_plugin_2>"
+    PLUGIN_3="$<TARGET_FILE:test_cpp_plugin_3>"
     TEST_BUILD_DIR="$<TARGET_FILE_DIR:${PROJECT_NAME}>"
 )
+
+set_source_files_properties(
+        tester_foreign_components.cpp
+        PROPERTIES COMPILE_DEFINITIONS $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)

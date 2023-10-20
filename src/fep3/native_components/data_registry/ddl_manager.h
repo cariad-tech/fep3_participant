@@ -4,32 +4,23 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
-
-#include <ddl/dd/dd.h>
 
 #include "fep3/fep3_errors.h"
 
-namespace fep3
-{
-namespace arya
-{
-class DDLManager
-{
+#include <fep3/components/logging/easy_logger.h>
+
+#include <ddl/dd/dd.h>
+
+namespace fep3 {
+namespace arya {
+class DDLManager {
 public:
     /// CTOR
     DDLManager();
@@ -41,7 +32,7 @@ public:
      *
      * @retval ERR_INVALID_ARG The description is invalid
      */
-    fep3::Result loadDDL(const std::string& ddl);
+    fep3::Result loadDDL(const std::string& ddl, std::shared_ptr<fep3::arya::ILogger> _logger);
 
     /**
      * @brief Loads a complete description from the string, merging it into the internal description
@@ -51,7 +42,7 @@ public:
      * @retval ERR_INVALID_ARG The description is invalid
      * @retval ERR_INVALID_TYPE A struct, enum or datatype is in conflict with its type definition
      */
-    fep3::Result mergeDDL(const std::string& ddl);
+    fep3::Result mergeDDL(const std::string& ddl, std::shared_ptr<fep3::arya::ILogger> _logger);
 
     /**
      * @brief Gets a complete but minimal DDL description that only contains the given type

@@ -4,24 +4,15 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-#include <gtest/gtest.h>
-
 #include <fep3/base/sample/data_sample.h>
 
-#include <chrono>
+#include <gtest/gtest.h>
 
 /**
  * @detail Test the timestamp and counter functionality of class fep3::base::DataSample
@@ -81,15 +72,13 @@ TEST(DataSampleTest, testTimestampAndCounter)
     }
 }
 
-template<typename data_sample_class>
-class DataSampleTypeTest : public ::testing::Test
-{};
+template <typename data_sample_class>
+class DataSampleTypeTest : public ::testing::Test {
+};
 
-class MyClass{};
-using DataSampleTypeTypes = ::testing::Types
-    <int
-    , MyClass
-    >;
+class MyClass {
+};
+using DataSampleTypeTypes = ::testing::Types<int, MyClass>;
 TYPED_TEST_SUITE(DataSampleTypeTest, DataSampleTypeTypes);
 
 /**
@@ -104,18 +93,6 @@ TYPED_TEST(DataSampleTypeTest, testCounterAndTime)
         EXPECT_EQ(0u, sample.getCounter());
         EXPECT_EQ(fep3::Timestamp(0), sample.getTime());
     }
-
-    { // copy assignment
-        TypeParam value_1{};
-        fep3::base::DataSampleType<TypeParam> sample_1(value_1);
-        sample_1.setTime(fep3::Timestamp(33));
-        sample_1.setCounter(44);
-        TypeParam value_2{};
-        fep3::base::DataSampleType<TypeParam> sample_2(value_2);
-        sample_2 = sample_1;
-        EXPECT_EQ(fep3::Timestamp(33), sample_2.getTime());
-        EXPECT_EQ(44u, sample_2.getCounter());
-    }
 }
 
 /**
@@ -126,10 +103,8 @@ TEST(StdVectorSampleTypeTest, testCopy)
 {
     using namespace std::literals::chrono_literals;
     const size_t element_count = 10;
-    const fep3::Timestamp timestamp = 123ns;
-    const uint32_t counter = 123;
 
-    struct TestVector{
+    struct TestVector {
         bool valid;
         int x;
         double length;
@@ -137,7 +112,7 @@ TEST(StdVectorSampleTypeTest, testCopy)
         char padding;
     };
 
-    auto compare_two_test_vectors = [](const TestVector &l, const TestVector &r) {
+    auto compare_two_test_vectors = [](const TestVector& l, const TestVector& r) {
         bool is_equal = l.valid == r.valid;
         is_equal &= l.x == r.x;
         is_equal &= l.length == r.length;
@@ -150,22 +125,14 @@ TEST(StdVectorSampleTypeTest, testCopy)
     std::vector<TestVector> my_data;
     my_data.reserve(element_count);
 
-    for (int i = element_count; i > 0; i--)
-    {
+    for (int i = element_count; i > 0; i--) {
         TestVector v{
-            i % 2 ? true : false,
-            i,
-            i * 1.24,
-            static_cast<float>(i) / 1.24f,
-            static_cast<char>(i)
-        };
+            i % 2 ? true : false, i, i * 1.24, static_cast<float>(i) / 1.24f, static_cast<char>(i)};
         my_data.emplace_back(v);
     }
 
     // Prepare sample
     fep3::base::StdVectorSampleType<TestVector> array_sample{my_data};
-    array_sample.setTime(timestamp);
-    array_sample.setCounter(counter);
     fep3::IDataSample* intf_sample = static_cast<fep3::IDataSample*>(&array_sample);
 
     // Copy sample via IDataSample interface
@@ -176,13 +143,7 @@ TEST(StdVectorSampleTypeTest, testCopy)
 
     // Test if sample is equal to its copy with IRawMemory interface
     copied_array_sample.write(sample_raw_copy);
-    ASSERT_TRUE(std::equal(my_data.begin(), my_data.end(), my_copied_data.begin(), compare_two_test_vectors));
+    ASSERT_TRUE(std::equal(
+        my_data.begin(), my_data.end(), my_copied_data.begin(), compare_two_test_vectors));
     ASSERT_EQ(array_sample.getSize(), copied_array_sample.getSize());
-
-    // Test if sample is equal to its copy via IDataSample assignment
-    copied_array_sample = sample_raw_copy;
-    ASSERT_TRUE(std::equal(my_data.begin(), my_data.end(), my_copied_data.begin(), compare_two_test_vectors));
-    ASSERT_EQ(array_sample.getSize(), copied_array_sample.getSize());
-    ASSERT_EQ(array_sample.getCounter(), copied_array_sample.getCounter());
-    ASSERT_EQ(array_sample.getTime(), copied_array_sample.getTime());
 }

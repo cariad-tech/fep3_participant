@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(NATIVE_COMPONENTS_CLOCK_SYNC_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/clock_sync)
 set(NATIVE_COMPONENTS_CLOCK_SYNC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/clock_sync)
@@ -29,24 +21,26 @@ source_group(components\\clock_sync FILES ${NATIVE_COMPONENTS_CLOCK_SYNC_SOURCES
 set(NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services/clock_sync)
 set(NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/clock_sync)
 
-# subtle difference: on unix the jsonrpc_generate_stub command silently fails if the output directory does not exist...
-file(MAKE_DIRECTORY ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR})
+add_custom_target(clock_sync_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET clock_sync_rpc_stub_generator
+    INPUT_FILE "${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_master.json"
+    OUTPUT_DIR "${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCClockSyncMasterClientStub
+    CLIENT_FILE_NAME clock_sync_master_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCClockSyncMasterServiceStub
+    SERVER_FILE_NAME clock_sync_master_service_stub.h
+)
 
-jsonrpc_generate_server_stub(${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_master.json
-                             fep3::rpc_stubs::RPCClockSyncMasterServiceStub
-                             ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}/clock_sync_master_service_stub.h)
-
-jsonrpc_generate_client_stub(${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_master.json
-                             fep3::rpc_stubs::RPCClockSyncMasterClientStub
-                             ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}/clock_sync_master_client_stub.h)
-
-jsonrpc_generate_server_stub(${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_slave.json
-                             fep3::rpc_stubs::RPCClockSyncSlaveServiceStub
-                             ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}/clock_sync_slave_service_stub.h)
-
-jsonrpc_generate_client_stub(${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_slave.json
-                             fep3::rpc_stubs::RPCClockSyncSlaveClientStub
-                             ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}/clock_sync_slave_client_stub.h)
+fep_generate_rpc_stubs_before_target(
+    TARGET clock_sync_rpc_stub_generator
+    INPUT_FILE "${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_INCLUDE_DIR}/clock_sync_slave.json"
+    OUTPUT_DIR "${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}"
+    CLIENT_CLASS_NAME fep3::rpc_stubs::RPCClockSyncSlaveClientStub
+    CLIENT_FILE_NAME clock_sync_slave_client_stub.h
+    SERVER_CLASS_NAME fep3::rpc_stubs::RPCClockSyncSlaveServiceStub
+    SERVER_FILE_NAME clock_sync_slave_service_stub.h
+)
 
 set(NATIVE_COMPONENTS_CLOCK_SYNC_RPC_SOURCES
     ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_BINARY_DIR}/clock_sync_master_service_stub.h
@@ -73,3 +67,4 @@ install(FILES
 ######################################
 set(FEP3_SOURCES ${FEP3_SOURCES} ${NATIVE_COMPONENTS_CLOCK_SYNC_SOURCES})
 set(FEP3_SOURCES ${FEP3_SOURCES} ${NATIVE_COMPONENTS_CLOCK_SYNC_RPC_SOURCES})
+list(APPEND FEP_NATIVE_COMPONENTS_STUB_GENERATORS clock_sync_rpc_stub_generator)

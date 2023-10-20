@@ -1,24 +1,16 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 ##################################################################
 # tester_job_registry
 ##################################################################
 
-find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
 
 add_executable(tester_job_registry_impl tester_job_registry_impl.cpp)
 
@@ -52,6 +44,7 @@ target_link_libraries(tester_job_configurations PRIVATE
     GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_components_test
 )
 
 target_compile_definitions(tester_job_configurations PRIVATE
@@ -77,6 +70,7 @@ target_link_libraries(tester_job_registry PRIVATE
     GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_components_test
 )
 
 target_compile_definitions(tester_job_registry PRIVATE
@@ -89,13 +83,16 @@ set_target_properties(tester_job_registry PROPERTIES FOLDER "test/private/native
 # Test of the native job registry rpc implementation
 ##################################################################
 
-jsonrpc_generate_client_stub(${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/job_registry/job_registry.json
-                             test::rpc_stubs::TestJobRegistryClientStub
-                             ${CMAKE_CURRENT_BINARY_DIR}/test_job_registry_client_stub.h)
-
-add_executable(tester_job_registry_rpc tester_job_registry_rpc.cpp
-               ${CMAKE_CURRENT_BINARY_DIR}/test_job_registry_client_stub.h
+add_custom_target(tester_job_registry_rpc_stub_generator)
+fep_generate_rpc_stubs_before_target(
+    TARGET tester_job_registry_rpc_stub_generator
+    INPUT_FILE "${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/job_registry/job_registry.json"
+    OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    CLIENT_CLASS_NAME test::rpc_stubs::TestJobRegistryClientStub
+    CLIENT_FILE_NAME test_job_registry_client_stub.h
 )
+add_executable(tester_job_registry_rpc tester_job_registry_rpc.cpp)
+add_dependencies(tester_job_registry_rpc tester_job_registry_rpc_stub_generator)
 
 add_test(NAME tester_job_registry_rpc
     COMMAND tester_job_registry_rpc
@@ -108,6 +105,7 @@ target_link_libraries(tester_job_registry_rpc PRIVATE
     GTest::gtest_main
     GTest::gmock
     fep3_participant_private_lib
+    fep3_components_test
 )
 
 target_include_directories(tester_job_registry_rpc PRIVATE

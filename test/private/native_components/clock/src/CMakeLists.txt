@@ -1,44 +1,65 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 ##################################################################
 # Test of the native clock implementations
 ##################################################################
 
-find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
 
-add_executable(tester_clock_system
-               tester_clock_system.cpp
-               tester_clock_system_discrete.cpp
+add_executable(tester_simulation_clock
+               tester_simulation_clock.cpp
 )
 
-add_test(NAME tester_clock_system
-    COMMAND tester_clock_system
+
+add_test(NAME tester_simulation_clock
+    COMMAND tester_simulation_clock
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
 
-target_link_libraries(tester_clock_system PRIVATE
+target_link_libraries(tester_simulation_clock PRIVATE
     GTest::gtest_main
     GTest::gmock
     participant_private_test_utils
+    participant_test_utils
     fep3_participant_private_lib
+    fep3_components_test
 )
 
-set_target_properties(tester_clock_system PROPERTIES FOLDER "test/private/native_components/clock/unit")
+set_target_properties(tester_simulation_clock PROPERTIES FOLDER "test/private/native_components/clock/unit")
+
+##################################################################
+# Test of the SystemClock implementation
+##################################################################
+
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
+add_executable(tester_system_clock
+               tester_system_clock.cpp
+)
+
+add_test(NAME tester_system_clock
+    COMMAND tester_system_clock
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
+)
+
+target_link_libraries(tester_system_clock PRIVATE
+    GTest::gtest_main
+    GTest::gmock
+    participant_private_test_utils
+    participant_test_utils
+    fep3_participant_private_lib
+    fep3_components_test
+)
+
+set_target_properties(tester_system_clock PROPERTIES FOLDER "test/private/native_components/clock/unit")
 
 ##################################################################
 # Test of the native clock registry implementation
@@ -57,6 +78,7 @@ target_link_libraries(tester_clock_registry PRIVATE
     GTest::gtest_main
     participant_private_test_utils
     fep3_participant_private_lib
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_registry PROPERTIES FOLDER "test/private/native_components/clock/unit")
@@ -79,6 +101,7 @@ target_link_libraries(tester_clock_service PRIVATE
     participant_private_test_utils
     fep3_participant_private_lib
     participant_test_utils
+    fep3_components_test
 )
 
 set_target_properties(tester_clock_service PROPERTIES FOLDER "test/private/native_components/clock")
@@ -87,31 +110,105 @@ set_target_properties(tester_clock_service PROPERTIES FOLDER "test/private/nativ
 # Test of the native clock service rpc implementation
 ##################################################################
 
-find_package(dev_essential REQUIRED COMPONENTS pkg_rpc)
-
-jsonrpc_generate_client_stub(${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/clock/clock.json
-                             test::rpc_stubs::TestClockServiceProxy
-                             ${CMAKE_CURRENT_BINARY_DIR}/test_clock_service_proxy_stub.h)
-
-add_executable(tester_clock_service_rpc tester_clock_service_rpc.cpp
-               ${CMAKE_CURRENT_BINARY_DIR}/test_clock_service_proxy_stub.h
+add_executable(tester_rpc_clock_service
+    tester_rpc_clock_service.cpp
 )
 
-add_test(NAME tester_clock_service_rpc
-    COMMAND tester_clock_service_rpc
+add_test(NAME tester_rpc_clock_service
+    COMMAND tester_rpc_clock_service
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )
 
-target_link_libraries(tester_clock_service_rpc PRIVATE
+target_link_libraries(tester_rpc_clock_service PRIVATE
     dev_essential::pkg_rpc
     GTest::gtest_main
     GTest::gmock
     fep3_participant_private_lib
+    fep3_components_test
 )
 
-target_include_directories(tester_clock_service_rpc PRIVATE
+target_include_directories(tester_rpc_clock_service PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-set_target_properties(tester_clock_service_rpc PROPERTIES FOLDER "test/private/native_components/clock")
+set_target_properties(tester_rpc_clock_service PROPERTIES FOLDER "test/private/native_components/clock")
+
+##################################################################
+# Test of the clock sync service rpc implementation
+##################################################################
+
+add_executable(tester_rpc_clock_sync_service
+    tester_rpc_clock_sync_service.cpp
+)
+
+add_test(NAME tester_rpc_clock_sync_service
+    COMMAND tester_rpc_clock_sync_service
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
+)
+
+target_link_libraries(tester_rpc_clock_sync_service PRIVATE
+    dev_essential::pkg_rpc
+    GTest::gtest_main
+    GTest::gmock
+    fep3_participant_private_lib
+    fep3_components_test
+)
+
+target_include_directories(tester_rpc_clock_sync_service PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set_target_properties(tester_rpc_clock_sync_service PROPERTIES FOLDER "test/private/native_components/clock")
+
+##################################################################
+# Test of the clock sync client rpc implementation
+##################################################################
+
+add_executable(tester_rpc_clock_sync_client
+    tester_rpc_clock_sync_client.cpp
+)
+
+add_test(NAME tester_rpc_clock_sync_client
+    COMMAND tester_rpc_clock_sync_client
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
+)
+
+target_link_libraries(tester_rpc_clock_sync_client PRIVATE
+    dev_essential::pkg_rpc
+    GTest::gtest_main
+    GTest::gmock
+    fep3_participant_private_lib
+    fep3_components_test
+)
+
+target_include_directories(tester_rpc_clock_sync_client PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set_target_properties(tester_rpc_clock_sync_client PROPERTIES FOLDER "test/private/native_components/clock")
+
+##################################################################
+# Test of the clock event sink registry
+##################################################################
+
+add_executable(tester_clock_event_sink_registry
+    tester_clock_event_sink_registry.cpp
+)
+
+add_test(NAME tester_clock_event_sink_registry
+    COMMAND tester_clock_event_sink_registry
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
+)
+
+target_link_libraries(tester_clock_event_sink_registry PRIVATE
+    GTest::gtest_main
+    GTest::gmock
+    participant_private_test_utils
+    fep3_participant_private_lib
+    fep3_components_test
+)
+set_target_properties(tester_clock_event_sink_registry PROPERTIES FOLDER "test/private/native_components/clock")

@@ -4,39 +4,29 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #include "simbus_datareader.h"
 
-namespace fep3
-{
-namespace native
-{
+namespace fep3 {
+namespace native {
 
 size_t SimulationBus::DataReader::size() const
 {
     return _item_queue->size();
 }
 
-SimulationBus::DataReader::DataReader
-    (const std::shared_ptr< DataItemQueue<> >& item_queue
-    , const std::weak_ptr<base::SimulationDataAccessCollection<DataItemQueue<>>>& data_access_collection
-    )
-    : _item_queue{ item_queue }
-    , _data_access_collection{data_access_collection}
-{}
+SimulationBus::DataReader::DataReader(
+    const std::shared_ptr<DataItemQueue<>>& item_queue,
+    const std::weak_ptr<base::SimulationDataAccessCollection<DataItemQueue<>>>&
+        data_access_collection)
+    : _item_queue{item_queue}, _data_access_collection{data_access_collection}
+{
+}
 
 SimulationBus::DataReader::~DataReader()
 {
@@ -51,8 +41,7 @@ size_t SimulationBus::DataReader::capacity() const
 
 bool SimulationBus::DataReader::pop(ISimulationBus::IDataReceiver& onReceive)
 {
-    if (_item_queue->size() == 0)
-    {
+    if (_item_queue->size() == 0) {
         return false;
     }
 
@@ -63,22 +52,21 @@ bool SimulationBus::DataReader::pop(ISimulationBus::IDataReceiver& onReceive)
     return true;
 }
 
-void SimulationBus::DataReader::reset(const std::shared_ptr<arya::ISimulationBus::IDataReceiver>& receiver)
+void SimulationBus::DataReader::reset(
+    const std::shared_ptr<arya::ISimulationBus::IDataReceiver>& receiver)
 {
     const auto& data_access_collection = _data_access_collection.lock();
     // remove the previous receiver (if any)
-    if(_data_access_iterator)
-    {
-        if(data_access_collection)
-        {
+    if (_data_access_iterator) {
+        if (data_access_collection) {
             data_access_collection->remove(_data_access_iterator.value());
         }
         _data_access_iterator.reset();
     }
 
-    if(data_access_collection && receiver)
-    {
-        // add the new receiver to the data access collection and store the iterator to the new entry
+    if (data_access_collection && receiver) {
+        // add the new receiver to the data access collection and store the iterator to the new
+        // entry
         _data_access_iterator = data_access_collection->add(receiver, _item_queue);
     }
 }

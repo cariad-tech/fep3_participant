@@ -4,34 +4,22 @@
  * @verbatim
 Copyright @ 2021 VW Group. All rights reserved.
 
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-If it is not possible or desirable to put the notice in a particular file, then
-You may include the notice in a location (such as a LICENSE file in a
-relevant directory) where a recipient would be likely to look for such a notice.
-
-You may add additional accurate notices of copyright ownership.
-
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 @endverbatim
  */
 
-
 #pragma once
 
-#include "fep3/fep3_optional.h"
-#include "fep3/base/sample/data_sample_intf.h"
-#include "fep3/base/stream_type/stream_type_intf.h"
+#include <fep3/base/sample/data_sample_intf.h>
+#include <fep3/base/stream_type/stream_type_intf.h>
+#include <fep3/fep3_optional.h>
 
-namespace fep3
-{
-namespace base
-{
-namespace arya
-{
-namespace detail
-{
+namespace fep3 {
+namespace base {
+namespace arya {
+namespace detail {
 /**
  * @brief Data Item queue base
  * Base class for data item queue implementations
@@ -39,13 +27,12 @@ namespace detail
  * @tparam SAMPLE_TYPE IDataRegistry::IDataSample class for samples
  * @tparam STREAM_TYPE IStreamType class for types
  */
-template<class SAMPLE_TYPE = const fep3::arya::IDataSample, class STREAM_TYPE = const fep3::arya::IStreamType>
-class DataItemQueueBase
-{
+template <class SAMPLE_TYPE = const fep3::arya::IDataSample,
+          class STREAM_TYPE = const fep3::arya::IStreamType>
+class DataItemQueueBase {
 protected:
     /**
      * @brief internal queue type
-     *
      */
     enum QueueType
     {
@@ -57,19 +44,17 @@ protected:
 
     /**
      * @brief internal data item
-     *
      */
-    class DataItem
-    {
+    class DataItem {
     public:
         /**
          * content type of the data item
          */
         enum Type
         {
-            ///is a sample
+            /// is a sample
             sample,
-            ///is a stream type
+            /// is a stream type
             type
         };
 
@@ -77,9 +62,7 @@ protected:
         /**
          * CTOR
          */
-        DataItem()
-            : _item_type(),
-            _time()
+        DataItem() : _item_type(), _time()
         {
         }
 
@@ -90,33 +73,30 @@ protected:
          * @param[in] time the timestamp of the data item
          */
         DataItem(const data_read_ptr<SAMPLE_TYPE>& sample, fep3::arya::Timestamp time)
-            : _item_type(Type::sample),
-            _time(time),
-            _sample(sample)
+            : _item_type(Type::sample), _time(time), _sample(sample)
         {
         }
 
         /**
-        * CTOR for a stream type data item
-        *
-        * @param[in] stream_type the stream_type to be stored in the data item
-        * @param[in] time the timestamp of the data item
-        */
+         * CTOR for a stream type data item
+         *
+         * @param[in] stream_type the stream_type to be stored in the data item
+         * @param[in] time the timestamp of the data item
+         */
         DataItem(const data_read_ptr<STREAM_TYPE>& stream_type, fep3::arya::Timestamp time)
-            : _item_type(Type::type),
-            _time(time),
-            _stream_type(stream_type)
+            : _item_type(Type::type), _time(time), _stream_type(stream_type)
         {
         }
 
     public:
         /**
-        * @brief Setter for a new data sample
-        * Resets the stream type member of the data item and handles the remaining members accordingly
-        *
-        * @param[in] sample the sample to be stored in the data item
-        * @param[in] time the timestamp of the data item
-        */
+         * @brief Setter for a new data sample
+         * Resets the stream type member of the data item and handles the remaining members
+         * accordingly
+         *
+         * @param[in] sample the sample to be stored in the data item
+         * @param[in] time the timestamp of the data item
+         */
         void set(const data_read_ptr<SAMPLE_TYPE>& sample, fep3::arya::Timestamp time)
         {
             _sample = sample;
@@ -195,7 +175,7 @@ protected:
     private:
         ///@cond no_documentation
         Type _item_type;
-        fep3::arya::Timestamp  _time;
+        fep3::arya::Timestamp _time;
         data_read_ptr<SAMPLE_TYPE> _sample;
         data_read_ptr<STREAM_TYPE> _stream_type;
         ///@endcond no_documentation
@@ -204,10 +184,8 @@ protected:
 public:
     /**
      * @brief Item receiver for pop call.
-     *
      */
-    class IDataItemReceiver
-    {
+    class IDataItemReceiver {
     protected:
         /// DTOR
         ~IDataItemReceiver() = default;
@@ -229,36 +207,62 @@ public:
 
 public:
     /**
-    * @brief CTOR
-    */
+     * @brief CTOR
+     */
     DataItemQueueBase() = default;
 
     /**
-     * @brief DTOR
+     * @brief Deleted Copy CTOR
+     */
+    DataItemQueueBase(const DataItemQueueBase&) = delete;
+
+    /**
+     * @brief Deleted Move CTOR
+     */
+    DataItemQueueBase(DataItemQueueBase&&) = delete;
+
+    /**
+     * @brief Deleted Copy assignment operator
      *
+     * @return DataItemQueueBase&
+     */
+    DataItemQueueBase& operator=(const DataItemQueueBase&) = delete;
+
+    /**
+     * @brief Deleted Copy assignment operator
+     *
+     * @return DataItemQueueBase&
+     */
+    DataItemQueueBase& operator=(DataItemQueueBase&&) = delete;
+
+    /**
+     * @brief DTOR
      */
     virtual ~DataItemQueueBase() = default;
 
     /**
-    * @brief pushes a sample data read pointer to the queue
-    *
-    * @param sample the sample data read pointer to push
-    * @param time_of_receiving the timestamp at which the sample was received
-    * @remark this is thread safe against push, read and pop calls
-    */
-    virtual void pushSample(const data_read_ptr<SAMPLE_TYPE>& sample, fep3::arya::Timestamp time_of_receiving) = 0;
+     * @brief pushes a sample data read pointer to the queue
+     *
+     * @param sample the sample data read pointer to push
+     * @param time_of_receiving the timestamp at which the sample was received
+     * @remark this is thread safe against push, read and pop calls
+     */
+    virtual void pushSample(const data_read_ptr<SAMPLE_TYPE>& sample,
+                            fep3::arya::Timestamp time_of_receiving) = 0;
 
     /**
-    * @brief pushes a stream type data read pointer to the queue
-    *
-    * @param type the type data read pointer to push
-    * @param time_of_receiving the timestamp at which the stream type was received
-    * @remark this is thread safe against push, read and pop calls
-    */
-    virtual void pushType(const data_read_ptr<STREAM_TYPE>& type, fep3::arya::Timestamp time_of_receiving) = 0;
+     * @brief pushes a stream type data read pointer to the queue
+     *
+     * @param type the type data read pointer to push
+     * @param time_of_receiving the timestamp at which the stream type was received
+     * @remark this is thread safe against push, read and pop calls
+     */
+    virtual void pushType(const data_read_ptr<STREAM_TYPE>& type,
+                          fep3::arya::Timestamp time_of_receiving) = 0;
 
     /**
-     * @brief returns the timestamp of the next item available (the item at the front of the queue/the oldest item available)
+     * @brief returns the timestamp of the next item available (the item at the front of the
+     * queue/the oldest item available)
      *
      * @return Optional containing the Timestamp of the queue front item
      * @return Empty Optional if the queue is empty
@@ -267,83 +271,89 @@ public:
     virtual fep3::arya::Optional<fep3::arya::Timestamp> nextTime() = 0;
 
     /**
-    * @brief pops an item from the front of the queue (the oldest item available)
-    *
-    * @return true if item is popped
-    * @return false if the queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief pops an item from the front of the queue (the oldest item available)
+     *
+     * @return true if item is popped
+     * @return false if the queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual bool pop() = 0;
 
     /**
-    * @brief pops the item from the front of the queue (the oldest item available) after putting the item to the given \p receiver
-    *
-    * @param receiver receiver reference where to call back and put the item before the item is popped.
-    * @return true if item is popped
-    * @return false if the queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief pops the item from the front of the queue (the oldest item available) after putting
+     * the item to the given @p receiver
+     *
+     * @param receiver receiver reference where to call back and put the item before the item is
+     * popped.
+     * @return true if item is popped
+     * @return false if the queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual bool popFront(IDataItemReceiver& receiver) = 0;
 
     /**
-    * @brief pops the item at the front of the queue (the oldest item available)
-    *
-    * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
-    * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
-    * @return {nullptr, nullptr} if queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief pops the item at the front of the queue (the oldest item available)
+     *
+     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
+     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
+     * @return {nullptr, nullptr} if queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> popFront() = 0;
 
     /**
-    * @brief pops the item from the back of the queue (the latest item available) after putting the item to the given \p receiver
-    *
-    * @param receiver receiver reference where to call back and put the item before the item is popped.
-    * @return true if item is popped
-    * @return false if the queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief pops the item from the back of the queue (the latest item available) after putting the
+     * item to the given @p receiver
+     *
+     * @param receiver receiver reference where to call back and put the item before the item is
+     * popped.
+     * @return true if item is popped
+     * @return false if the queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual bool popBack(IDataItemReceiver& receiver) = 0;
 
     /**
-    * @brief pops the item at the back of the queue (the latest item available)
-    *
-    * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
-    * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
-    * @return {nullptr, nullptr} if queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief pops the item at the back of the queue (the latest item available)
+     *
+     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is popped
+     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is popped
+     * @return {nullptr, nullptr} if queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> popBack() = 0;
 
     /**
-    * @brief reads an item at a given index without popping it
-    *
-    * @param index index of the item to be read.
-    * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
-    * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
-    * @return {nullptr, nullptr} if queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
-    virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> read(size_t index) const = 0;
+     * @brief reads an item at a given index without popping it
+     *
+     * @param index index of the item to be read.
+     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
+     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
+     * @return {nullptr, nullptr} if queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
+    virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> read(
+        size_t index) const = 0;
 
     /**
-    * @brief reads the item at the front of the queue (the oldest item available) without popping it
-    *
-    * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
-    * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
-    * @return {nullptr, nullptr} if queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief reads the item at the front of the queue (the oldest item available) without popping
+     * it
+     *
+     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
+     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
+     * @return {nullptr, nullptr} if queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> readFront() = 0;
 
     /**
-    * @brief reads the item at the back of the queue (the latest item available) without popping it
-    *
-    * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
-    * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
-    * @return {nullptr, nullptr} if queue is empty
-    * @remark this is thread safe against push, read and pop calls
-    */
+     * @brief reads the item at the back of the queue (the latest item available) without popping it
+     *
+     * @return {data_read_ptr<SAMPLE_TYPE>, nullptr} if sample item is read
+     * @return {nullptr, data_read_ptr<STREAM_TYPE>} if type item is read
+     * @return {nullptr, nullptr} if queue is empty
+     * @remark this is thread safe against push, read and pop calls
+     */
     virtual std::tuple<data_read_ptr<SAMPLE_TYPE>, data_read_ptr<STREAM_TYPE>> readBack() const = 0;
 
     /**
@@ -373,7 +383,7 @@ public:
      */
     virtual QueueType getQueueType() const = 0;
 };
-}
-}
-}
-}
+} // namespace detail
+} // namespace arya
+} // namespace base
+} // namespace fep3

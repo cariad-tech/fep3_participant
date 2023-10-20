@@ -1,17 +1,9 @@
 #
 # Copyright @ 2021 VW Group. All rights reserved.
-# 
-#     This Source Code Form is subject to the terms of the Mozilla
-#     Public License, v. 2.0. If a copy of the MPL was not distributed
-#     with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# 
-# If it is not possible or desirable to put the notice in a particular file, then
-# You may include the notice in a location (such as a LICENSE file in a
-# relevant directory) where a recipient would be likely to look for such a notice.
-# 
-# You may add additional accurate notices of copyright ownership.
-# 
 #
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 if(fep3_participant_FOUND)
     return()
@@ -23,7 +15,7 @@ set(fep3_participant_pdb_version_str @FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR@.@F
 #includes and provides some helper macros like fep3_deploy
 include(${CMAKE_CURRENT_LIST_DIR}/fep3_participant-macros.cmake)
 
-find_package(dev_essential REQUIRED)
+find_package(dev_essential 1.3.0 REQUIRED)
 
 # Add imported library target for the participant
 include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_participant_targets.cmake)
@@ -40,6 +32,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep_components_plugin_targets.cmake)
 # include the target for rti to install it on client side
 if(fep3_participant_use_rtidds)
     include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_connext_dds_plugin_targets.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/lib/cmake/fep3_dds_service_bus_plugin_targets.cmake)
 endif()
 
 set(fep3_participant_FOUND true)
