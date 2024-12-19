@@ -1,28 +1,25 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../test/private/utils/common/gtest_asserts.h"
 #include "tester_logging_sink_file.h"
 
 #include <fep3/base/component_registry/component_registry.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
 #include <fep3/native_components/logging/logging_service.h>
 #include <fep3/native_components/service_bus/testing/service_bus_testing.hpp>
 #include <fep3/rpc_services/logging/logging_client_stub.h>
-
-#include <a_util/system/system.h>
+#include <fep3/rpc_services/logging/logging_rpc_sink_service_service_stub.h>
 
 #include <boost/regex.hpp>
 
 #include <future>
+#include <thread>
 
 typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingClientStub,
                                     fep3::rpc::IRPCLoggingServiceDef>
@@ -32,7 +29,7 @@ namespace {
 void writeLogEntry(std::shared_ptr<fep3::ILogger> iLogger, const std::string string_id)
 {
     for (int i = 0; i < 100; ++i) {
-        ASSERT_FEP3_NOERROR(iLogger->logWarning(string_id + a_util::strings::toString(i)));
+        ASSERT_FEP3_NOERROR(iLogger->logWarning(string_id + std::to_string(i)));
     }
 }
 } // namespace
@@ -115,7 +112,7 @@ TEST_F(TestLoggingServiceFile, TestFileLog)
     ASSERT_EQ(logger->logInfo("Test log: must not appear in file"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    a_util::system::sleepMilliseconds(300);
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
     // validate file content
     ASSERT_TRUE(readFileContent());
@@ -158,7 +155,7 @@ TEST_F(TestLoggingServiceFile, TestFileStress)
     thread1_future.get();
     thread2_future.get();
     // wait until the logs are executed from queue, has to be fixed in the future
-    a_util::system::sleepMilliseconds(2000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     // validate file content
     ASSERT_TRUE(readFileContent());
 
@@ -166,8 +163,8 @@ TEST_F(TestLoggingServiceFile, TestFileStress)
     ASSERT_NO_FATAL_FAILURE(findStringInFile("Warning"));
 
     for (int i = 0; i < 100; ++i) {
-        ASSERT_NO_FATAL_FAILURE(findStringInFile("First:  " + a_util::strings::toString(i)));
-        ASSERT_NO_FATAL_FAILURE(findStringInFile("Second:  " + a_util::strings::toString(i)));
+        ASSERT_NO_FATAL_FAILURE(findStringInFile("First:  " + std::to_string(i)));
+        ASSERT_NO_FATAL_FAILURE(findStringInFile("Second:  " + std::to_string(i)));
     }
 }
 
@@ -193,7 +190,7 @@ TEST_F(TestLoggingServiceFile, TestFileLogJson)
     ASSERT_FEP3_NOERROR(logger->logInfo("Test log: must not appear in file"));
 
     // wait until the logs are executed from queue
-    a_util::system::sleepMilliseconds(300);
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
     // clean everything so that the destructor of LoggingFormaterJson is called
     ASSERT_EQ(_component_registry->destroy(), fep3::ERR_NOERROR);

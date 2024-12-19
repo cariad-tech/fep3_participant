@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
     This Source Code Form is subject to the terms of the Mozilla
     Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -12,8 +12,6 @@ Copyright @ 2023 VW Group. All rights reserved.
  */
 
 #include "clock_variant_handling.h"
-
-#include "clock_event_sink_variant_handling.h"
 
 #include <fep3/components/logging/easy_logger.h>
 
@@ -108,7 +106,12 @@ void GenericClockAdapter::start(
             if constexpr (std::is_same_v<ClockTypeInVariant, fep3::experimental::IClock>)
                 arg->start(event_sink);
             else {
-                _adapter = std::make_shared<CatelynToAryaEventSinkAdapter>(event_sink);
+                // ClockService::getClockLocked returns a copy of GenericClockAdapter
+                // in case we called  _adapter =
+                // std::make_shared<CatelynToAryaEventSinkAdapter>(event_sink); the mem variable of
+                // the ClockService (ClockService:::_current_clock) will not have the sink saved and
+                // thus not participating in its lifetime
+                _adapter->setSink(event_sink);
                 arg->start(_adapter);
             }
         },

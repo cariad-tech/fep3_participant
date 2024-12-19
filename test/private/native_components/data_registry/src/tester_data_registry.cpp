@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "data_registry_test_fixture.h"
@@ -15,6 +11,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/base/sample/data_sample.h>
 #include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/base/stream_type/mock/mock_stream_type.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
 #include <fep3/native_components/simulation_bus/simulation_bus.h>
 #include <fep3/rpc_services/data_registry/data_registry_client_stub.h>
 
@@ -1010,7 +1007,7 @@ TEST_F(NativeDataRegistry, testCurrentStreamTypeViaRPC)
     const auto struct_name = "tTestStruct";
     const auto ddl_description = R"(<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!--
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed

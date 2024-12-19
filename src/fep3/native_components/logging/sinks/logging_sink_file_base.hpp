@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -17,8 +13,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/base/properties/properties.h>
 #include <fep3/components/logging/logging_service_intf.h>
 #include <fep3/fep3_errors.h>
-
-#include <a_util/filesystem.h>
+#include <fep3/fep3_filesystem.h>
 
 #include <fstream>
 #include <mutex>
@@ -58,8 +53,8 @@ public:
             {
                 std::unique_lock<std::mutex> guard(_file_mutex);
                 _log_file = std::make_unique<std::fstream>();
-                auto path = a_util::filesystem::Path(value); // Normalize path string
-                if (path.isEmpty()) {
+                auto path = fs::path(value); // Normalize path string
+                if (path.empty()) {
                     throw std::runtime_error("File path for file logger is empty.");
                 }
 
@@ -68,14 +63,14 @@ public:
                 }
 
                 std::fstream::openmode mode = std::fstream::in | std::fstream::out;
-                logExists = a_util::filesystem::exists(path);
+                logExists = fs::exists(path);
                 if (logExists) {
                     mode |= std::fstream::ate;
                 }
                 else {
                     mode |= std::fstream::trunc;
                 }
-                _log_file->open(path.toString().c_str(), mode);
+                _log_file->open(path.string().c_str(), mode);
 
                 if (_log_file->fail()) {
                     throw std::runtime_error(std::string("Unable to open log file ") + value);

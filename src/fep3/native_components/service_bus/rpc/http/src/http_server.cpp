@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "http_server.h"
@@ -101,8 +97,7 @@ HttpServer::HttpServer(const std::string& name,
     }
 
     for (int port = _port_begin; port <= _port_end; ++port) {
-        _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" +
-               a_util::strings::toString(port);
+        _url = url_to_parse.scheme() + "://" + url_to_parse.host() + ":" + std::to_string(port);
         res = _http_server.StartListening(_url.c_str(), 0);
         if (res) {
             _logger_proxy->logDebug(
@@ -269,11 +264,13 @@ HttpServer::~HttpServer()
 fep3::Result HttpServer::registerService(const std::string& service_name,
                                          const std::shared_ptr<IRPCService>& service)
 {
-    _logger_proxy->logDebug(a_util::strings::format(
-        "HttpServer registering service %s, with IID %s and interface definition %d",
-        service_name.c_str(),
-        service->getRPCServiceIIDs().c_str(),
-        service->getRPCInterfaceDefinition().c_str()));
+    if (_logger_proxy->isDebugEnabled()) {
+        _logger_proxy->logDebug(a_util::strings::format(
+            "HttpServer registering service %s, with IID %s and interface definition %s",
+            service_name.c_str(),
+            service->getRPCServiceIIDs().c_str(),
+            service->getRPCInterfaceDefinition().c_str()));
+    }
 
     std::lock_guard<std::recursive_mutex> _lock(_sync_wrappers);
 

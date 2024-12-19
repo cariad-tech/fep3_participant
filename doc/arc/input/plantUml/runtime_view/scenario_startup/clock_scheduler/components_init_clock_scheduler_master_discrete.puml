@@ -1,0 +1,43 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam hyperlinkUnderline false
+ 
+ title Initialize Clock/Scheduler - timing master (discrete)
+ 
+ [-> "Component\nRegistry": [[fep_element_initialize.svg{Tooltip for message} initialize()]] 
+  activate "Component\nRegistry"
+  "Component\nRegistry" -> "Clock\nService": initialize()
+   activate "Clock\nService"
+   return
+  "Component\nRegistry" -> "Clock Sync\nService": initialize()
+   activate "Clock Sync\nService"
+   note right: calls validateConfiguration()\nto validate Master/Slave clock sync config
+   return
+  "Component\nRegistry" -> "Job\nRegistry": initialize()
+   activate "Job\nRegistry"
+   return 
+  "Component\nRegistry" -> "Local Scheduler\nService": initialize()
+   activate "Local Scheduler\nService"
+   return
+  ...
+  return
+
+ [-> "RPC\nService/Client" : [[components_init_clock_scheduler_slave_discrete.svg{Tooltip for message} "RPC Slave -> Master: get Master type"]]
+  activate "RPC\nService/Client"
+  return
+ 
+ [-> "RPC\nService/Client" : [[components_init_clock_scheduler_slave_discrete.svg{Tooltip for message} "RPC Slave -> Master: register Sync Slave"]]
+  activate "RPC\nService/Client"
+  return
+
+@enduml

@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -13,6 +13,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <fep3/base/properties/propertynode.h>
+#include <fep3/components/data_registry/data_registry_intf.h>
 #include <fep3/components/job_registry/job_configuration.h>
 #include <fep3/components/job_registry/job_intf.h>
 #include <fep3/components/logging/easy_logger.h>
@@ -27,7 +28,7 @@ namespace fep3::core {
 /**
  * @brief Class for creating a default job
  *
- * Inherite from it to create a default job to run in a @ref fep3::core::DefaultJobElement
+ * Inherit from it to create a default job to run in a @ref fep3::core::DefaultJobElement
  */
 class DefaultJob : public fep3::arya::IJob,
                    public fep3::base::EasyLogging,
@@ -95,6 +96,65 @@ public:
     }
 
     /**
+     * @brief Create default property variables
+     *
+     * @return fep3::Result
+     * @remark Called in @ref fep3::base::IElement::loadElement.
+     */
+    fep3::Result createDefaultPropertyVariables()
+    {
+        FEP3_RETURN_IF_FAILED(registerPropertyVariable(_purged_samples_log_capacity,
+                                                       FEP3_PURGED_SAMPLES_LOG_CAPACITY_PROPERTY));
+
+        return registerPropertyVariable(_clear_input_signal_queues,
+                                        FEP3_CLEAR_INPUT_SIGNALS_QUEUES_PROPERTY);
+    }
+
+    /**
+     * @brief Evaluates and applies default property variables
+     *
+     * @return fep3::Result
+     * @remark Called in @ref fep3::base::IElement::initialize.
+     */
+    fep3::Result applyDefaultPropertyVariables()
+    {
+        if (_purged_samples_log_capacity < 0) {
+            RETURN_ERROR_DESCRIPTION(
+                fep3::ERR_INVALID_ARG,
+                "Invalid value of '%lld' for property '%s'. Value has to be >= '0'.",
+                static_cast<int64_t>(_purged_samples_log_capacity),
+                FEP3_PURGED_SAMPLES_LOG_CAPACITY_PROPERTY);
+        }
+        const DataIOContainerConfiguration configuration = {
+            static_cast<size_t>(_purged_samples_log_capacity), _clear_input_signal_queues};
+        _container->setConfiguration(configuration);
+
+        return {};
+    }
+
+    /**
+     * @brief Remove default property variables
+     *
+     * @return fep3::Result
+     * @remark Called in @ref fep3::base::IElement::unloadElement.
+     */
+    fep3::Result removeDefaultPropertyVariables()
+    {
+        return unregisterPropertyVariable(_purged_samples_log_capacity,
+                                          FEP3_PURGED_SAMPLES_LOG_CAPACITY_PROPERTY);
+    }
+
+    /**
+     * @brief Log information regarding data inputs and outputs
+     *
+     * @remark Called in @ref fep3::base::IElement::stop.
+     */
+    void logIOInfo() const
+    {
+        _container->logIOInfo(getLogger().get());
+    }
+
+    /**
      * @brief Do additional actions required in state transition initialize
      *
      * It does nothing in default implementation.
@@ -123,7 +183,7 @@ public:
     }
 
     /**
-     * @brief Do additional actions required in state transistion stop
+     * @brief Do additional actions required in state transition stop
      *
      * It does nothing in default implementation.
      *
@@ -135,6 +195,20 @@ public:
     {
         return {};
     }
+
+    /**
+     * @brief Do additional actions required in state transition deinitialize
+     *
+     * It does nothing in default implementation.
+     *
+     * @return fep3::Result
+     * @remark Called in @ref fep3::base::IElement::deinitialize.
+     *         Override this method in the child class.
+     */
+    virtual fep3::Result deinitialize()
+    {
+        return {};
+    };
 
     /**
      * @brief Register property variables during initialization
@@ -166,6 +240,9 @@ private:
     ///@cond nodoc
     std::string _job_name;
     fep3::core::IDataIOContainer* _container = nullptr;
+    base::PropertyVariable<int64_t> _purged_samples_log_capacity{
+        FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE};
+    base::PropertyVariable<bool> _clear_input_signal_queues{false};
     ///@endcond nodoc
 };
 } // namespace fep3::core

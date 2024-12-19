@@ -1,21 +1,20 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/base/component_registry/component_registry.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
+#include <fep3/fep3_errors.h>
 #include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/configuration/configuration_service.h>
 #include <fep3/native_components/logging/logging_service.h>
 #include <fep3/native_components/service_bus/testing/service_bus_testing.hpp>
 #include <fep3/rpc_services/logging/logging_client_stub.h>
+#include <fep3/rpc_services/logging/logging_rpc_sink_service_service_stub.h>
 
 #include <a_util/process/process.h>
 

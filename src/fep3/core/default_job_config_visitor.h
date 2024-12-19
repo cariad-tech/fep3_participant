@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -23,7 +19,8 @@ public:
     DefaultJobConfigVisitor(const std::string& name,
                             const IStreamType& stream_type,
                             std::list<core::DataReader>& readers,
-                            size_t queue_size);
+                            size_t queue_size,
+                            size_t purged_sample_log_capacity);
 
 public:
     fep3::Result visitClockTriggeredConfiguration(const ClockTriggeredJobConfiguration&) override;
@@ -33,7 +30,8 @@ private:
     const std::string _name;
     const IStreamType& _stream_type;
     std::list<core::DataReader>& _readers;
-    const Optional<size_t> _queue_size;
+    const size_t _queue_size;
+    size_t _purged_sample_log_capacity;
 };
 
 } // namespace core

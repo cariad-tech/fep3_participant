@@ -1,0 +1,275 @@
+# Copyright 2023 CARIAD SE.
+#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+fep_metamodel_specification_version: 3.4.0
+description: "FEP SDK Native Components"
+components:
+  - iid:
+      - logging_service.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - clock_service.arya.fep3.iid
+      - configuration_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+    environment_variables:
+      FEP3_DEFAULT_LOGGING_SEVERITY:
+        description: "The default severity of all loggers"
+        default_value: ""
+    configure:
+      /logging/default_sinks:
+        description: "The default sinks to be used by the logging service"
+        type: string
+        available_in_state: UNLOADED
+        default_value: console,rpc
+      /logging/default_severity:
+        description: "The default severity of all loggers"
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 4
+      /logging/default_sink_file:
+        description: "File that the sink 'file' will write by default. 
+                      Mind that sink 'file_json' does not take this into account."
+        type: string
+        available_in_state: UNLOADED
+        default_value: ""
+  - iid:
+      - configuration_service.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - service_bus.catelyn.fep3.iid
+    configure:
+  - iid:
+      - service_bus.catelyn.fep3.iid
+      - service_bus.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/rti/fep3_dds_service_bus_plugin
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+    environment_variables: 
+      FEP3_SERVICEBUS_SERVER_URL:
+        description: "Takes precedence over server_url in createServer if not empty. Sets the IP of the RPC server. Set this 
+                      if the RPC server should only listen on a specific network interface. Also in case this is set, then
+                      the discovery announcements of the participant will contain this IP and not the hostname of machine
+                      the participant is running. Use this if the hostname of the machine the participant is running 
+                      cannot be resolved by the receiver of the discovery announcements"
+      FEP3_SERVICE_BUS_DOMAIN_ID:
+        description: "DDS domain ID where the Service Bus will discover other FEP Participants and FEP Systems"
+        default_value: ""        
+    configure:
+      /service_bus/init_priority:
+        description: "The initialization priority of the participant in the system. Participants with lower priority will 
+                      be initialized after participants with higher priority have completed their transition to state initialized."
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 0
+      /service_bus/start_priority:
+        description: "The start priority of the participant in the system. Participants with lower priority will 
+                      be started after participants with higher priority have completed their transition to state running."
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 0
+  - iid:
+      - service_bus.catelyn.fep3.iid
+      - service_bus.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/http/fep3_http_service_bus
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+    environment_variables:
+      FEP3_SERVICEBUS_SYSTEM_URL:
+        description: "Takes precedence over system_discovery_url in createSystemAccess if not empty. If set to 'use_default_url', the default multicast
+                      address http://230.230.230.1:9900 will be used. Use it to set up a multicast address and a port, e.g. http:/230.230.230.1:9900"
+      FEP3_SERVICEBUS_SERVER_URL:
+        description: "Takes precedence over server_url in createServer if not empty. Sets the IP of the RPC server. Set this 
+                     if the RPC server should only listen on a specific network interface."
+      FEP3_NETWORK_INTERFACE:
+        description: "Multicast discovery announcements will be only received by specified network interface. 
+                      For example if set to 192.168.1.2 it will only receive announcements from 192.168.1.x subnet (depending on the network mask setting)."      
+    configure:
+      /service_bus/init_priority:
+        description: "The initialization priority of the participant in the system. Participants with lower priority will 
+                      be initialized after participants with higher priority have completed their transition to state initialized."
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 0
+      /service_bus/start_priority:
+        description: "The start priority of the participant in the system. Participants with lower priority will 
+                      be started after participants with higher priority have completed their transition to state running."
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 0
+  - iid:
+      - participant_info.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - service_bus.catelyn.fep3.iid
+    configure:
+  - iid:
+      - clock_service.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+    configure:
+      /clock/main_clock:
+        description: "The name of the clock to be used by the clock service"
+        type: string
+        available_in_state: UNLOADED
+        default_value: local_system_realtime
+      /clock/time_update_timeout:
+        description: "Timeout [in nanoseconds] for sending time update events like timeUpdating, timeReset, etc. to timing
+                      clients. The timeout is applied per client and update function."
+        type: int64
+        available_in_state: UNLOADED
+        default_value: 5000000000
+      /clock/time_factor:
+        description: "Time factor used by discrete simulation time clock 'local_system_simtime'.
+                      The higher the factor the faster the simulation runs in means of step_size compared to a wall clock."
+        type: double
+        available_in_state: UNLOADED
+        default_value: 1.000000
+      /clock/step_size:
+        description: "Step size of the built-in discrete simulation time clock 'local_system_simtime' in nanoseconds."
+        type: int64
+        available_in_state: UNLOADED
+        default_value: 100000000
+  - iid:
+      - clock_sync_service.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - clock_service.arya.fep3.iid
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+    configure:
+      /clock_synchronization/timing_master:
+        description: "The timing master to be used in the clock synchronization service"
+        type: string
+        available_in_state: UNLOADED
+        default_value: ""
+      /clock_synchronization/sync_cycle_time:
+        description: "Period at which the clock of the timing client system clock synchronizes with the
+                      timing server. Only relevant for timing client configuration if the timing clients's main clock is
+                      set to slave_master_on_demand. The timing client's clock cyclically requests the
+                      current simulation time from the timing server. The duration in ns which has to pass between
+                      those time requests is configured by this property."
+        type: int64
+        available_in_state: UNLOADED
+        default_value: 100000000
+  - iid:
+      - data_registry.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+      - simulation_bus.arya.fep3.iid
+    configure:
+      /data_registry/mapping_configuration_file_path:
+        description: "The mapping configuration file path"
+        type: string
+        available_in_state: UNLOADED
+        default_value: ""
+      /data_registry/mapping_ddl_file_paths:
+        description: "Use this to set the ddl mapping  files"
+        type: array-string
+        available_in_state: UNLOADED
+        default_value: []
+      /data_registry/renaming_input:
+        description: "If for example is set to 'old_in_1:new_in_1,old_in_2:new_in_2', 
+                      then input signal 'old_in_1' is renamed to 'new_in_1' and input signal 
+                      'old_in_2' is renamed to 'new_in_2'."
+        type: string
+        available_in_state: UNLOADED
+        default_value: ""
+      /data_registry/renaming_output:
+        description: "If for example is set to old_out_1:new_out_1,old_out_2:new_out_2, then output signal 
+                      'old_out_1' is renamed to 'new_out_1' and output signal 'old_out_2' is renamed to 'new_out_2'."
+        type: string
+        available_in_state: UNLOADED
+        default_value: ""
+  - iid:
+      - job_registry.arya.fep3.iid
+      - job_registry.catelyn.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+    configure:
+  - iid:
+      - scheduler_service.arya.fep3.iid
+      - scheduler_service.catelyn.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - clock_service.arya.fep3.iid
+      - configuration_service.arya.fep3.iid
+      - data_registry.arya.fep3.iid
+      - health_service.catelyn.fep3.iid
+      - job_registry.catelyn.fep3.iid
+      - logging_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+    configure:
+      /scheduling/scheduler:
+        description: "The scheduler to be used by the scheduler service"
+        type: string
+        available_in_state: UNLOADED
+        default_value: clock_based_scheduler
+  - iid:
+      - health_service.catelyn.fep3.iid
+    type: cpp-plugin
+    path: lib/fep_components_plugin
+    required_components:
+      - job_registry.catelyn.fep3.iid
+      - logging_service.arya.fep3.iid
+      - service_bus.catelyn.fep3.iid
+    configure:
+  - iid:
+      - simulation_bus.arya.fep3.iid
+    type: cpp-plugin
+    path: lib/rti/fep3_connext_dds_plugin
+    required_components:
+      - configuration_service.arya.fep3.iid
+      - logging_service.arya.fep3.iid
+      - participant_info.arya.fep3.iid
+    configure:
+      /rti_dds_simulation_bus/participant_domain:
+        description: "The DDS Domain ID of the Simulation bus Buss DDS participant"
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 5
+      /rti_dds_simulation_bus/datawriter_ready_timeout:
+        description: "Sets the timeout value how long a reader should wait for a writer to connect in
+                      nanoseconds. Default value of 0 disables this feature."
+        type: int64
+        available_in_state: UNLOADED
+        default_value: 0
+      /rti_dds_simulation_bus/must_be_ready_signals:
+        description: "Array of signals for which the reader should wait for at least one writer to
+                      connect."
+        type: array-string
+        available_in_state: UNLOADED
+        default_value: []
+      /rti_dds_simulation_bus/use_async_waitset:
+        description: "Enables the AsyncWaitSet on RTI DDS simulation bus"
+        type: bool
+        available_in_state: UNLOADED
+        default_value: false
+      /rti_dds_simulation_bus/async_waitset_threads:
+        description: "Sets the size of this thread pool while using AsyncWaitSet"
+        type: int32
+        available_in_state: UNLOADED
+        default_value: 8

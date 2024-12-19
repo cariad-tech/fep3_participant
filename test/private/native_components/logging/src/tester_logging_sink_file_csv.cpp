@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -16,6 +16,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/native_components/logging/sinks/logging_sink_file.hpp>
 
 #include <common/gtest_asserts.h>
+#include <regex>
 
 namespace {
 const boost::filesystem::path test_json_logs_path =
@@ -51,7 +52,12 @@ protected:
         const auto local_time_string{line.substr(0, line.find("\t"))};
         checkIsoTime(local_time_string);
 
-        const auto log_without_local_time_string{line.substr(line.find("\t"), line.size())};
+        auto log_without_local_time_string{line.substr(line.find("\t"), line.size())};
+
+        // The line break will be escaped while exporting to CSV file using the formatter.
+        // We should adapt the final log message
+        _log_message_string = std::regex_replace(_log_message_string, std::regex("\n"), "\\n");
+
         ASSERT_EQ(log_without_local_time_string,
                   a_util::strings::format("\t%s\t%s\t%s\t%s\t%s",
                                           _timestamp.c_str(),
@@ -67,7 +73,8 @@ protected:
     const std::string _logger_name = "logger";
     const std::string _participant_name = "participant";
     const LoggerSeverity _logger_severity{LoggerSeverity::debug};
-    const std::string _log_message_string = "A log message";
+
+    std::string _log_message_string = "A log message";
     fep3::arya::LogMessage _log_message = {_timestamp,
                                            fep3::arya::LoggerSeverity::debug,
                                            _participant_name,
@@ -86,6 +93,30 @@ TEST_F(TestLoggingSinkFileCsv, TestCsvWriteNewFile)
 
     ASSERT_FEP3_NOERROR(_logging_sink_file_csv->log(_log_message));
     _logging_sink_file_csv.reset();
+
+    checkCsvContent();
+}
+
+/**
+ * Test logging a csv message in a new file
+ * @req_id ???
+ */
+TEST_F(TestLoggingSinkFileCsv, TestCsvMessageContainsLineBreak)
+{
+    std::string message_string = "A log message first line \n second line";
+    fep3::arya::LogMessage log_message = {_timestamp,
+                                          fep3::arya::LoggerSeverity::debug,
+                                          _participant_name,
+                                          _logger_name,
+                                          message_string};
+
+    ASSERT_NO_THROW(
+        _logging_sink_file_csv->setProperty("file_path", _test_log_file_string, "string"));
+
+    ASSERT_FEP3_NOERROR(_logging_sink_file_csv->log(log_message));
+    _logging_sink_file_csv.reset();
+
+    _log_message_string = "A log message first line \\n second line";
 
     checkCsvContent();
 }

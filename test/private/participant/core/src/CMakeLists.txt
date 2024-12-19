@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -13,8 +12,7 @@ set_target_properties(fep_participant_file_copy_private_participant_core PROPERT
 ##################################################################
 
 add_executable(tester_data_reader_backlog tester_data_reader_backlog.cpp)
-add_test(NAME tester_data_reader_backlog
-    COMMAND tester_data_reader_backlog
+gtest_discover_tests(tester_data_reader_backlog
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -22,6 +20,7 @@ target_link_libraries(tester_data_reader_backlog PRIVATE
     GTest::gtest_main
     GTest::gmock
     fep3_participant_core
+    participant_test_utils
 )
 add_dependencies(tester_data_reader_backlog fep_participant_file_copy_private_participant_core)
 set_target_properties(tester_data_reader_backlog PROPERTIES 
@@ -34,8 +33,7 @@ set_target_properties(tester_data_reader_backlog PROPERTIES
 ##################################################################
 
 add_executable(tester_data_reader tester_data_reader.cpp)
-add_test(NAME tester_data_reader
-    COMMAND tester_data_reader
+gtest_discover_tests(tester_data_reader
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -56,8 +54,7 @@ set_target_properties(tester_data_reader PROPERTIES
 ##################################################################
 
 add_executable(tester_data_writer tester_data_writer.cpp)
-add_test(NAME tester_data_writer
-    COMMAND tester_data_writer
+gtest_discover_tests(tester_data_writer
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -78,12 +75,18 @@ set_target_properties(tester_data_writer PROPERTIES
 # tester_default_job_element
 ##################################################################
 
-add_executable(tester_default_job_element tester_default_job_element.cpp)
-add_test(NAME tester_default_job_element
-    COMMAND tester_default_job_element
+add_executable(tester_default_job_element 
+    tester_default_job_element.cpp
+    tester_default_job_element_unwinding.cpp
+    test_step_unwinding.cpp)
+gtest_discover_tests(tester_default_job_element
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
+if(MSVC)
+    set_source_files_properties(tester_default_job_element.cpp PROPERTIES COMPILE_FLAGS "/bigobj")
+endif()
+
 target_link_libraries(tester_default_job_element PRIVATE
     GTest::gtest_main
     GTest::gmock
@@ -91,6 +94,7 @@ target_link_libraries(tester_default_job_element PRIVATE
     participant_test_utils
     participant_private_test_utils
     fep3_components_test
+    convenient_component_registry
 )
 add_dependencies(tester_default_job_element fep_participant_file_copy_private_participant_core)
 set_target_properties(tester_default_job_element 
@@ -104,8 +108,7 @@ set_target_properties(tester_default_job_element
 ##################################################################
 
 add_executable(tester_default_job tester_default_job.cpp)
-add_test(NAME tester_default_job
-    COMMAND tester_default_job
+gtest_discover_tests(tester_default_job
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -129,8 +132,7 @@ set_target_properties(tester_default_job
 ##################################################################
 
 add_executable(tester_custom_element_factory tester_custom_element_factory.cpp)
-add_test(NAME tester_custom_element_factory
-    COMMAND tester_custom_element_factory
+gtest_discover_tests(tester_custom_element_factory
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )

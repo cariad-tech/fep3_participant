@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -9,8 +8,7 @@
 project(test_component_factory_cpp_plugins)
 
 add_executable(${PROJECT_NAME} tester_component_factory_cpp_plugins.cpp)
-add_test(NAME ${PROJECT_NAME}
-    COMMAND ${PROJECT_NAME}
+gtest_discover_tests(${PROJECT_NAME}
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )

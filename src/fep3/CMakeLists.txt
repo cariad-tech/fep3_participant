@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -47,6 +46,7 @@ set (FEP3_COMMON_SOURCES ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_exp
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_participant_types.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_timestamp.h
                          ${PROJECT_SOURCE_DIR}/include/fep3/fep3_duration.h
+                         ${PROJECT_SOURCE_DIR}/include/fep3/fep3_filesystem.h
                          ${PROJECT_BINARY_DIR}/include/fep3/fep3_participant_version.h)
 
 set (FEP3_SOURCES ${FEP3_COMMON_SOURCES})
@@ -108,7 +108,7 @@ target_include_directories(fep3_participant_object_lib PUBLIC
 target_link_libraries(fep3_participant_object_lib
     PUBLIC dev_essential::ddl
            dev_essential::pkg_rpc
-    PRIVATE Boost::filesystem
+    PRIVATE Boost::headers
             fep3_environment_variable
             fep3_default_severity_from_env_variable
 )
@@ -137,11 +137,6 @@ target_compile_definitions(fep3_participant_object_lib PRIVATE _FEP3_PARTICIPANT
 target_link_libraries(fep3_participant PRIVATE fep3_participant_object_lib fep3_component_registry
                                        PUBLIC dev_essential::result
                                               dev_essential::memory)
-
-if(UNIX)
-    # we shall not export symbols from linked static libraries
-    target_link_options(fep3_participant PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:fep3_component_registry>")
-endif(UNIX)
 
 target_compile_features(fep3_participant PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 if(MSVC)
@@ -181,6 +176,14 @@ target_include_directories(fep3_participant_cpp_plugin PUBLIC
     "$<INSTALL_INTERFACE:${INSTALL_INTERFACE_INCLUDES}>"
 )
 target_link_libraries(fep3_participant_cpp_plugin PUBLIC dev_essential::result)
+
+# For GCC < 9 we have to link publically with -lstdc++fs
+# See: https://gcc.gnu.org/gcc-9/changes.html (chapter "Runtime Library (libstdc++)")
+if("GNU" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+    if("9" VERSION_GREATER "${CMAKE_CXX_COMPILER_VERSION}")
+        target_link_libraries(fep3_participant_cpp_plugin INTERFACE stdc++fs)
+    endif()
+endif()
 
 set_target_properties(fep3_participant_cpp_plugin PROPERTIES
     OUTPUT_NAME fep3_participant_cpp_plugin
@@ -335,3 +338,4 @@ add_subdirectory(base/environment_variable)
 add_subdirectory(base/component_registry)
 add_subdirectory(base/logging)
 add_subdirectory(base/thread_utilities)
+add_subdirectory(base/component_plugin_analyzer)

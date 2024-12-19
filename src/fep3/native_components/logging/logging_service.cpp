@@ -1,22 +1,23 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "logging_service.h"
 
 #include "../../logging/default_severity_from_env_variable.h"
+// clang-format off
+// unfortunately order of include matters
+// because asio (included in logging_sink_rpc)
+// complains if windows.h is included first (by logging_sink_file)
 #include "logging_queue.h"
+#include "sinks/logging_sink_rpc.hpp"
 #include "sinks/logging_sink_console.hpp"
 #include "sinks/logging_sink_file.hpp"
-
+// clang-format on
 #include <fep3/native_components/clock/variant_handling/clock_service_handling.h>
 
 using namespace fep3;
@@ -60,40 +61,35 @@ fep3::Result LoggingService::Logger::logDebug(const std::string& message) const
 
 bool LoggingService::Logger::isInfoEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
-    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    std::scoped_lock lock(_sync_service_access, _logging_service->_sync_config);
     return (_logging_service &&
             (LoggerSeverity::info <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isWarningEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
-    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    std::scoped_lock lock(_sync_service_access, _logging_service->_sync_config);
     return (_logging_service && (LoggerSeverity::warning <=
                                  _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isErrorEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
-    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    std::scoped_lock lock(_sync_service_access, _logging_service->_sync_config);
     return (_logging_service &&
             (LoggerSeverity::error <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isFatalEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
-    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    std::scoped_lock lock(_sync_service_access, _logging_service->_sync_config);
     return (_logging_service &&
             (LoggerSeverity::fatal <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
 
 bool LoggingService::Logger::isDebugEnabled() const
 {
-    std::lock_guard<std::recursive_mutex> service_lock(_sync_service_access);
-    std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+    std::scoped_lock lock(_sync_service_access, _logging_service->_sync_config);
     return (_logging_service &&
             (LoggerSeverity::debug <= _logging_service->getInternalFilter(_logger_name)._severity));
 }
@@ -108,14 +104,14 @@ fep3::Result LoggingService::Logger::log(const std::string& message, LoggerSever
     std::string part_name{};
     if (_logging_service) {
         if (_logging_service->_time_getter) {
-            timestamp = a_util::strings::toString(_logging_service->_time_getter().count());
+            timestamp = std::to_string(_logging_service->_time_getter().count());
         }
 
         LogMessage log_message = {
             timestamp, severity, _logging_service->_participant_name, _logger_name, message};
 
         // Get Filter and log to all enabled sinks
-        std::lock_guard<a_util::concurrency::mutex> config_lock(_logging_service->_sync_config);
+        std::scoped_lock config_lock(_logging_service->_sync_config);
         const LoggerFilterInternal& filter = _logging_service->getInternalFilter(_logger_name);
         if (severity <= filter._severity) {
             for (const auto& logging_sink: filter._logging_sinks) {
@@ -149,7 +145,7 @@ LoggingService::LoggingService()
     registerSink("file", std::make_shared<LoggingSinkFileCsv>());
     registerSink("file_json", std::make_shared<LoggingSinkFileJson>());
 
-    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    std::scoped_lock lock(_sync_config);
     setInternalFilter("",
                       {static_cast<LoggerSeverity>(static_cast<int32_t>(_default_severity)),
                        {{"console", getSink("console")}}});
@@ -194,7 +190,7 @@ fep3::Result LoggingService::create()
                 getNode()
                     ->getChild(FEP3_LOGGING_DEFAULT_SINKS_PROPERTY)
                     ->setValue("console,rpc", base::PropertyType<std::string>::getTypeName());
-                std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+                std::scoped_lock lock(_sync_config);
                 setInternalFilter(
                     "",
                     {static_cast<LoggerSeverity>(static_cast<int32_t>(_default_severity)),
@@ -314,14 +310,14 @@ fep3::Result LoggingService::setFilter(const std::string& logger_name,
         _default_sinks_changed = true;
     }
 
-    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    std::scoped_lock lock(_sync_config);
     setInternalFilter(logger_name, new_filter, overwrite);
     return {};
 }
 
 LoggerFilter LoggingService::getFilter(const std::string& logger_name) const
 {
-    std::lock_guard<a_util::concurrency::mutex> lock(_sync_config);
+    std::scoped_lock lock(_sync_config);
     auto internal_filter = getInternalFilter(logger_name);
     LoggerFilter filter = {internal_filter._severity, {}};
     for (const auto& current_sink: internal_filter._logging_sinks) {

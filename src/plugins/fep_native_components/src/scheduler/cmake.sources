@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -19,6 +18,7 @@ set(COMPONENTS_PLUGIN_SCHEDULER_CLOCK_BASED_SOURCES_PRIVATE
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/job_runner.cpp
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/job_runner.h
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/data_triggered_receiver.h
+    ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/data_triggered_executor.h
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/clock_based_scheduler.cpp
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/clock_based_scheduler.h
     ${COMPONENTS_PLUGIN_SCHEDULER_DIR}/clock_based/task_clock_event_sink.cpp

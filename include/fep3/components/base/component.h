@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -214,11 +214,40 @@ private:
         }
     };
 };
+
+/**
+ * @brief Get a component from @ref fep3::arya::IComponents interface.
+ * @tparam interface_type the component interface looking for
+ * @param[in] components the reference to the components
+ * @return Default constructed fep3::Result and interface_type* the valid interface pointer
+ *         or fep3::ERR_NO_INTERFACE and nullptr in case the interface was not found.
+ */
+template <typename interface_type>
+std::pair<fep3::Result, interface_type*> getComponentHelper(const fep3::IComponents& components)
+{
+    auto* comp_pointer = fep3::getComponent<interface_type>(components);
+    fep3::Result res{};
+    if (!comp_pointer) {
+        res = CREATE_ERROR_DESCRIPTION(fep3::ERR_NO_INTERFACE,
+                                       "Access to component '%s' was not possible "
+                                       " because it is not part of the given component registry,"
+                                       " make sure component is set in components file.",
+                                       fep3::getComponentIID<interface_type>().c_str());
+    }
+
+    return {res, comp_pointer};
+}
+
 } // namespace arya
 
 /**
  * @brief extracting @ref fep3::base::catelyn::Component from version namespace
  */
 using arya::Component;
+/**
+ * @brief extracting @ref fep3::base::arya::getComponentHelper from version namespace
+ */
+using arya::getComponentHelper;
+
 } // namespace base
 } // namespace fep3

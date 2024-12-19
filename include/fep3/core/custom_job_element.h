@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -21,7 +21,7 @@ namespace fep3::core {
 
 /**
  * The base job element for customizing.
- * Derived from it for custom behaviors and to pass it
+ * Derive from it for custom behaviors and to pass it
  * to the constructor of fep3::core::DefaultJobElement
  */
 class CustomJobElement : public fep3::base::arya::Configuration,
@@ -57,12 +57,15 @@ public:
     virtual std::string getVersion() const = 0;
 
     /**
-     * @brief Create a job and its job configuration
+     * @brief Create a job and its job configuration.
+     * This function shall not throw or forward exceptions but return an approriate fep3::Result
+     * instead.
      *
      * @return {fep3::Result, JobPtr, JobConfigPtr}
      * @remark Must be implemented by user
      */
-    virtual std::tuple<fep3::Result, JobPtr, JobConfigPtr> createJob() = 0;
+    virtual std::tuple<fep3::Result, JobPtr, JobConfigPtr> createJob(
+        const fep3::arya::IComponents&) = 0;
 
     /**
      * @brief Destroy a job

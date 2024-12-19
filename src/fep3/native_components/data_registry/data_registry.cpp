@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "data_signal.h"
@@ -20,6 +16,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #endif // WIN32
 
 #include <fep3/components/service_bus/service_bus_intf.h>
+#include <fep3/fep3_filesystem.h>
 
 #include <a_util/filesystem/filesystem.h>
 #include <a_util/system/address_info.h>
@@ -552,7 +549,7 @@ fep3::Result DataRegistry::registerDDLsFromFiles(const std::vector<std::string>&
     static const auto address_info_var = 0;
     const auto address_info = a_util::system::AddressInfo(address_info_var);
     for (const auto& ddl_file_path: ddl_files) {
-        if (a_util::filesystem::Path(ddl_file_path).isRelative()) {
+        if (fs::path(ddl_file_path).is_relative()) {
             auto absolute_ddl_file_path =
                 address_info.getFilePath().getParent().append(ddl_file_path);
             if (a_util::filesystem::readTextFile(absolute_ddl_file_path, ddl_description) !=

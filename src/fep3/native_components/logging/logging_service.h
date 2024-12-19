@@ -1,28 +1,22 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
 
 #include "logging_config.h"
 #include "logging_rpc_service.h"
-#include "sinks/logging_sink_rpc.hpp"
 
 #include <fep3/base/properties/propertynode.h>
 #include <fep3/components/base/component.h>
 #include <fep3/components/clock/clock_service_intf.h>
 
-#include <a_util/concurrency/mutex.h>
-
 #include <functional>
+#include <mutex>
 
 namespace fep3 {
 namespace native {
@@ -30,6 +24,7 @@ namespace native {
 class LoggingServer;
 class LoggingQueue;
 class ClockServiceAdapter;
+class LoggingSinkRPC;
 
 class LoggingService : public base::Component<ILoggingService>, base::Configuration {
 public:
@@ -101,10 +96,10 @@ private:
     std::shared_ptr<LoggingRPCService> _logging_rpc_service;
     /// Queue object so that loggers don't halt the main program
     std::unique_ptr<LoggingQueue> _queue;
-    mutable a_util::concurrency::mutex _lock_queue;
+    mutable std::mutex _lock_queue;
     /// Configuration which logs should be filtered
     LoggingFilterTree _configuration;
-    mutable a_util::concurrency::mutex _sync_config;
+    mutable std::mutex _sync_config;
     /// Pointer to function for getting the current timestamp for the log
     std::function<fep3::Timestamp()> _time_getter;
     std::string _participant_name;

@@ -1,0 +1,74 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+ 
+@startuml
+skinparam backgroundColor transparent
+!include <c4/C4_Container.puml>
+
+LAYOUT_WITH_LEGEND()
+
+title <Draft> FEP SDK Participant Library: Context
+
+Person(user, "FEP User")
+Person(user_mm3, "FEP Meta Model")
+Person_Ext(user_auto, "Test-Tool\n<size:8>E.g. Adtf, ControlDesk, EXAM, ...</size>")
+
+System_Boundary(sys_fep_element, "FEP Element"){
+  Container_Boundary(cont_app, "FEP Application") {
+    Container_Ext(cont_fep_app, "FEP Application", "C/C++, Python?", "E.g. FEP VEF, ...")
+    Container_Ext(cont_fep_participant_plugin, "FEP SDK Participant Plugin", "C++", "")
+  }
+  Container_Ext(cont_fep_interface, "FEP Interface", "C/C++/C#, Python?", "Interface for XIL, ADTF, Matlab, Silver, VEOS,...")
+  Container_Boundary(cont_fep_sdk, "FEP SDK") {
+    Container(cont_fep_participant, "FEP SDK Participant", "C/C++", "Main library to develop FEP Participant(s)")
+  }
+}
+
+Container_Boundary(cont_opendev, "OPENDEV") {
+  Container_Ext(cont_dev_essential, "Dev Essential", "C++", "Base Libraries for the development of products like ADTF and FEP")
+}
+
+Container_Boundary(cont_3rdParty, "3rd party"){
+  Container_Ext(cont_boost, "Boost", "C++", "Collection of C++ libraries")
+  Container_Ext(cont_clip, "Clipp", "C++", "Command line interface library")
+  Container_Ext(cont_http, "cpp-httplib", "C++","")
+  Container_Ext(cont_jsoncpp, "jsoncpp", "C++","")
+  Container_Ext(cont_jsonrpc, "libjson-rpc-cpp", "C++", "") 
+}
+  
+
+
+System_Boundary(sys_network, "FEP Network"){
+  System_Ext(sys_simulation_bus, "Simulation Bus\n<size:8>Transmission of signals (simulation data) between FEP Elements</size>")
+  System_Ext(sys_service_bus, "Service Bus\n<size:8>Exchange of simulation control data/instructions, logging and user defined data via RPC")
+}
+
+BiRel(user, cont_fep_app, "Uses", "")
+BiRel(user_mm3, cont_fep_app, "Uses", "")
+BiRel(user_auto, cont_fep_interface, "Uses", "")
+
+BiRel(cont_fep_app, cont_fep_participant, "Uses", "")
+cont_fep_app <-[dotted]-> cont_fep_participant_plugin : Uses
+cont_fep_participant -[dotted]-> cont_fep_participant_plugin : Uses
+BiRel(cont_fep_interface, cont_fep_participant, "Uses", "")
+
+Rel_R(cont_fep_participant, cont_dev_essential, "Uses", "pkg_rpc,ddl,a_util")
+Rel_L(cont_fep_participant, cont_boost, "Uses", "headers,date_time,thread,bind,filesystem,asio")
+Rel(cont_fep_participant, cont_clip, "Uses", "")
+
+BiRel(cont_fep_participant, sys_simulation_bus, "Uses", "Publish/Subscribe")
+BiRel(cont_fep_participant, sys_service_bus, "Uses", "Json RPC")
+
+Rel(cont_dev_essential, cont_http, "", "")
+Rel(cont_dev_essential, cont_jsoncpp, "", "")
+Rel(cont_dev_essential, cont_jsonrpc, "", "")
+
+Lay_R(cont_fep_app, cont_fep_participant_plugin)
+Lay_D(cont_boost, cont_clip)
+
+@enduml

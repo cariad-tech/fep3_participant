@@ -1,0 +1,47 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+skinparam backgroundColor transparent
+!include <c4/C4_Container.puml>  
+
+LAYOUT_WITH_LEGEND()
+
+title <Draft> Native Component: Clock Service: Clock Main Event Sink - C4 model: Level 3
+
+System_Boundary(sys_fep_participant, [[lvl1_participant_overview.svg FEP SDK Participant]]){
+  Container(cont_rpc_services, "RPC Services", "C++", "")
+  Container_Boundary(cont_components, "Components"){
+    Container_Boundary(cont_ncomp, "Native Components"){
+      Container_Boundary(cont_ncomp_clock_service, [[lvl2_ncomp_clock_service.svg Clock Service]]){
+        Container(cont_ncomp_clock_main_event_sink, "Clock Main Event Sink", "","")
+        Container(cont_ncomp_clock_rpc_sync_client, "RPC Clock Sync\nClient", "","")
+      }
+      Container(cont_ncomp_logging_service, "Logging Service", "","")
+    }
+  }
+}
+
+Container_Boundary(cont_opendev, "OPENDEV"){
+   Container_Boundary(cont_dev_essential, "Dev Essential"){
+    Container_Boundary(cont_dev_essential_autil, "a_util") {
+      'Container_Ext(cont_devess_sys, "a_util::system", "C++")
+      Container_Ext(cont_devess_res, "a_util::result", "C++")
+      Container_Ext(cont_devess_str, "a_util::strings", "C++")
+    }
+   }
+}
+
+'Clock Main Event Sink
+Rel(cont_ncomp_clock_main_event_sink, cont_devess_res, "Uses", "a_util::result")
+Rel(cont_ncomp_clock_main_event_sink, cont_rpc_services, "Uses", "IRPCClockSyncMasterDef")
+Rel(cont_ncomp_clock_main_event_sink, cont_ncomp_logging_service, "Uses", "ILogger")
+Rel(cont_ncomp_clock_main_event_sink, cont_ncomp_clock_rpc_sync_client, "Uses", "RPCClockSyncClient")
+Rel(cont_ncomp_clock_main_event_sink, cont_devess_str, "Uses", "a_util::strings")
+
+@enduml

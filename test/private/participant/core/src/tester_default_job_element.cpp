@@ -1,5 +1,5 @@
 /**
- * Copyright @ 2023 VW Group. All rights reserved.
+ * Copyright 2023 CARIAD SE.
  *
  * This Source Code Form is subject to the terms of the Mozilla
  * Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -9,6 +9,7 @@
 #include <fep3/components/base/mock_components.h>
 #include <fep3/components/clock/mock_clock_service.h>
 #include <fep3/components/configuration/mock_configuration_service.h>
+#include <fep3/components/configuration/mock_property_node.h>
 #include <fep3/components/data_registry/mock_data_registry.h>
 #include <fep3/components/job_registry/mock_job.h>
 #include <fep3/components/job_registry/mock_job_registry.h>
@@ -34,6 +35,7 @@ using MyElement = NiceMock<fep3::mock::CustomJobElement>;
 using MyDataIOContainer = NiceMock<fep3::mock::DataIOContainer>;
 using Components = NiceMock<fep3::mock::Components>;
 using ConfigurationService = StrictMock<fep3::mock::ConfigurationService>;
+using PropertyNode = StrictMock<fep3::mock::PropertyNode>;
 using DataRegistry = StrictMock<fep3::mock::DataRegistry>;
 using ClockService = StrictMock<fep3::mock::ClockService>;
 using LoggingService = NiceMock<fep3::mock::LoggingService>;
@@ -74,7 +76,7 @@ protected:
         EXPECT_CALL(*configuration_service, registerNode(_)).WillRepeatedly(Return(fep3::Result{}));
         EXPECT_CALL(*my_job, registerPropertyVariables()).WillOnce(Return(fep3::Result{}));
         EXPECT_CALL(*my_element, load(_)).WillOnce(Return(fep3::Result{}));
-        EXPECT_CALL(*my_element, createJob())
+        EXPECT_CALL(*my_element, createJob(_))
             .WillOnce(Return(ByMove(std::make_tuple(fep3::Result{}, my_job, job_config->clone()))));
 
         EXPECT_CALL(
@@ -84,6 +86,12 @@ protected:
                    Matcher<const fep3::JobConfiguration&>{fep3::mock::JobConfigurationMatcher(
                        fep3::ClockTriggeredJobConfiguration(100ms))}))
             .WillOnce(Return(fep3::Result{}));
+    }
+
+    void setUpInitializeElement()
+    {
+        EXPECT_CALL(*configuration_service, getNode(_)).WillRepeatedly(Return(property_node));
+        EXPECT_CALL(*property_node, getValue()).WillRepeatedly(Return(""));
     }
 
     std::string element_name = "my_element";
@@ -96,11 +104,12 @@ protected:
     std::shared_ptr<Components> components = std::make_shared<Components>();
     std::shared_ptr<ConfigurationService> configuration_service =
         std::make_shared<ConfigurationService>();
+    std::shared_ptr<PropertyNode> property_node = std::make_shared<PropertyNode>();
     std::shared_ptr<JobRegistry> job_registry = std::make_shared<JobRegistry>();
     std::shared_ptr<DataRegistry> data_registry = std::make_shared<DataRegistry>();
     std::shared_ptr<ClockService> clock_service = std::make_shared<ClockService>();
     std::shared_ptr<LoggingService> logging_service = std::make_shared<LoggingService>();
-    std::shared_ptr<fep3::ILogger> logger = std::make_shared<Logger>();
+    std::shared_ptr<Logger> logger = std::make_shared<Logger>();
 };
 
 TEST_F(DefaultJobElementTest, getTypename_successful)
@@ -127,19 +136,21 @@ TEST_F(DefaultJobElementTest, loadElement_successful)
 TEST_F(DefaultJobElementTest, initialize_successful)
 {
     setUpLoadElement();
+    setUpInitializeElement();
 
     EXPECT_CALL(*my_element, initialize(_)).WillOnce(Return(fep3::Result{}));
     EXPECT_CALL(*my_job, initialize(_)).WillOnce(Return(fep3::Result{}));
     EXPECT_CALL(*my_container, addToDataRegistry(_, _)).WillOnce(Return(fep3::Result{}));
 
     auto element = MyDefaultElement(std::move(my_element), std::move(my_container));
-    element.loadElement(*components);
+    ASSERT_FEP3_NOERROR(element.loadElement(*components));
     ASSERT_FEP3_NOERROR(element.initialize());
 }
 
-TEST_F(DefaultJobElementTest, initialize_reconfigureJonConfig_successful)
+TEST_F(DefaultJobElementTest, initialize_reconfigureJobConfig_successful)
 {
     setUpLoadElement();
+    setUpInitializeElement();
 
     EXPECT_CALL(*my_element, initialize(_)).WillOnce(Return(fep3::Result{}));
     EXPECT_CALL(*my_job, initialize(_)).WillOnce(Return(fep3::Result{}));
@@ -162,7 +173,7 @@ TEST_F(DefaultJobElementTest, initialize_reconfigureJonConfig_successful)
     EXPECT_CALL(*my_container, addToDataRegistry(_, _)).WillOnce(Return(fep3::Result{}));
 
     auto element = MyDefaultElement(std::move(my_element), std::move(my_container));
-    element.loadElement(*components);
+    ASSERT_FEP3_NOERROR(element.loadElement(*components));
     ASSERT_FEP3_NOERROR(element.initialize());
 }
 
@@ -188,6 +199,25 @@ TEST_F(DefaultJobElementTest, deinitialize_successful)
     EXPECT_CALL(*my_element, deinitialize(_)).WillOnce(Return());
     EXPECT_CALL(*configuration_service, unregisterNode(_)).WillRepeatedly(Return(fep3::Result{}));
 
+    EXPECT_CALL(*my_job, deinitialize());
+
+    EXPECT_CALL(*my_container, removeFromDataRegistry(_)).WillOnce(Return());
+
+    auto element = MyDefaultElement(std::move(my_element), std::move(my_container));
+    ASSERT_FEP3_NOERROR(element.loadElement(*components));
+    element.deinitialize();
+}
+
+TEST_F(DefaultJobElementTest, deinitialize_jobDeinitializeFails)
+{
+    setUpLoadElement();
+
+    EXPECT_CALL(*my_element, deinitialize(_)).WillOnce(Return());
+    EXPECT_CALL(*configuration_service, unregisterNode(_)).WillRepeatedly(Return(fep3::Result{}));
+
+    EXPECT_CALL(*my_job, deinitialize()).WillOnce(Return(fep3::Result(fep3::ERR_FAILED)));
+    EXPECT_CALL(*logger, logError(_)).WillOnce(Return(fep3::Result{}));
+
     EXPECT_CALL(*my_container, removeFromDataRegistry(_)).WillOnce(Return());
 
     auto element = MyDefaultElement(std::move(my_element), std::move(my_container));
@@ -210,6 +240,19 @@ TEST_F(DefaultJobElementTest, stop_successful)
 {
     setUpLoadElement();
     EXPECT_CALL(*my_job, stop());
+    EXPECT_CALL(*my_element, stop());
+
+    auto element = MyDefaultElement(std::move(my_element));
+    ASSERT_FEP3_NOERROR(element.loadElement(*components));
+    element.stop();
+}
+
+TEST_F(DefaultJobElementTest, stop_jobStopFails)
+{
+    setUpLoadElement();
+    EXPECT_CALL(*my_job, stop()).WillOnce(Return(fep3::Result(fep3::ERR_FAILED)));
+    EXPECT_CALL(*logger, logError(_)).WillOnce(Return(fep3::Result{}));
+
     EXPECT_CALL(*my_element, stop());
 
     auto element = MyDefaultElement(std::move(my_element));

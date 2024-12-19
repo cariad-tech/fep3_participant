@@ -1,12 +1,11 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
 # with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc process)
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS process)
 find_package(Boost 1.73.0 REQUIRED COMPONENTS thread)
 
 add_custom_target(test_service_bus_stub_generator)
@@ -27,7 +26,9 @@ add_executable(test_service_bus tester_service_bus.cpp
                                 tester_service_bus_create_access_server.cpp
                                 tester_service_bus_service_update_event.cpp
                                 tester_service_bus_native_and_base_mocks.h
-                                test_system_access.cpp)
+                                test_system_access.cpp
+                                tester_service_update_sink_registry.cpp
+                                tester_update_event_sink_proxy.cpp)
 add_dependencies(test_service_bus test_service_bus_stub_generator)
 
 set_target_properties(test_service_bus PROPERTIES FOLDER "test/private/native_components/service_bus")
@@ -46,9 +47,9 @@ target_link_libraries(test_service_bus PRIVATE GTest::gtest_main
 target_include_directories(test_service_bus PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
                            ${PROJECT_SOURCE_DIR}/src/fep3/components/logging/mock/)
-add_test(NAME test_service_bus COMMAND test_service_bus WORKING_DIRECTORY "..")
 set_target_properties(test_service_bus PROPERTIES TIMEOUT 10)
 target_compile_definitions(test_service_bus PUBLIC LSSDP_SERVICE_DISCOVERY)
+gtest_discover_tests(test_service_bus WORKING_DIRECTORY ".." TEST_PREFIX LSSDP_)
 
 # Service Bus RPC
 add_custom_target(test_http_server_rpc_stub_generator)
@@ -62,8 +63,7 @@ fep_generate_rpc_stubs_before_target(
 add_executable(test_http_server_rpc tester_http_server_rpc.cpp)
 add_dependencies(test_http_server_rpc test_http_server_rpc_stub_generator)
 
-add_test(NAME test_http_server_rpc
-    COMMAND test_http_server_rpc
+gtest_discover_tests(test_http_server_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )
@@ -120,15 +120,16 @@ if (FEP3_USE_RTIDDS)
         set(TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR "")
     endif()
 
-    add_test(NAME test_dds_service_bus
-            COMMAND test_dds_service_bus
-            TIMEOUT 10
-            WORKING_DIRECTORY $<TARGET_FILE_DIR:test_dds_service_bus>/${TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR})
-
     target_compile_definitions(test_dds_service_bus PUBLIC DDS_SERVICE_DISCOVERY)
     if(MSVC)
         # warning coming from dds headers
         target_compile_options(test_dds_service_bus PRIVATE /wd4245)
     endif()
     internal_fep3_participant_deploy_dds(test_dds_service_bus $<TARGET_FILE_DIR:test_dds_service_bus>)
+    gtest_discover_tests(test_dds_service_bus
+            DISCOVERY_TIMEOUT 10
+            TEST_PREFIX DDS_
+            PROPERTIES TIMEOUT 60
+            WORKING_DIRECTORY $<TARGET_FILE_DIR:test_dds_service_bus>/${TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR})
+
 endif()

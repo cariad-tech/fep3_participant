@@ -1,3 +1,11 @@
+#
+# Copyright 2023 CARIAD SE.
+# 
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+#
 set(COMPONENT_PLUGIN_RPC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/rpc_services/)
 set(COMPONENT_PLUGIN_RPC_BINARY_DIR ${PROJECT_BINARY_DIR}/include/fep3/rpc_services)
 set(COMPONENT_PLUGIN_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/fep3/components)
@@ -5,12 +13,10 @@ set(COMPONENT_PLUGIN_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/fep3/componen
 set(FEP_COMPONENT_PLUGIN_SOURCES)
 set(FEP_COMPONENT_PLUGIN_STUB_GENERATORS)
 
-add_compile_definitions(LSSDP_SERVICE_DISCOVERY)
-
 if(NOT TARGET dev_essential)
     find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
 endif()
-find_package(Boost 1.73.0 REQUIRED COMPONENTS date_time thread headers)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS date_time thread)
 
 include(src/data_registry/cmake.sources)
 include(src/scheduler/cmake.sources)
@@ -40,9 +46,6 @@ target_link_libraries(fep_components_plugin_object_lib
     fep3_lssdp_service_discovery_lib
     $<BUILD_INTERFACE:fep3_thread_utilities>
     PRIVATE
-    dev_essential::filesystem
-    dev_essential::datetime
-    dev_essential::system
     Boost::thread
     Boost::headers
     fep3_participant_cpp_plugin
@@ -50,8 +53,9 @@ target_link_libraries(fep_components_plugin_object_lib
     Boost::headers
     Boost::thread
     fep3_default_severity_from_env_variable
-    $<INSTALL_INTERFACE:fep3_thread_utilities>)
-
+    $<INSTALL_INTERFACE:fep3_thread_utilities>
+    #for the Url class
+    fep3_lssdp)
 
 target_include_directories(fep_components_plugin_object_lib
                            PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/src")

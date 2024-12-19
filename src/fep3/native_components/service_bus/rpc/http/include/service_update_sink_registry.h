@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2022 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -16,11 +12,16 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #include <mutex>
 #include <set>
+#include <threaded_executor.h>
 
 namespace fep3::native {
 
+struct UpdateEventSinkProxy;
+
 class ServiceUpdateSinkRegistry {
 public:
+    ServiceUpdateSinkRegistry();
+    ~ServiceUpdateSinkRegistry();
     fep3::Result registerUpdateEventSink(
         fep3::IServiceBus::IServiceUpdateEventSink* update_event_sink);
 
@@ -30,8 +31,9 @@ public:
     void updateEvent(const fep3::IServiceBus::ServiceUpdateEvent& service_update_event);
 
 private:
-    std::set<fep3::IServiceBus::IServiceUpdateEventSink*> _service_update_sinks;
+    std::vector<std::shared_ptr<UpdateEventSinkProxy>> _service_update_sinks;
     std::mutex _mtx;
+    ThreadPoolExecutor _thread_pool;
 };
 
 } // namespace fep3::native

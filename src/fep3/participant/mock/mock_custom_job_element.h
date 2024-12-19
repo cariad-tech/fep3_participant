@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/core/custom_job_element.h>
@@ -24,7 +20,10 @@ public:
 
     MOCK_METHOD(std::string, getTypename, (), (const));
     MOCK_METHOD(std::string, getVersion, (), (const));
-    MOCK_METHOD((std::tuple<fep3::Result, JobPtr, JobConfigPtr>), createJob, (), ());
+    MOCK_METHOD((std::tuple<fep3::Result, JobPtr, JobConfigPtr>),
+                createJob,
+                (const fep3::arya::IComponents&),
+                ());
     MOCK_METHOD(fep3::Result, destroyJob, (), ());
     MOCK_METHOD(fep3::Result, load, (const fep3::arya::IComponents&), ());
     MOCK_METHOD(void, unload, (const fep3::arya::IComponents&), ());

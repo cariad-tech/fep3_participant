@@ -1,0 +1,102 @@
+# Copyright 2023 CARIAD SE.
+#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Configuration file for the Sphinx documentation builder.
+#
+# This file only contains a selection of the most common options. For a full
+# list see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+# -- Path setup --------------------------------------------------------------
+import os
+import sys
+
+from datetime import date
+
+sys.path.append(os.path.abspath('./config'))
+sys.path.append(os.path.abspath("./_ext"))
+
+
+# -- Project information -----------------------------------------------------
+
+project = '${DOC_ARC_PROJECT_NAME}'
+author = 'CARIAD SE'
+current_date = date.today()
+copyright = current_date.strftime("%d.%m.%Y") + ", " + author
+
+release = '${FEP3_PARTICIPANT_LIBRARY_VERSION}'
+version = release
+
+language = 'en'
+
+
+# -- General configuration ---------------------------------------------------
+
+extensions = [
+    'breathe',
+    'sphinx_rtd_theme',
+    'sphinxmark',
+    'sphinx.ext.graphviz',
+    'sphinxcontrib.spelling',
+    'sphinx.ext.todo'
+]
+
+templates_path = ['_templates']
+exclude_patterns = []
+
+# -- Options for breathe output ----------------------------------------------
+
+breathe_projects = {
+    project: "${DOXYGEN_XML_OUTPUT_DIR}",
+}
+
+breathe_default_project = project
+breathe_show_define_initializer = True
+#breathe_debug_trace_directives = True
+
+# -- Options for graphviz output ---------------------------------------------
+
+graphviz_output_format = 'svg'
+
+# -- Options for spelling check ----------------------------------------------
+
+spelling_warning=True
+spelling_lang=language
+
+# -- Options for todo ---------------------------------------------------------
+
+todo_include_todos = True
+todo_emit_warnings = True
+
+# -- Options for HTML output: sphinxmark --------------------------------------
+
+sphinxmark_enable = ${DOC_ARC_DRAFT_VERSION}
+sphinxmark_div = 'document'
+sphinxmark_image = '${CMAKE_CURRENT_SOURCE_DIR}/input/images/watermark-draft.png'
+
+# -- Options for HTML output -------------------------------------------------
+
+html_theme = 'sphinx_rtd_theme' # Used theme. The sphinx rtd theme must be installed separately
+
+html_logo = '${CMAKE_CURRENT_SOURCE_DIR}/input/images/fep_logo_white.png' # An image used in the top left of the documentation
+
+html_favicon = '${CMAKE_CURRENT_SOURCE_DIR}/input/images/fep_logo_white.ico' # An image used as icon in the browser
+
+html_copy_source = True # DO copy the source .rst files to the output dir in order to make search work properly
+
+html_title = project # Title of the HTML in the browser
+
+html_static_path = ['${CMAKE_CURRENT_SOURCE_DIR}/input/_static'] # Additional css files
+
+html_css_files = [
+    'theme_overrides.css',
+] # Additional css files to override wide tables
+
+html_theme_options = {
+    'style_external_links': True,
+    'style_nav_header_background': '#004666',
+    'prev_next_buttons_location': 'both'
+}

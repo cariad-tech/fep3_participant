@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "asynchronous_task_executor.h"
@@ -86,6 +82,9 @@ fep3::Duration AsyncTaskExecutor::run(Timestamp current_time)
 
         if (bool_complete) {
             bool_complete = false;
+            FEP3_ARYA_LOGGER_LOG_DEBUG(_logger,
+                                       a_util::strings::format("Scheduling job %s for execution",
+                                                               scheduler_task.getName().c_str()));
             _threaded_executor.post([&, timer_info = scheduler_task, current_time]() mutable {
                 timer_info.run(current_time);
                 bool_complete = true;

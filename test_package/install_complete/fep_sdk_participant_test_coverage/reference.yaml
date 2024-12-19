@@ -1,0 +1,16 @@
+# Copyright 2024 CARIAD SE.
+#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+exclude:
+    files:
+        - test/result
+        - test_coverage_report/Modules
+        - test_coverage_report/third-party
+
+common:
+    files:
+        - test_coverage_report/index.html
+        - test_coverage_report/opencppcoverage_result.xml

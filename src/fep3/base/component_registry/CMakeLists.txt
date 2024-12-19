@@ -1,14 +1,12 @@
-#
-# Copyright @ 2022 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
 # with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 if(NOT TARGET dev_essential)
     find_package(dev_essential 1.3.0 REQUIRED COMPONENTS result process xml)
 endif()
-
-find_package(Boost 1.73.0 REQUIRED COMPONENTS filesystem)
 
 add_library(fep3_component_registry STATIC
 
@@ -43,7 +41,8 @@ add_library(fep3_component_registry STATIC
 
 target_include_directories(fep3_component_registry
                            PUBLIC
-                              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/component_registry>
+                              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/fep3/base/component_registry>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                               $<INSTALL_INTERFACE:include/fep3/base/component_registry>
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
                                    ${PROJECT_SOURCE_DIR}/include/
@@ -52,16 +51,18 @@ target_include_directories(fep3_component_registry
                            )
 
 set_target_properties(fep3_component_registry PROPERTIES FOLDER "libraries/base")
-target_link_libraries(fep3_component_registry PUBLIC
-                                              dev_essential::result
+target_link_libraries(fep3_component_registry PUBLIC dev_essential::result
                                               PRIVATE
-                                              Boost::filesystem
-                                              dev_essential::process
-                                              dev_essential::xml)
+                                                      dev_essential::process
+                                                      dev_essential::xml)
 
-#set_source_files_properties(
-#        ${CMAKE_CURRENT_SOURCE_DIR}/environment_variable.cpp
-#        PROPERTIES COMPILE_DEFINITIONS $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+# For GCC < 9 we have to link publically with -lstdc++fs
+# See: https://gcc.gnu.org/gcc-9/changes.html (chapter "Runtime Library (libstdc++)")
+if("GNU" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+    if("9" VERSION_GREATER "${CMAKE_CXX_COMPILER_VERSION}")
+        target_link_libraries(fep3_component_registry INTERFACE stdc++fs)
+    endif()
+endif()
 
 set_target_properties(fep3_component_registry PROPERTIES
     OUTPUT_NAME fep3_component_registry

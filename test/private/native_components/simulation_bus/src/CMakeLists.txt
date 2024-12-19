@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -16,7 +15,7 @@ target_link_libraries(test_sim_bus PRIVATE
     fep3_components_test
 )
 target_include_directories(test_sim_bus PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-add_test(NAME test_sim_bus COMMAND test_sim_bus WORKING_DIRECTORY "..")
+gtest_discover_tests(test_sim_bus WORKING_DIRECTORY "..")
 set_target_properties(test_sim_bus PROPERTIES TIMEOUT 10)
 
 

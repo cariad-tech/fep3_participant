@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -12,6 +12,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #pragma once
 
+#include <fep3/base/properties/property_type.h>
 #include <fep3/base/properties/propertynode_helper.h>
 #include <fep3/components/configuration/propertynode_intf.h>
 #include <fep3/fep3_errors.h>
@@ -19,6 +20,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <a_util/preprocessor/deprecated.h> // DEV_ESSENTIAL_DEPRECATED()
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <mutex>
@@ -282,10 +284,35 @@ public:
      * @param[in] type Type of the property node
      *                  * See @ref fep3::base::arya::PropertyType<T>::getTypeName for default types.
      */
-    PropertyNode(const std::string& name, const std::string& value, const std::string& type)
+    [[deprecated("Since 3.3.0 deprecated. "
+                 "Please use the templated constructor in order to validate the value while "
+                 "setting")]] PropertyNode(const std::string& name,
+                                           const std::string& value,
+                                           const std::string& type)
         : _name(name), _value(value), _type(type)
     {
         validatePropertyName(_name);
+        _validator = [](const std::string&) { return true; };
+    }
+
+    /**
+     * @brief CTOR
+     *
+     * @tparam property_type Type of the property_variable
+     * @param[in] name Name of the property node
+     * @param[in] value Initial value of the property node
+     */
+    template <typename property_type>
+    PropertyNode(const std::string& name, const property_type& value)
+        : _name(name), _value(DefaultPropertyTypeConversion<property_type>::toString(value))
+    {
+        validatePropertyName(_name);
+        _type = base::arya::PropertyType<property_type>::getTypeName();
+
+        _validator = [](const std::string& from) {
+            property_type to;
+            return DefaultPropertyTypeConversion<property_type>::fromString(from, to);
+        };
     }
 
     /**
@@ -301,6 +328,7 @@ public:
           _type(base::arya::PropertyType<base::arya::NodePropertyType>::getTypeName())
     {
         validatePropertyName(_name);
+        _validator = [](const std::string&) { return false; };
     }
 
     /**
@@ -463,15 +491,27 @@ public:
     fep3::Result setValue(const std::string& value, const std::string& type_name = "") override
     {
         std::unique_lock<std::shared_timed_mutex> lock(_mutex_strings);
+
         if (!type_name.empty() && type_name != _type) {
             RETURN_ERROR_DESCRIPTION(ERR_INVALID_TYPE,
-                                     "Type of node and provided type are not matching. Node type = "
-                                     "%s; Provided type = %s",
+                                     "Given type of node and provided type are not matching; "
+                                     "Node type = %s; "
+                                     "Provided type = %s",
                                      _type.c_str(),
                                      type_name.c_str());
         }
 
-        _value = value;
+        if (_validator(value)) {
+            _value = value;
+        }
+        else {
+            RETURN_ERROR_DESCRIPTION(ERR_FAILED,
+                                     "Given value can not be converted; "
+                                     "Node type = %s; "
+                                     "Given value = %s",
+                                     _type.c_str(),
+                                     value.c_str());
+        }
 
         return {};
     }
@@ -684,8 +724,8 @@ public:
         const auto register_to_this = name.empty();
 
         if (!register_to_this && !isChild(name)) {
-            setChild(std::make_shared<PropertyNode>(
-                name, property_variable.toString(), property_variable.getTypeName()));
+            setChild(std::make_shared<PropertyNode>(name,
+                                                    static_cast<variable_type>(property_variable)));
         }
 
         T* node_to_register = nullptr;
@@ -763,6 +803,8 @@ protected:
     std::string _value;
     /// type of this node
     std::string _type;
+    /// conversion validator of this node
+    std::function<bool(const std::string&)> _validator;
     /// mutex to guard name, value and type
     mutable std::shared_timed_mutex _mutex_strings;
 };
@@ -783,10 +825,7 @@ using NativePropertyNode = arya::PropertyNode<base::arya::IPropertyWithExtendedA
 template <typename T>
 std::shared_ptr<arya::NativePropertyNode> makeNativePropertyNode(const std::string& name, T value)
 {
-    return std::make_shared<arya::NativePropertyNode>(
-        name,
-        fep3::base::arya::DefaultPropertyTypeConversion<T>::toString(value),
-        fep3::base::arya::PropertyType<T>::getTypeName());
+    return std::make_shared<arya::NativePropertyNode>(name, value);
 }
 
 /**

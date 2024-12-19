@@ -1,20 +1,15 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #ifndef _FEP_LOCKED_QUEUE_
 #define _FEP_LOCKED_QUEUE_
 
-#include <a_util/concurrency/fast_mutex.h>
-
+#include <mutex>
 #include <queue>
 
 namespace fep3 {
@@ -126,9 +121,8 @@ public:
 
 /// Locked Queue Template
 template <typename T, class Alloc = std::allocator<T>>
-class LockedQueue : public detail::LockedQueueAdaptor<T,
-                                                      std::queue<T, std::deque<T, Alloc>>,
-                                                      a_util::concurrency::fast_mutex> {
+class LockedQueue
+    : public detail::LockedQueueAdaptor<T, std::queue<T, std::deque<T, Alloc>>, std::mutex> {
 };
 
 /// Unlocked Queue Template

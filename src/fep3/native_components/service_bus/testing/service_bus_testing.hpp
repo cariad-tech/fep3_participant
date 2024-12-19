@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -44,7 +40,7 @@ inline ::testing::AssertionResult prepareServiceBusForTestingDefault(
                << __FILE__ << ":" << __LINE__ << " getSystemAccess() failed";
     }
 
-    auto participant_url = participant_host + a_util::strings::toString(test_participant_port);
+    auto participant_url = participant_host + std::to_string(test_participant_port);
     res = sysaccess->createServer(test_participant_name, participant_url);
 
     if (!res) {

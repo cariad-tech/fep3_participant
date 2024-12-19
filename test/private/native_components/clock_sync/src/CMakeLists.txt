@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -33,8 +32,7 @@ add_executable(tester_clock_sync_service
                tester_clock_sync_service.cpp
 )
 
-add_test(NAME tester_clock_sync_service
-    COMMAND tester_clock_sync_service
+gtest_discover_tests(tester_clock_sync_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -56,8 +54,7 @@ add_executable(tester_clock_sync_client
                tester_system_clock_client_reset.cpp
 )
 
-add_test(NAME tester_clock_sync_client
-    COMMAND tester_clock_sync_client
+gtest_discover_tests(tester_clock_sync_client
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -79,8 +76,7 @@ add_executable(tester_clock_sync_master
                tester_clock_sync_master.cpp
 )
 
-add_test(NAME tester_clock_sync_master
-    COMMAND tester_clock_sync_master
+gtest_discover_tests(tester_clock_sync_master
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -102,11 +98,10 @@ add_executable(tester_clock_synchronization
                tester_clock_synchronization.cpp
 )
 
-add_test(NAME tester_clock_synchronization
-    COMMAND tester_clock_synchronization
+gtest_discover_tests(tester_clock_synchronization
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
-set_tests_properties(tester_clock_synchronization PROPERTIES TIMEOUT 30)
+set_target_properties(tester_clock_synchronization PROPERTIES TIMEOUT 30)
 target_link_libraries(tester_clock_synchronization PRIVATE
     GTest::gtest_main
     GTest::gmock

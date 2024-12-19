@@ -1,0 +1,51 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+skinparam backgroundColor transparent
+!include <c4/C4_Container.puml>  
+
+LAYOUT_WITH_LEGEND()
+
+title <Draft> Native Component: Clock Service: Clock Event Sink Registry - C4 model: Level 3
+
+System_Boundary(sys_fep_participant, [[lvl1_participant_overview.svg FEP SDK Participant]]){
+  Container(cont_base, "Base", "C++", "")
+
+  Container_Boundary(cont_components, "Components"){
+    Container_Boundary(cont_ncomp, "Native Components"){
+      Container_Boundary(cont_ncomp_clock_service, [[lvl2_ncomp_clock_service.svg Clock Service]]){
+        Container(cont_ncomp_clock_event_sink_registry, "Clock Event Sink Registry", "", "")
+
+        Container_Boundary(cont_ncomp_clock_variant, "Variant Handling"){
+          Container(cont_ncomp_clock_var_event_sink, "Clock Event Sink\nVariant Handling", "","")
+        }
+      }
+      
+      Container(cont_ncomp_logging_service, "Logging Service", "","")
+    }
+  }
+}
+
+Container_Boundary(cont_3rdParty, "3rd Party"){
+   Container_Boundary(cont_boost, "Boost"){
+    Container_Ext(cont_boost_thread, "thread", "C++", "")
+    Container_Ext(cont_boost_asio, "asio", "C++", "")
+    Container_Ext(cont_boost_bind, "bind", "C++", "")
+   }
+}
+
+'Clock Event Sink Registry
+Rel(cont_ncomp_clock_event_sink_registry, cont_ncomp_clock_var_event_sink, "Uses", "GenericEventSinkAdapter")
+Rel(cont_ncomp_clock_event_sink_registry, cont_base, "Uses", "SingleThreadWorker")
+Rel(cont_ncomp_clock_event_sink_registry, cont_ncomp_logging_service, "Uses", "EasyLogging")
+Rel(cont_ncomp_clock_event_sink_registry, cont_boost_thread, "Uses", "latch")
+Rel(cont_ncomp_clock_event_sink_registry, cont_boost_asio, "Uses", "post")
+Rel(cont_ncomp_clock_event_sink_registry, cont_boost_bind, "Uses", "bind")
+
+@enduml

@@ -1,22 +1,17 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../../include/component_registry_factory/components_configuration.h"
 
-#include <a_util/filesystem.h>
+#include <fep3/fep3_filesystem.h>
+
 #include <a_util/strings.h>
 #include <a_util/xml.h>
-
-#include <boost/filesystem.hpp>
 
 namespace fep3 {
 namespace arya {
@@ -41,9 +36,7 @@ std::vector<ComponentsConfiguration::ComponentConfiguration> ComponentsConfigura
     a_util::xml::DOMElement schema_version;
     if (loaded_file.getRoot().findNode("schema_version", schema_version)) {
         auto schema_version_string = schema_version.getData();
-        if (a_util::strings::trim(schema_version_string) == "1.0.0") {
-        }
-        else {
+        if (a_util::strings::trim(schema_version_string) != "1.0.0") {
             auto error_message = a_util::strings::format(
                 "can not loaded %s - Error : wrong schema version found : expect %s - found %s",
                 file_path.c_str(),
@@ -56,14 +49,6 @@ std::vector<ComponentsConfiguration::ComponentConfiguration> ComponentsConfigura
         auto error_message = a_util::strings::format(
             "can not loaded %s - Error : %s", file_path.c_str(), "no schema version tag found");
         throw std::runtime_error(error_message);
-    }
-
-    { // sets the path
-        a_util::filesystem::Path filepath = file_path;
-        if (filepath.isRelative()) {
-            filepath = a_util::filesystem::getWorkingDirectory().append(filepath);
-            filepath.makeCanonical();
-        }
     }
 
     a_util::xml::DOMElementList comps;
@@ -98,7 +83,7 @@ std::vector<ComponentsConfiguration::ComponentConfiguration> ComponentsConfigura
                     fep3::arya::getComponentSourceType(source_node.getAttribute("type"));
                 auto source_file_string = source_node.getData();
                 a_util::strings::trim(source_file_string);
-                boost::filesystem::path component_lib_path;
+                fs::path component_lib_path;
                 if (!source_file_string.empty()) {
                     component_lib_path = source_file_string;
                 }
@@ -121,23 +106,21 @@ std::vector<ComponentsConfiguration::ComponentConfiguration> ComponentsConfigura
     return _items;
 }
 
-boost::filesystem::path ComponentsConfiguration::getAbsoluteComponentLibPath(
-    const boost::filesystem::path& component_lib_rel_path,
-    const std::string& fep_component_file_path) const
+fs::path ComponentsConfiguration::getAbsoluteComponentLibPath(
+    const fs::path& component_lib_rel_path, const std::string& fep_component_file_path) const
 {
     // we make it relative to the File! (not the workingdirectory!!)
     // first get the directory of the components dll
-    boost::filesystem::path component_lib_directory = component_lib_rel_path.parent_path();
-    // calculate the absolute path to the fep components file, usually it has a dot in the path
-    boost::filesystem::path fep_components_file_path_absolute =
-        boost::filesystem::canonical(fep_component_file_path);
+    fs::path component_plugin_directory = component_lib_rel_path.parent_path();
+    // calculate the canonical path to the fep components file, usually it has a dot in the path
+    fs::path fep_components_file_path = fs::canonical(fep_component_file_path);
     // now get the directory of the fep components file
-    fep_components_file_path_absolute = fep_components_file_path_absolute.parent_path();
+    fep_components_file_path = fep_components_file_path.parent_path();
     // calculate the absolute directory of the components dll
-    component_lib_directory =
-        boost::filesystem::canonical(component_lib_directory, fep_components_file_path_absolute);
+    component_plugin_directory =
+        fs::canonical(fs::absolute(fep_components_file_path / component_plugin_directory));
 
-    return component_lib_directory / component_lib_rel_path.filename();
+    return component_plugin_directory / component_lib_rel_path.filename();
 }
 } // namespace arya
 } // namespace fep3

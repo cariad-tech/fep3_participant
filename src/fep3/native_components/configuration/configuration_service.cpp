@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "configuration_service.h"
@@ -344,10 +340,10 @@ std::shared_ptr<const IPropertyNode> getConstPropertyNodeByPath(
     return getConstPropertyNodeByPath(current_property, path_without_root);
 }
 
+template <typename T>
 std::shared_ptr<base::arya::IPropertyWithExtendedAccess> setPropertyNodeByPath(
     const std::shared_ptr<base::arya::IPropertyWithExtendedAccess>& node,
     const std::string& property_path,
-    const std::string& type,
     const std::string& value)
 {
     const PropertyPath path(property_path);
@@ -356,24 +352,24 @@ std::shared_ptr<base::arya::IPropertyWithExtendedAccess> setPropertyNodeByPath(
     if (1 == split_path.size()) {
         auto property = node->getChildImpl(split_path.front());
         if (property) {
-            property->setValue(value, type);
+            property->setValue(value);
             return property;
         }
 
+        T type;
         return node->setChild(
             std::make_shared<base::NativePropertyNode>(split_path.front(), value, type));
     }
 
     auto child_node = node->getChildImpl(split_path.front());
     if (!child_node) {
-        child_node = node->setChild(
-            std::make_shared<base::NativePropertyNode>(split_path.front(), "", "node"));
+        child_node = node->setChild(std::make_shared<base::NativePropertyNode>(split_path.front()));
     }
 
     auto path_without_root = path;
     path_without_root.removeFirstProperty();
 
-    return setPropertyNodeByPath(child_node, path_without_root, type, value);
+    return setPropertyNodeByPath<T>(child_node, path_without_root, value);
 }
 
 std::vector<std::string> collectAllChildPropertyNames(const IPropertyNode& property,

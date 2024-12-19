@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -70,7 +66,7 @@ private:
     fep3::IHealthService* _health_service = nullptr;
     const catelyn::JobEntry* _current_processed_job = nullptr;
     std::unique_ptr<fep3::native::DataTriggeredExecutor> _data_triggered_executor;
-    std::vector<std::shared_ptr<DataTriggeredReceiver>> _data_triggered_receivers;
+    std::vector<std::shared_ptr<DataTriggeredReceiver<>>> _data_triggered_receivers;
     std::shared_ptr<const fep3::native::ISchedulerFactory> _scheduler_factory;
     std::shared_ptr<CatelynToAryaEventSinkAdapter> _adapter;
 };

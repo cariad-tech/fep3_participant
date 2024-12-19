@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -32,7 +32,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #define FEP3_PARTICIPANT_LIBRARY_VERSION_LABEL "FEP3 Participant Library\n"                        \
                                                "Version " FEP3_PARTICIPANT_LIBRARY_VERSION_STR "\n"\
                                                "Build @FEP3_PARTICIPANT_LIBRARY_BUILD_NR@\n"       \
-                                               "Copyright (c) VW Group "                           \
+                                               "Copyright (c) CARIAD SE "                           \
                                                "All rights reserved."
 
 /// platform label for the fep3 participant library

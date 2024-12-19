@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -38,7 +34,9 @@ private:
 
 class CatelynToAryaEventSinkAdapter : public fep3::arya::IClock::IEventSink {
 public:
-    CatelynToAryaEventSinkAdapter(std::weak_ptr<fep3::experimental::IClock::IEventSink> event_sink);
+    CatelynToAryaEventSinkAdapter(std::weak_ptr<fep3::experimental::IClock::IEventSink> event_sink =
+                                      std::weak_ptr<fep3::experimental::IClock::IEventSink>{});
+    void setSink(std::weak_ptr<fep3::experimental::IClock::IEventSink> event_sink);
 
     void timeUpdateBegin(fep3::arya::Timestamp old_time, fep3::arya::Timestamp new_time) override;
 

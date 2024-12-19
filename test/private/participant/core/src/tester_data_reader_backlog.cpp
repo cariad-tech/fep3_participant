@@ -1,24 +1,23 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/base/sample/mock/mock_data_sample.h>
 #include <fep3/base/stream_type/mock/mock_stream_type.h>
+#include <fep3/components/logging/mock/mock_logger_addons.h>
 #include <fep3/core/data/data_reader_backlog.h>
 
 using namespace fep3;
 using namespace testing;
-
+using namespace std::chrono_literals;
+using fep3::mock::LogStringRegexMatcher;
 using StreamTypeMock = NiceMock<mock::StreamType>;
 using DataSampleMock = NiceMock<mock::DataSample>;
+using LoggerMock = NiceMock<mock::LoggerWithDefaultBehaviour>;
 
 void pushDataSampleToBacklog(core::DataReaderBacklog& data_reader_backlog,
                              Timestamp sample_timestamp)
@@ -38,23 +37,38 @@ void pushStreamTypeToBacklog(core::DataReaderBacklog& data_reader_backlog,
     data_reader_backlog(stream_type_mock);
 }
 
-struct TestDataReaderBacklogSetup : Test {
-    TestDataReaderBacklogSetup() : _data_reader_backlog(1, _stream_type_mock)
+struct TestDataReaderBacklogBase : Test {
+    TestDataReaderBacklogBase()
+    {
+    }
+
+    void SetUp(core::DataReaderBacklog& data_reader_backlog,
+               size_t data_reader_capacity,
+               const int sample_count)
+    {
+        data_reader_backlog.setCapacity(data_reader_capacity);
+
+        for (int i = 0, j = sample_count; i < j; i++) {
+            pushDataSampleToBacklog(data_reader_backlog, Timestamp{i});
+        }
+
+        pushStreamTypeToBacklog(data_reader_backlog, "stream_type_mock");
+    }
+
+    StreamTypeMock _stream_type_mock{};
+    const LoggerMock _logger_mock;
+};
+
+struct TestDataReaderBacklogSetup : TestDataReaderBacklogBase {
+    TestDataReaderBacklogSetup() : _data_reader_backlog(1, _stream_type_mock, {})
     {
     }
 
     void SetUp(size_t data_reader_capacity, const int sample_count)
     {
-        _data_reader_backlog.setCapacity(data_reader_capacity);
-
-        for (int i = 0, j = sample_count; i < j; i++) {
-            pushDataSampleToBacklog(_data_reader_backlog, Timestamp{i});
-        }
-
-        pushStreamTypeToBacklog(_data_reader_backlog, "stream_type_mock");
+        TestDataReaderBacklogBase::SetUp(_data_reader_backlog, data_reader_capacity, sample_count);
     }
 
-    StreamTypeMock _stream_type_mock{};
     core::DataReaderBacklog _data_reader_backlog;
 };
 
@@ -64,9 +78,22 @@ struct TestDataReaderBacklogSetup : Test {
  */
 TEST(TestDataReaderBacklog, CTOR)
 {
-    core::DataReaderBacklog data_reader_backlog{10, StreamTypeMock{}};
+    core::DataReaderBacklog data_reader_backlog{10, StreamTypeMock{}, {}};
 
     ASSERT_EQ(data_reader_backlog.getSampleQueueCapacity(), 10);
+    ASSERT_EQ(data_reader_backlog.getSampleQueueSize(), 0);
+}
+
+/**
+ * Test the data reader backlog ctor providing an invalid value for sample queue capacity.
+ * The sample queue capacity shall be set to 1 on creation.
+ * @req_id TODO
+ */
+TEST(TestDataReaderBacklog, CTOR__invalidCapacity)
+{
+    core::DataReaderBacklog data_reader_backlog{0, StreamTypeMock{}, {}};
+
+    ASSERT_EQ(data_reader_backlog.getSampleQueueCapacity(), 1);
     ASSERT_EQ(data_reader_backlog.getSampleQueueSize(), 0);
 }
 
@@ -76,7 +103,7 @@ TEST(TestDataReaderBacklog, CTOR)
  */
 TEST(TestDataReaderBacklog, pushStreamType)
 {
-    core::DataReaderBacklog data_reader_backlog{10, StreamTypeMock{}};
+    core::DataReaderBacklog data_reader_backlog{10, StreamTypeMock{}, {}};
 
     pushStreamTypeToBacklog(data_reader_backlog, "stream_type_mock_1");
 
@@ -345,8 +372,6 @@ TEST_F(TestDataReaderBacklogSetup, readStreamType)
  */
 TEST_F(TestDataReaderBacklogSetup, purgeAndPopSampleBefore)
 {
-    using namespace std::chrono_literals;
-
     // Scenario 1 (One tnow-tc sample)
     // Take tnow-tc sample, no purge
     SetUp(1, 1);
@@ -552,4 +577,240 @@ TEST_F(TestDataReaderBacklogSetup, resize)
     ASSERT_EQ(_data_reader_backlog.setCapacity(0), 1);
     ASSERT_EQ(_data_reader_backlog.getSampleQueueCapacity(), 1);
     ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 0);
+}
+
+/**
+ * Test whether the backlog can be cleared. The sample queue size shall be 0 after calling clear.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogSetup, clear)
+{
+    SetUp(5, 5);
+
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 5);
+
+    _data_reader_backlog.clear();
+
+    ASSERT_EQ(_data_reader_backlog.getSampleQueueSize(), 0);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged by ther user calling
+ * purgeAndPopSampleBefore.
+ * 1 sample is pushed to the backlog.
+ * 0 samples are purged by the user
+ * calling purgeAndPopSampleBefore.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByPop__noSamplesPurged)
+{
+    auto backlog_capacity = 1, purged_sample_info_capacity = 2;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, backlog_capacity);
+
+    auto sample =
+        data_reader_backlog.purgeAndPopSampleBefore(std::chrono::nanoseconds(backlog_capacity));
+    ASSERT_EQ(sample->getTime(), 0ns);
+
+    EXPECT_CALL(_logger_mock, logDebug(HasSubstr("No samples"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged by ther user calling
+ * purgeAndPopSampleBefore.
+ * 3 samples are pushed to the backlog.
+ * 2 samples are purged by the user
+ * calling purgeAndPopSampleBefore.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByPop__samplesPurged)
+{
+    auto backlog_capacity = 3, purged_sample_info_capacity = 3;
+    ;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, backlog_capacity);
+
+    auto sample =
+        data_reader_backlog.purgeAndPopSampleBefore(std::chrono::nanoseconds(backlog_capacity));
+    ASSERT_EQ(sample->getTime(), 2ns);
+
+    EXPECT_CALL(_logger_mock, logWarning(LogStringRegexMatcher("'2' samples .* '0, 1'"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding the purged sample buffer being reached
+ * if more samples are purged than the buffer can store.
+ * 3 samples are pushed to the backlog having a capacity of 3.
+ * 2 samples are purged by calling purgeAndPopSampleBefore but added only partly to the purge sample
+ * buffer which has a capacity of 1. A warning shall be logged regarding the buffer limit being
+ * reached.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByPop__bufferLimitReached)
+{
+    auto backlog_capacity = 3, purged_sample_info_capacity = 1;
+    ;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, backlog_capacity);
+
+    auto sample =
+        data_reader_backlog.purgeAndPopSampleBefore(std::chrono::nanoseconds(backlog_capacity));
+    ASSERT_EQ(sample->getTime(), 2ns);
+
+    EXPECT_CALL(_logger_mock, logWarning(_)).Times(AnyNumber());
+    EXPECT_CALL(_logger_mock, logWarning(HasSubstr("reached its limit"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged by ther user calling clear.
+ * 0 samples are pushed to the backlog.
+ * 0 samples are purged by the user calling clear.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByClear__noSamplesPurged)
+{
+    auto backlog_capacity = 1, purged_sample_info_capacity = 1;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    data_reader_backlog.clear();
+
+    EXPECT_CALL(_logger_mock, logDebug(HasSubstr("No samples"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged by ther user calling clear.
+ * 2 samples are pushed to the backlog.
+ * 2 samples are purged by the user calling clear.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByClear__samplesPurged)
+{
+    auto backlog_capacity = 2, purged_sample_info_capacity = 3;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, backlog_capacity);
+
+    data_reader_backlog.clear();
+
+    EXPECT_CALL(_logger_mock, logWarning(LogStringRegexMatcher("'2' samples .* '0, 1'"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding the purged sample buffer being reached
+ * if more samples are purged than the buffer can store.
+ * 2 samples are pushed to the backlog having a capacity of 2.
+ * 2 samples are purged by calling clear but added only partly to the purge sample buffer which has
+ * a capacity of 1. A warning shall be logged regarding the buffer limit being reached.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedByClear__bufferLimitReached)
+{
+    auto backlog_capacity = 2, purged_sample_info_capacity = 1,
+         sample_count = purged_sample_info_capacity + 1;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, sample_count);
+
+    data_reader_backlog.clear();
+
+    EXPECT_CALL(_logger_mock, logWarning(_)).Times(AnyNumber());
+    EXPECT_CALL(_logger_mock, logWarning(HasSubstr("reached its limit"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged automatically during
+ * reception.
+ * 1 sample is pushed to the backlog having a capacity of 1.
+ * 0 samples are purged automatically.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedAutomatically__noSamplesPurged)
+{
+    auto backlog_capacity = 1, purged_sample_info_capacity = 2;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, backlog_capacity);
+
+    EXPECT_CALL(_logger_mock, logDebug(HasSubstr("No samples"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding samples purged automatically during
+ * reception.
+ * 4 samples are pushed to the backlog having a capacity of 2.
+ * 2 samples are purged automatically because of the backlog capacity being too small.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedAutomatically__samplesPurged)
+{
+    auto backlog_capacity = 2, purged_sample_info_capacity = 3, sample_count = backlog_capacity + 2;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, sample_count);
+
+    EXPECT_CALL(_logger_mock, logWarning(LogStringRegexMatcher("'2' samples .* '0, 1'"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog logs information regarding the purged sample buffer being reached
+ * if more samples are purged than the buffer can store.
+ * 3 samples are pushed to the backlog having a capacity of 1.
+ * 2 samples are purged automatically but added only partly to the purge sample buffer which has a
+ * capacity of 1. A warning shall be logged regarding the buffer limit being reached.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__purgedAutomatically__bufferLimitReached)
+{
+    auto backlog_capacity = 1, purged_sample_info_capacity = 1,
+         sample_count = backlog_capacity + purged_sample_info_capacity + 1;
+    core::DataReaderBacklog data_reader_backlog(
+        backlog_capacity, _stream_type_mock, purged_sample_info_capacity);
+
+    SetUp(data_reader_backlog, backlog_capacity, sample_count);
+
+    EXPECT_CALL(_logger_mock, logWarning(_)).Times(AnyNumber());
+    EXPECT_CALL(_logger_mock, logWarning(HasSubstr("reached its limit"))).Times(1);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
+}
+
+/**
+ * Test whether the backlog skips logging information regarding purged samples
+ * if purged sample buffer capacity is not provided.
+ * 3 samples are pushed to the backlog having a capacity of 2.
+ * 1 sample is purged silently when popping a sample and 1 sample is purged silently
+ * when calling clear.
+ * @req_id TODO
+ */
+TEST_F(TestDataReaderBacklogBase, logPurgedSamples__loggingDisabled)
+{
+    auto backlog_capacity = 2, sample_count = backlog_capacity + 1;
+    core::DataReaderBacklog data_reader_backlog(backlog_capacity, _stream_type_mock, 0);
+
+    SetUp(data_reader_backlog, backlog_capacity, sample_count);
+
+    EXPECT_TRUE(
+        data_reader_backlog.purgeAndPopSampleBefore(std::chrono::nanoseconds(backlog_capacity)));
+    data_reader_backlog.clear();
+
+    EXPECT_CALL(_logger_mock, logWarning(_)).Times(0);
+    data_reader_backlog.logPurgedSamples("signal", &_logger_mock);
 }

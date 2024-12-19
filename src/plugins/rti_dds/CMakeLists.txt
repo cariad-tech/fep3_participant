@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -24,7 +23,7 @@ changeHostSystemIfArm()
 find_package(RTIConnextDDS 6.1.0 EXACT REQUIRED)
 
 if(NOT TARGET dev_essential)
-    find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc system filesystem process ddl)
+    find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc process ddl)
 endif()
 
 # Undo hack
@@ -75,8 +74,6 @@ target_include_directories(fep3_connext_dds_simulation_bus_object_lib PUBLIC
 target_link_libraries(fep3_connext_dds_simulation_bus_object_lib
     PUBLIC dev_essential::ddl
            dev_essential::pkg_rpc
-           dev_essential::filesystem
-           dev_essential::system
            RTIConnextDDS::cpp2_api
     PRIVATE fep3_participant_cpp_plugin
             fep3_environment_variable
@@ -197,7 +194,9 @@ target_include_directories(fep3_dds_service_discovery_lib
 PUBLIC
  ${CMAKE_CURRENT_SOURCE_DIR}/service_bus/dds_factory/include/
  ${CMAKE_CURRENT_SOURCE_DIR}/service_bus/dds_service_discovery/include/
- ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/include/)
+ ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/include/
+ ${PROJECT_SOURCE_DIR}/src/fep3/native_components/logging/sinks/
+ )
 
  target_link_libraries(fep3_dds_service_discovery_lib PUBLIC
             RTIConnextDDS::cpp2_api
@@ -206,7 +205,6 @@ PUBLIC
             fep3_service_bus_base_lib
             fep3_thread_utilities
             PRIVATE
-            dev_essential::system
             dev_essential::process
             fep3_lssdp)
 
@@ -244,7 +242,6 @@ target_link_libraries(fep3_dds_service_bus_plugin
             PUBLIC
             PRIVATE
             fep3_participant_cpp_plugin
-            fep3_dds_service_discovery_lib
-            dev_essential::system)
+            fep3_dds_service_discovery_lib)
 
 set_target_properties(fep3_dds_service_bus_plugin PROPERTIES FOLDER "plugins/cpp/connext_dds_plugin")

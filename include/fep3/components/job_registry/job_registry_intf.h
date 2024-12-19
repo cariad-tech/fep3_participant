@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -128,15 +128,19 @@ public:
     virtual fep3::Result removeJob(const std::string& name) = 0;
 
     /**
-     * @brief Return the job info of all registered jobs.
-     * @return List containing job info of all registered jobs
+     * @brief Return the job info of all registered clock triggered jobs.
+     * @return List containing job info of all registered clock triggered jobs
+     * @note Returns only job info of clock triggered jobs, to get both
+     * clock and data triggered job infos use @ref fep3::catelyn::IJobRegistry::getJobInfosCatelyn
      */
     virtual std::list<arya::JobInfo> getJobInfos() const = 0;
 
     /**
      * @brief Get all registered jobs.
      *
-     * @return All registered Jobs
+     * @return All registered clock triggered Jobs
+     * @note Returns only clock triggered jobs. To get both
+     * clock and data triggered jobs use @ref fep3::catelyn::IJobRegistry::getJobsCatelyn
      */
     virtual arya::Jobs getJobs() const = 0;
 };
@@ -181,6 +185,9 @@ public:
     /**
      * @brief Return the job info of all registered jobs.
      * @return List containing job info of all registered jobs
+     * @note Returns clock and data triggered jobs info
+     * whereas @ref fep3::arya::IJobRegistry::getJobInfos returns
+     * only clock triggered job infos.
      */
     virtual std::list<fep3::catelyn::JobInfo> getJobInfosCatelyn() const = 0;
 
@@ -188,6 +195,9 @@ public:
      * @brief Get all registered jobs.
      *
      * @return All registered Jobs
+     * @note Returns clock and data triggered jobs,
+     * whereas @ref fep3::arya::IJobRegistry::getJobs returns
+     * only clock triggered jobs.
      */
     virtual fep3::catelyn::Jobs getJobsCatelyn() const = 0;
 };

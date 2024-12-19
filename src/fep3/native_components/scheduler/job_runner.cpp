@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "job_runner.h"
@@ -70,6 +66,10 @@ fep3::Result JobRunner::runJob(const Timestamp trigger_time, fep3::IJob& job)
 
     IHealthService::JobExecuteResult execution_result;
     execution_result.simulation_time = trigger_time;
+    FEP3_ARYA_LOGGER_LOG_DEBUG(_logger,
+                               a_util::strings::format("Job %s: Calling executeDataIn with %lld ns",
+                                                       _name.c_str(),
+                                                       trigger_time.count()));
     execution_result.result_execute_data_in = job.executeDataIn(trigger_time);
     if (!execution_result.result_execute_data_in) {
         _logger->logWarning(a_util::strings::format(
@@ -77,6 +77,8 @@ fep3::Result JobRunner::runJob(const Timestamp trigger_time, fep3::IJob& job)
             _name.c_str()));
     }
 
+    FEP3_ARYA_LOGGER_LOG_DEBUG(_logger,
+                               a_util::strings::format("Job %s: Calling execute", _name.c_str()));
     auto begin = std::chrono::steady_clock::now();
     execution_result.result_execute = job.execute(trigger_time);
 
@@ -96,6 +98,8 @@ fep3::Result JobRunner::runJob(const Timestamp trigger_time, fep3::IJob& job)
     }
 
     if (!_skip_output) {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(
+            _logger, a_util::strings::format("Job %s: Calling executeDataOut", _name.c_str()));
         execution_result.result_execute_data_out = job.executeDataOut(trigger_time);
         if (!execution_result.result_execute_data_out) {
             _logger->logWarning(a_util::strings::format(
@@ -103,12 +107,19 @@ fep3::Result JobRunner::runJob(const Timestamp trigger_time, fep3::IJob& job)
                 _name.c_str()));
         }
     }
+    else {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(
+            _logger,
+            a_util::strings::format("Job %s: Skipped calling executeDataOut", _name.c_str()));
+    }
 
     if (_health_service) {
         auto update_job_result = _health_service->updateJobStatus(_name, execution_result);
         FEP3_ARYA_LOGGER_LOG_RESULT(_logger, update_job_result);
     }
 
+    FEP3_ARYA_LOGGER_LOG_DEBUG(_logger,
+                               a_util::strings::format("All calls to job %s done", _name.c_str()));
     return execution_result.result_execute;
 }
 
@@ -123,7 +134,7 @@ fep3::Result JobRunner::applyTimeViolationStrategy(const Timestamp process_durat
         _logger->logWarning(a_util::strings::format(
             "Job %s: Computation time (%d us) exceeded configured maximum runtime.",
             _name.c_str(),
-            process_duration));
+            process_duration.count()));
 
         result = fep3::ERR_NOERROR;
         break;
@@ -134,7 +145,7 @@ fep3::Result JobRunner::applyTimeViolationStrategy(const Timestamp process_durat
             "defined output in data writer queues will not be published during this processing "
             "cycle!",
             _name.c_str(),
-            process_duration));
+            process_duration.count()));
 
         _skip_output = true;
         result = fep3::ERR_NOERROR;

@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "clock_service.h"
@@ -150,19 +146,18 @@ fep3::Result ClockService::relax()
 
 fep3::Result ClockService::start()
 {
-    performLockedOp([&](GenericClockAdapter& clock) {
-        FEP3_LOG_DEBUG(a_util::strings::format("Clock '%s' is configured as main clock.",
-                                               clock.getName().c_str()));
-        clock.start(_clock_event_sink_registry);
-    });
+    auto clock = getClockLocked();
+    clock.start(_clock_event_sink_registry);
     _is_started = true;
-
+    FEP3_LOG_DEBUG(a_util::strings::format("Clock '%s' is configured as main clock.",
+                                           clock.getName().c_str()));
     return {};
 }
 
 fep3::Result ClockService::stop()
 {
-    performLockedOp([&](GenericClockAdapter& clock) { clock.stop(); });
+    auto clock = getClockLocked();
+    clock.stop();
     _is_started = false;
 
     return {};
@@ -176,8 +171,8 @@ std::string ClockService::getMainClockName() const
         return _configuration._main_clock_name.toString();
     }
 
-    return performLockedOp(
-        [&](const GenericClockAdapter& clock) -> std::string { return clock.getName(); });
+    auto clock = getClockLocked();
+    return clock.getName();
 }
 
 Timestamp ClockService::getTime() const
@@ -186,8 +181,8 @@ Timestamp ClockService::getTime() const
         return Timestamp{0};
     }
 
-    return performLockedOp(
-        [&](const GenericClockAdapter& clock) -> Timestamp { return clock.getTime(); });
+    auto clock = getClockLocked();
+    return clock.getTime();
 }
 
 Optional<Timestamp> ClockService::getTime(const std::string& clock_name) const
@@ -218,9 +213,8 @@ fep3::arya::IClock::ClockType ClockService::getType() const
         }
     }
 
-    return performLockedOp([&](const GenericClockAdapter& clock) -> fep3::arya::IClock::ClockType {
-        return clock.getType();
-    });
+    auto clock = getClockLocked();
+    return clock.getType();
 }
 
 Optional<fep3::arya::IClock::ClockType> ClockService::getType(const std::string& clock_name) const
@@ -283,9 +277,6 @@ fep3::Result ClockService::selectMainClock(const std::string& clock_name)
 
         return result;
     }
-
-    FEP3_RETURN_IF_FAILED(fep3::base::setPropertyValue(
-        *_configuration.getNode()->getChild(FEP3_MAIN_CLOCK_PROPERTY), clock_name));
 
     FEP3_LOG_DEBUG(a_util::strings::format("Clock '%s' set as main clock of the clock service.",
                                            clock_name.c_str()));
@@ -356,8 +347,6 @@ fep3::Result ClockService::unregisterClock(const std::string& clock_name)
     FEP3_RETURN_IF_FAILED(result.first);
 
     if (result.second) {
-        FEP3_RETURN_IF_FAILED(selectMainClock(FEP3_CLOCK_LOCAL_SYSTEM_REAL_TIME));
-
         FEP3_LOG_WARNING(a_util::strings::format(
             "Unregistered main clock %s. Reset main clock to default value %s.",
             clock_name.c_str(),
@@ -532,6 +521,13 @@ fep3::Result ClockService::setupRPCClockService(IServiceBus::IParticipantServer&
                                                      _rpc_clock_service));
 
     return {};
+}
+
+GenericClockAdapter ClockService::getClockLocked() const
+{
+    std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
+
+    return _current_clock;
 }
 
 } // namespace native

@@ -1,0 +1,112 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ 
+ title FEP SDK Participant: Create components: Clock/Scheduler
+ 
+ [-> "Component\nRegistry": [[fep_element_create_execute.svg{Tooltip for message} create()]]
+  activate "Component\nRegistry"
+  "Component\nRegistry" -> "Clock\nService": create()
+   activate "Clock\nService"
+   create "Clock\nRegistry"
+   "Clock\nService" -> "Clock\nRegistry": c'tor
+    activate "Clock\nRegistry"
+    return
+   "Clock\nService" -> "Clock\nService": setupClockMainEventSink()
+   create "Clock Main\nEvent Sink"
+   "Clock\nService" -> "Clock Main\nEvent Sink": c'tor
+    activate "Clock Main\nEvent Sink"
+    create "Async\nExecutor"
+    "Clock Main\nEvent Sink" -> "Async\nExecutor": c'tor
+     activate "Async\nExecutor"
+      create "thread:\nAsyncExecutor"
+      "Async\nExecutor" -> "thread:\nAsyncExecutor": c'tor
+       activate "thread:\nAsyncExecutor" #Ivory
+       "thread:\nAsyncExecutor" -> "thread:\nAsyncExecutor": executionloop()
+     'return
+     "Async\nExecutor" --> "Clock Main\nEvent Sink"
+     deactivate "Async\nExecutor"
+    "Clock Main\nEvent Sink" -> "Clock Main\nEvent Sink": createUpdateFunctions()
+    note left: create RPC time update functions:\nupdate_begin, update, update_end, reset
+    'return
+    "Clock Main\nEvent Sink" --> "Clock\nService"
+    deactivate "Clock Main\nEvent Sink"
+   "Clock\nService" -> "Clock Event\nSink Registry": registerSink(Clock Main Event Sink)
+    activate "Clock Event\nSink Registry"
+    create  "Single Thread\nWorker"
+    "Clock Event\nSink Registry" -> "Single Thread\nWorker": c'tor
+     activate  "Single Thread\nWorker"
+     create "thread"
+     "Single Thread\nWorker" -> "thread": c'tor
+      activate "thread" #HoneyDew
+      "thread" -> "thread": ClockEventSinkRegistry::_worker
+     'return
+     "Single Thread\nWorker" --> "Clock Event\nSink Registry"
+     deactivate "Single Thread\nWorker"
+    'return
+    "Clock Event\nSink Registry" --> "Clock\nService"
+    deactivate "Clock Event\nSink Registry"
+  "Clock\nService" -> "Clock\nService": setupRPCClockSyncService()
+  "Clock\nService" -> "RPC Clock\nSync Service": c'tor
+   activate "RPC Clock\nSync Service"
+   return
+   
+  ref over "Clock\nService"
+   Register RPC Clock Sync Service
+  end ref
+  "Clock\nService" -> "Clock\nService": setupRPCClockService()
+  "Clock\nService" -> "RPC Clock\nService": c'tor
+   activate "RPC Clock\nService"
+   return
+  
+  ref over "Clock\nService"
+   Register RPC Clock Service
+  end ref
+  ...
+  "Clock\nService" -> "Clock\nService": registerDefaultClocks()
+  "Clock\nService" -> "Clock\nRegistry": registerNativeClocks()
+   activate "Clock\nRegistry"
+   
+   ref over "Clock\nRegistry"
+   Register clock:
+    * local system realtime
+    * local system simtime
+   end ref
+   
+   return
+  ...
+  return
+ "Component\nRegistry" -> "Clock Sync\nService": create()
+  activate "Clock Sync\nService"
+  note right: Calls Configuration::initConfiguration()\nregisterPropertyVariables()\nregisterNode()
+  return
+ ...
+ "Component\nRegistry" -> "Job\nRegistry": create()
+  activate "Job\nRegistry"
+  create "RPC Job\nRegistry"
+  "Job\nRegistry" -> "RPC Job\nRegistry": c'tor
+   activate "RPC Job\nRegistry"
+   return
+  ref over "Job\nRegistry"
+   Register rpc server service job registry
+  end ref
+  return
+ 
+ "Component\nRegistry" -> "Local Scheduler\nService": create()
+  activate "Local Scheduler\nService"
+  note right: Calls Configuration::initConfiguration()\nCalls setupRPCSchedulerService() to\ncreate and register RPC Scheduler service
+  return
+  ...
+ [<-- "Component\nRegistry" 
+@enduml

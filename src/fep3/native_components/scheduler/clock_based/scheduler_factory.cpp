@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include "scheduler_factory.h"
 
@@ -32,7 +28,7 @@ std::unique_ptr<ITaskExecutorInvoker> SchedulerFactory::createSchedulerProcessor
     switch (clock_type) {
     case (fep3::arya::IClock::ClockType::discrete):
         return std::make_unique<SyncTaskExecutorInvokerType>(
-            [&]() { return SyncTaskExecutor(threaded_executor); });
+            [&]() { return SyncTaskExecutor(threaded_executor); }, logger);
 
     case (fep3::arya::IClock::ClockType::continuous):
         return std::make_unique<AsyncContinuousClockScheduler>(

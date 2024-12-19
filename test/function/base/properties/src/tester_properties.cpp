@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <gtest_asserts.h>
@@ -87,12 +83,12 @@ TEST(NativePropertyNode, isEqual)
     auto property_node = std::make_shared<base::NativePropertyNode>(main_node_name);
 
     {
-        EXPECT_TRUE(NativePropertyNode("my_node", "value", "my_type")
-                        .isEqual(NativePropertyNode("my_node", "value", "my_type")));
-        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type")
-                         .isEqual(NativePropertyNode("my_node", "value_not", "my_type")));
-        EXPECT_FALSE(NativePropertyNode("my_node", "value", "my_type")
-                         .isEqual(NativePropertyNode("my_node", "value", "my_type_not")));
+        EXPECT_TRUE(NativePropertyNode("my_node", int32_t{0})
+                        .isEqual(NativePropertyNode("my_node", int32_t{0})));
+        EXPECT_FALSE(NativePropertyNode("my_node", int32_t{0})
+                         .isEqual(NativePropertyNode("my_node", int32_t{1})));
+        EXPECT_FALSE(NativePropertyNode("my_node", int32_t{0})
+                         .isEqual(NativePropertyNode("my_node", int64_t{0})));
         EXPECT_TRUE(createTestProperties()->isEqual(*createTestProperties()));
 
         {
@@ -117,7 +113,7 @@ TEST(NativePropertyNode, setChildThatIsNew)
     auto property_node = std::make_shared<base::NativePropertyNode>(main_node_name);
     {
         property_node->setChild(
-            std::make_shared<base::NativePropertyNode>(node_name, "value", default_type));
+            std::make_shared<base::NativePropertyNode>(node_name, std::string{"value"}));
 
         EXPECT_EQ(property_node->getNumberOfChildren(), 1);
         EXPECT_EQ(property_node->getChild(node_name)->getName(), node_name);
@@ -139,12 +135,12 @@ TEST(NativePropertyNode, setChildThatIsExisting)
     {
         setChildImpl(
             property_node,
-            std::make_shared<base::NativePropertyNode>(node_name, "value_old", default_type))
-            ->setChild(std::make_shared<base::NativePropertyNode>(
-                "my_child_property", "value_child", default_type));
+            std::make_shared<base::NativePropertyNode>(node_name, std::string{"value_old"}))
+            ->setChild(std::make_shared<base::NativePropertyNode>("my_child_property",
+                                                                  std::string{"value_child"}));
 
         auto property_to_add =
-            std::make_shared<base::NativePropertyNode>(node_name, "value_new", default_type);
+            std::make_shared<base::NativePropertyNode>(node_name, std::string{"value_new"});
         property_node->setChild(property_to_add);
 
         EXPECT_TRUE(property_node->getChild(node_name)->isEqual(*property_to_add));
@@ -207,11 +203,139 @@ TEST(NativePropertyNode, setProperty)
 {
     const auto main_node_name = "main_node";
 
-    auto properties = NativePropertyNode(main_node_name, "value", "old_type");
-    ASSERT_FEP3_NOERROR(properties.setValue("new_value", "old_type"));
+    auto properties = NativePropertyNode(main_node_name, std::string{"value"});
+    ASSERT_FEP3_NOERROR(properties.setValue("new_value", "string"));
 
-    EXPECT_EQ(properties.getTypeName(), "old_type");
+    EXPECT_EQ(properties.getTypeName(), "string");
     EXPECT_EQ(properties.getValue(), "new_value");
+}
+
+/**
+ * @brief The method setValue conversion is tested
+ */
+TEST(NativePropertyNode, setValue__ConversionValidated)
+{
+    const auto node_name = "main_node";
+    {
+        auto property_node = NativePropertyNode(node_name, int32_t{0});
+        ASSERT_FEP3_NOERROR(property_node.setValue("2"));
+        EXPECT_EQ(property_node.getValue(), "2");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_int"), ERR_FAILED);
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, int64_t{0});
+        ASSERT_FEP3_NOERROR(property_node.setValue("2"));
+        EXPECT_EQ(property_node.getValue(), "2");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_int"), ERR_FAILED);
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, double{2.0});
+        ASSERT_FEP3_NOERROR(property_node.setValue("3.0"));
+        EXPECT_EQ(property_node.getValue(), "3.0");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_double"), ERR_FAILED);
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, true);
+        ASSERT_FEP3_NOERROR(property_node.setValue("false"));
+        EXPECT_EQ(property_node.getValue(), "false");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_bool"), ERR_FAILED);
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, std::string{});
+        ASSERT_FEP3_NOERROR(property_node.setValue("a string value"));
+        EXPECT_EQ(property_node.getValue(), "a string value");
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, uint32_t{0});
+        ASSERT_FEP3_NOERROR(property_node.setValue("2"));
+        EXPECT_EQ(property_node.getValue(), "2");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_uint"), ERR_FAILED);
+    }
+    {
+        auto property_node = NativePropertyNode(node_name, uint64_t{0});
+        ASSERT_FEP3_NOERROR(property_node.setValue("2"));
+        EXPECT_EQ(property_node.getValue(), "2");
+        EXPECT_FEP3_RESULT(property_node.setValue("not_a_uint"), ERR_FAILED);
+    }
+}
+
+/**
+ * @brief setValue is tested for array types
+ */
+TEST(NativePropertyNode, setValue__arrayTypesConversionValidated)
+{
+    {
+        const auto value = std::vector<int32_t>({1, 2, 3});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<int32_t>>::toString(value);
+        const auto invalid_value_str = std::string{"1,2,3"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<int32_t>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        EXPECT_FEP3_RESULT(property_node.setValue(invalid_value_str), ERR_FAILED);
+    }
+
+    {
+        const auto value = std::vector<double>({1.0, 2.1, 3.2});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<double>>::toString(value);
+        const auto invalid_value_str = std::string{"1.0,2.1,3.2"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<double>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        EXPECT_FEP3_RESULT(property_node.setValue(invalid_value_str), ERR_FAILED);
+    }
+
+    {
+        const auto value = std::vector<bool>({true, false, true});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<bool>>::toString(value);
+        const auto invalid_value_str = std::string{"true,false,true"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<bool>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        EXPECT_FEP3_RESULT(property_node.setValue(invalid_value_str), ERR_FAILED);
+    }
+
+    {
+        const auto value = std::vector<std::string>({"ab", "cd", "ef"});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<std::string>>::toString(value);
+        const auto another_value_str = std::string{"ab,cd,ef"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<std::string>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        ASSERT_FEP3_NOERROR(property_node.setValue(another_value_str));
+        EXPECT_EQ(property_node.getValue(), another_value_str);
+    }
+
+    {
+        const auto value = std::vector<uint32_t>({1, 2, 3});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<std::uint32_t>>::toString(value);
+        const auto invalid_value_str = std::string{"1,2,3"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<uint32_t>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        EXPECT_FEP3_RESULT(property_node.setValue(invalid_value_str), ERR_FAILED);
+    }
+
+    {
+        const auto value = std::vector<uint64_t>({1, 2, 3});
+        const auto value_str =
+            base::DefaultPropertyTypeConversion<std::vector<std::uint64_t>>::toString(value);
+        const auto invalid_value_str = std::string{"1,2,3"};
+
+        auto property_node = base::NativePropertyNode("my_node", std::vector<uint64_t>{});
+        ASSERT_FEP3_NOERROR(property_node.setValue(value_str));
+        EXPECT_EQ(property_node.getValue(), value_str);
+        EXPECT_FEP3_RESULT(property_node.setValue(invalid_value_str), ERR_FAILED);
+    }
 }
 
 struct Observer : public fep3::base::IPropertyObserver {
@@ -232,7 +356,7 @@ TEST(NativePropertyNode, observerRegisterAndUpdate)
     }));
 
     {
-        auto property_node = NativePropertyNode(property_node_name, "old_value", default_type);
+        auto property_node = NativePropertyNode(property_node_name, std::string{"old_value"});
         property_node.registerObserver(observer);
 
         ASSERT_FEP3_NOERROR(property_node.setValue("new_value"));
@@ -253,7 +377,7 @@ TEST(NativePropertyNode, observerUnregister)
     /// we expect only one call because of the unregistration
     EXPECT_CALL(*observer, onUpdate(_)).WillOnce(Return());
     {
-        auto property_node = NativePropertyNode(property_node_name, "old_value", default_type);
+        auto property_node = NativePropertyNode(property_node_name, std::string{"old_value"});
 
         // set value when observer registered
         {
@@ -287,10 +411,8 @@ TEST(PropertyVariable, PropertyVariableTypes)
 struct PropertyVariableRegistrationFixture : public ::testing::Test {
     PropertyVariableRegistrationFixture()
     {
-        property_node = std::make_shared<base::NativePropertyNode>(
-            main_node_name,
-            base::DefaultPropertyTypeConversion<double>::toString(init_value),
-            base::PropertyType<double>::getTypeName());
+        property_node =
+            std::make_shared<base::NativePropertyNode>(main_node_name, double{init_value});
     }
 
     double init_value = 0.0;
@@ -351,10 +473,8 @@ TEST_F(PropertyVariableRegistrationFixture, registerVariableAsChildChildExisting
 {
     const auto child_name = "child";
 
-    property_node->setChild(std::make_shared<base::NativePropertyNode>(
-        child_name,
-        base::DefaultPropertyTypeConversion<double>::toString(init_value),
-        base::PropertyType<double>::getTypeName()));
+    property_node->setChild(
+        std::make_shared<base::NativePropertyNode>(child_name, double{init_value}));
 
     const auto new_init_value = 2.0;
     base::PropertyVariable<double> variable = new_init_value;

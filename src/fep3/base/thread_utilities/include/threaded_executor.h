@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
     This Source Code Form is subject to the terms of the Mozilla
     Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -38,59 +38,21 @@ struct IThreadPoolExecutor {
 struct PeriodicTask : public std::enable_shared_from_this<PeriodicTask> {
     PeriodicTask(std::chrono::milliseconds delay,
                  std::function<bool()> f,
-                 boost::asio::io_service& io_service)
-        : _delay(delay), _timer(io_service, _delay), _f(f)
-    {
-    }
+                 boost::asio::io_service& io_service);
 
-    ~PeriodicTask()
-    {
-        // also cancels:
-        stop();
-    }
-
+    ~PeriodicTask();
     // shared_from_this not allowed in constructor
-    void start()
-    {
-        auto strong_this = shared_from_this();
-        boost::asio::post(_timer.get_executor(), [strong_this, this]() { run({}); });
-    }
+    void start();
 
-    void stop()
-    {
-        _canceled = true;
-        _timer.cancel();
-    }
+    /// @brief it does not cover the case where a call is under execution
+    void stop();
 
     PeriodicTask(PeriodicTask&&) = default;
     PeriodicTask& operator=(PeriodicTask&&) = default;
     PeriodicTask() = delete;
 
 private:
-    void run(const boost::system::error_code& error)
-    {
-        switch (error.value()) {
-        case boost::system::errc::success: {
-            if (!_canceled) {
-                auto res = _f();
-                if (!_canceled && res) {
-                    _timer.expires_from_now(_delay);
-                    auto strongThis = shared_from_this();
-                    _timer.async_wait(
-                        [strongThis, this](const boost::system::error_code& ec) { run(ec); });
-                }
-            }
-        } break;
-
-        case boost::system::errc::operation_canceled: {
-            // Timer cancelled
-        } break;
-
-        default: {
-            // unexpected case
-        } break;
-        }
-    }
+    void run(const boost::system::error_code& error);
 
     std::chrono::milliseconds _delay;
     boost::asio::basic_waitable_timer<std::chrono::steady_clock> _timer;
@@ -101,97 +63,26 @@ private:
 struct ThreadPoolExecutor : IThreadPoolExecutor {
     using StopToken = std::function<bool()>;
 
-    ThreadPoolExecutor(size_t thread_count = 1) : _thread_count(thread_count)
-    {
-        assert(_thread_count > 0);
-    }
+    ThreadPoolExecutor(size_t thread_count = 1);
 
-    void start() override
-    {
-        if (_running) {
-            return;
-        }
+    void start() override;
 
-        if (_io_service.stopped()) {
-            _io_service.restart();
-        }
+    void stop() override;
 
-        _work = std::make_unique<boost::asio::io_service::work>(_io_service);
-        for (unsigned long i = 0; i < _thread_count; ++i)
-            _worker_threads.create_thread(boost::bind(&boost::asio::io_service::run, &_io_service));
-
-        _running = true;
-    }
-
-    void stop() override
-    {
-        if (!_running) {
-            return;
-        }
-
-        _work.reset();
-
-        if (!_io_service.stopped()) {
-            _io_service.stop();
-        }
-
-        for (auto& ref: _per_tasks)
-            ref->stop();
-
-        _worker_threads.join_all();
-        _per_tasks.clear();
-
-        _running = false;
-    }
-
-    ~ThreadPoolExecutor()
-    {
-        stop();
-    }
+    ~ThreadPoolExecutor();
 
     ThreadPoolExecutor(const ThreadPoolExecutor&) = delete;
     const ThreadPoolExecutor& operator=(const PeriodicTask&) = delete;
 
-    void post(std::function<void()> f) override
-    {
-        boost::asio::post(_io_service, std::move(f));
-    }
+    void post(std::function<void()> f) override;
 
-    void postAt(std::chrono::milliseconds delay_ms, std::function<void()> f) override
-    {
-        // lifetime is handled by io service
-        auto timer = std::make_shared<boost::asio::steady_timer>(_io_service, delay_ms);
-        timer->async_wait([timer, f](const boost::system::error_code&) { f(); });
-    }
+    void postAt(std::chrono::milliseconds delay_ms, std::function<void()> f) override;
 
-    uintptr_t postPeriodic(std::chrono::milliseconds period, std::function<bool()> f) override
-    {
-        auto task = std::make_shared<PeriodicTask>(period, f, _io_service);
-        uintptr_t handle = reinterpret_cast<uintptr_t>(task.get());
-        task->start();
-        _per_tasks.emplace_back(std::move(task));
-        return handle;
-    }
+    uintptr_t postPeriodic(std::chrono::milliseconds period, std::function<bool()> f) override;
 
-    [[nodiscard]] std::future<void> postWithCompletionFuture(std::function<void()> f) override
-    {
-        return boost::asio::post(_io_service, std::packaged_task<void()>(f));
-    }
+    [[nodiscard]] std::future<void> postWithCompletionFuture(std::function<void()> f) override;
 
-    bool cancel(uintptr_t handle) override
-    {
-        auto it = std::find_if(_per_tasks.begin(), _per_tasks.end(), [handle](const auto& ptr) {
-            return reinterpret_cast<uintptr_t>(ptr.get()) == handle;
-        });
-
-        if (it != _per_tasks.end()) {
-            (*it)->stop();
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
+    bool cancel(uintptr_t handle) override;
 
     size_t _thread_count;
     boost::thread_group _worker_threads;

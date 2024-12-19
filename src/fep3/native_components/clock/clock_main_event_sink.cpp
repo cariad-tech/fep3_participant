@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "clock_main_event_sink.h"
@@ -31,8 +27,8 @@ const nanoseconds validateTimeout(const ILogger& logger, const nanoseconds time_
         if (logger.isWarningEnabled()) {
             logger.logWarning(format("Configured time_update_timeout of '%lld'ns is below minimum "
                                      "of '%lld'ns. Using minimum value instead.",
-                                     time_update_timeout,
-                                     nanoseconds(FEP3_TIME_UPDATE_TIMEOUT_MIN_VALUE)));
+                                     time_update_timeout.count(),
+                                     nanoseconds(FEP3_TIME_UPDATE_TIMEOUT_MIN_VALUE).count()));
         }
 
         return nanoseconds(FEP3_TIME_UPDATE_TIMEOUT_MIN_VALUE);
@@ -161,9 +157,10 @@ void ClockMainEventSink::timeUpdateBegin(Timestamp old_time, Timestamp new_time)
         _func_time_update_begin(client, new_time, old_time);
     };
 
-    synchronizeEvent(func_wrapper,
-                     IRPCClockSyncMasterDef::EventIDFlag::register_for_time_update_before,
-                     format("an error occured during time_update_before at time %lld", new_time));
+    synchronizeEvent(
+        func_wrapper,
+        IRPCClockSyncMasterDef::EventIDFlag::register_for_time_update_before,
+        format("an error occured during time_update_before at time %lld", new_time.count()));
 }
 
 void ClockMainEventSink::timeUpdating(Timestamp new_time, std::optional<Timestamp> next_tick)
@@ -174,9 +171,10 @@ void ClockMainEventSink::timeUpdating(Timestamp new_time, std::optional<Timestam
         _func_time_updating(client, new_time, next_tick);
     };
 
-    synchronizeEvent(func_wrapper,
-                     IRPCClockSyncMasterDef::EventIDFlag::register_for_time_updating,
-                     format("an error occured during time_updating at time %lld", new_time));
+    synchronizeEvent(
+        func_wrapper,
+        IRPCClockSyncMasterDef::EventIDFlag::register_for_time_updating,
+        format("an error occured during time_updating at time %lld", new_time.count()));
 }
 
 void ClockMainEventSink::timeUpdateEnd(Timestamp new_time)
@@ -187,9 +185,10 @@ void ClockMainEventSink::timeUpdateEnd(Timestamp new_time)
         _func_time_update_end(client, new_time);
     };
 
-    synchronizeEvent(func_wrapper,
-                     IRPCClockSyncMasterDef::EventIDFlag::register_for_time_update_after,
-                     format("an error occured during time_update_after at time %lld", new_time));
+    synchronizeEvent(
+        func_wrapper,
+        IRPCClockSyncMasterDef::EventIDFlag::register_for_time_update_after,
+        format("an error occured during time_update_after at time %lld", new_time.count()));
 }
 
 void ClockMainEventSink::timeResetBegin(Timestamp old_time, Timestamp new_time)
@@ -200,9 +199,10 @@ void ClockMainEventSink::timeResetBegin(Timestamp old_time, Timestamp new_time)
         _func_time_reset_begin(client, new_time, old_time);
     };
 
-    synchronizeEvent(func_wrapper,
-                     IRPCClockSyncMasterDef::EventIDFlag::register_for_time_reset,
-                     format("an error occured during time_reset at old time %lld", old_time));
+    synchronizeEvent(
+        func_wrapper,
+        IRPCClockSyncMasterDef::EventIDFlag::register_for_time_reset,
+        format("an error occured during time_reset at old time %lld", old_time.count()));
 }
 
 void ClockMainEventSink::timeResetEnd(Timestamp /*new_time*/)

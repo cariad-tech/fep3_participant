@@ -1,19 +1,14 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/native_components/job_registry/job_configurations.h>
 
 #include <common/gtest_asserts.h>
-
 using namespace fep3;
 using namespace native;
 using namespace a_util::strings;
@@ -31,17 +26,16 @@ std::shared_ptr<base::NativePropertyNode> getJobEntryNode(
     auto job_entry_node = std::make_shared<base::NativePropertyNode>(name);
 
     job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
-        FEP3_JOB_CYCLE_SIM_TIME_PROPERTY, cycle_time, base::PropertyType<int32_t>::getTypeName()));
+        FEP3_JOB_CYCLE_SIM_TIME_PROPERTY,
+        base::DefaultPropertyTypeConversion<int32_t>::fromString(cycle_time)));
     job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
-        FEP3_JOB_DELAY_SIM_TIME_PROPERTY, delay_time, base::PropertyType<int32_t>::getTypeName()));
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY,
-                                                   max_runtime,
-                                                   base::PropertyType<int32_t>::getTypeName()));
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY,
-                                                   time_violation_strategy,
-                                                   base::PropertyType<std::string>::getTypeName()));
+        FEP3_JOB_DELAY_SIM_TIME_PROPERTY,
+        base::DefaultPropertyTypeConversion<int32_t>::fromString(delay_time)));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY,
+        base::DefaultPropertyTypeConversion<int32_t>::fromString(max_runtime)));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY, time_violation_strategy));
 
     return job_entry_node;
 }
@@ -58,10 +52,8 @@ std::shared_ptr<base::NativePropertyNode> getJobEntryNodeClockTriggerType(
     auto job_entry_node =
         getJobEntryNode(name, cycle_time, delay_time, max_runtime, time_violation_strategy);
 
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_TRIGGER_TYPE_PROPERTY,
-                                                   FEP3_JOB_CYCLIC_TRIGGER_TYPE_PROPERTY,
-                                                   base::PropertyType<std::string>::getTypeName()));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_TRIGGER_TYPE_PROPERTY, std::string{FEP3_JOB_CYCLIC_TRIGGER_TYPE_PROPERTY}));
 
     return job_entry_node;
 }
@@ -74,20 +66,15 @@ std::shared_ptr<base::NativePropertyNode> getJobEntryNodeDataTriggerType(
 {
     auto job_entry_node = std::make_shared<base::NativePropertyNode>(name);
 
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY,
-                                                   max_runtime,
-                                                   base::PropertyType<int32_t>::getTypeName()));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY,
+        base::DefaultPropertyTypeConversion<int32_t>::fromString(max_runtime)));
 
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY,
-                                                   time_violation_strategy,
-                                                   base::PropertyType<std::string>::getTypeName()));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY, time_violation_strategy));
 
-    job_entry_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_TRIGGER_TYPE_PROPERTY,
-                                                   FEP3_JOB_DATA_TRIGGER_TYPE_PROPERTY,
-                                                   base::PropertyType<std::string>::getTypeName()));
+    job_entry_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_TRIGGER_TYPE_PROPERTY, std::string{FEP3_JOB_DATA_TRIGGER_TYPE_PROPERTY}));
 
     job_entry_node->setChild(base::makeNativePropertyNode<std::vector<std::string>>(
         FEP3_JOB_TRIGGER_SIGNAL_PROPERTY, signal_names));

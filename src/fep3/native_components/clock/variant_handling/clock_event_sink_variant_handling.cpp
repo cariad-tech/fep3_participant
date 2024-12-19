@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
     This Source Code Form is subject to the terms of the Mozilla
     Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -73,6 +73,12 @@ CatelynToAryaEventSinkAdapter::CatelynToAryaEventSinkAdapter(
     std::weak_ptr<fep3::experimental::IClock::IEventSink> event_sink)
     : _event_sink(event_sink)
 {
+}
+
+void CatelynToAryaEventSinkAdapter::setSink(
+    std::weak_ptr<fep3::experimental::IClock::IEventSink> event_sink)
+{
+    _event_sink = event_sink;
 }
 
 void CatelynToAryaEventSinkAdapter::timeUpdateBegin(fep3::arya::Timestamp old_time,

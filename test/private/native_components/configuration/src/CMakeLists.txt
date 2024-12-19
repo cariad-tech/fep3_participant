@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -11,14 +10,11 @@
 # tester_configuration_service
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-
 add_executable(tester_configuration_service
     tester_configuration_service.cpp
 )
 
-add_test(NAME tester_configuration_service
-    COMMAND tester_configuration_service
+gtest_discover_tests(tester_configuration_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -37,6 +33,8 @@ set_target_properties(tester_configuration_service PROPERTIES FOLDER "test/priva
 # tester_configuration_service_rpc
 ##################################################################
 
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
 add_custom_target(tester_configuration_service_rpc_stub_generator)
 fep_generate_rpc_stubs_before_target(
     TARGET tester_configuration_service_rpc_stub_generator
@@ -48,8 +46,7 @@ fep_generate_rpc_stubs_before_target(
 add_executable(tester_configuration_service_rpc tester_configuration_service_rpc.cpp)
 add_dependencies(tester_configuration_service_rpc tester_configuration_service_rpc_stub_generator)
 
-add_test(NAME tester_configuration_service_rpc
-    COMMAND tester_configuration_service_rpc
+gtest_discover_tests(tester_configuration_service_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )

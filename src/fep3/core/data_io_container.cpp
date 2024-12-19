@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/components/job_registry/job_configuration.h>
@@ -28,7 +24,8 @@ fep3::core::DataReader* DataIOContainer::addDataIn(
     size_t queue_size,
     const fep3::catelyn::JobConfiguration& job_configuration)
 {
-    DefaultJobConfigVisitor visitor(name, type, _readers, queue_size);
+    DefaultJobConfigVisitor visitor(
+        name, type, _readers, queue_size, _configuration.purged_samples_log_capacity);
     job_configuration.acceptVisitor(visitor);
     return &_readers.back();
 }
@@ -59,6 +56,13 @@ fep3::Result DataIOContainer::executeDataOut(fep3::Timestamp time_of_execution)
         // response of the receivers of the data
         res |= current.flushNow(time_of_execution);
     }
+
+    for (auto& current: _readers) {
+        if (_configuration.clear_input_signal_queues) {
+            current.clear();
+        }
+    }
+
     return res;
 }
 
@@ -121,6 +125,18 @@ void DataIOContainer::removeFromDataRegistry(fep3::arya::IDataRegistry& data_reg
         if (writer.removeFromDataRegistry(data_registry)) {
             writer.removeClockTimeGetter();
         }
+    }
+}
+
+void DataIOContainer::setConfiguration(const DataIOContainerConfiguration& configuration)
+{
+    _configuration = configuration;
+}
+
+void DataIOContainer::logIOInfo(const fep3::arya::ILogger* logger)
+{
+    for (auto& reader: _readers) {
+        reader.logPurgedSamples(logger);
     }
 }
 

@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -18,17 +18,17 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/fep3_optional.h>
 
 /**
- * @brief The clock service main property tree entry node
+ * @brief The clock service main property tree entry node.
  */
 #define FEP3_CLOCK_SERVICE_CONFIG "clock"
 
 /**
- * @brief The main clock configuration property name
+ * @brief The main clock configuration property name.
  * Use this to set the main clock by configuration.
  */
 #define FEP3_MAIN_CLOCK_PROPERTY "main_clock"
 /**
- * @brief The clock service main clock configuration node
+ * @brief The clock service main clock configuration node.
  * Use this to set the main clock by configuration.
  */
 #define FEP3_CLOCK_SERVICE_MAIN_CLOCK FEP3_CLOCK_SERVICE_CONFIG "/" FEP3_MAIN_CLOCK_PROPERTY
@@ -39,7 +39,8 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #define FEP3_CLOCK_SIM_TIME_STEP_SIZE_PROPERTY "step_size"
 
 /**
- * @brief Step size of the built-in discrete simulation time clock in nanoseconds.
+ * @brief Step size of the built-in discrete simulation time clock 'local_system_simtime' in
+ * nanoseconds.
  */
 #define FEP3_CLOCK_SERVICE_CLOCK_SIM_TIME_STEP_SIZE                                                \
     FEP3_CLOCK_SERVICE_CONFIG "/" FEP3_CLOCK_SIM_TIME_STEP_SIZE_PROPERTY

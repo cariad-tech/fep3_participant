@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -28,7 +24,7 @@ public:
     explicit HttpSystemAccess(const std::string& system_name,
                               const std::string& system_url,
                               const std::shared_ptr<ISystemAccessBaseDefaultUrls>& defaults,
-                              std::shared_ptr<ILogger> logger,
+                              std::shared_ptr<ILogger> startup_logger,
                               std::shared_ptr<IServiceDiscoveryFactory> service_discovery_factory);
     ~HttpSystemAccess();
 

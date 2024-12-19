@@ -1,5 +1,4 @@
-#
-# Copyright @ 2022 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -34,7 +33,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     FEP_COMPONENTS_PLUGIN_FILE_PATH="$<TARGET_FILE:fep_components_plugin>"
 )
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+gtest_discover_tests(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES TIMEOUT 10)
 
 internal_fep3_participant_deploy(${PROJECT_NAME})

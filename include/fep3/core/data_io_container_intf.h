@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -41,6 +41,15 @@ using DataWriter = arya::DataWriter;
 } // namespace fep3::core
 
 namespace fep3::core {
+/**
+ * @brief Data IOs container configuration structure
+ */
+struct DataIOContainerConfiguration {
+    /// capacity of storage containing information regarding purged samples
+    size_t purged_samples_log_capacity = FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE;
+    /// flag to clear input signal queues at job cycle's end
+    bool clear_input_signal_queues = false;
+};
 /**
  * @brief Data IOs container interface
  */
@@ -117,6 +126,20 @@ public:
      * @param[in] data_registry data registry to remove data writers from.
      */
     virtual void removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry) = 0;
+
+    /**
+     * @brief Set the DataIOContainer configuration.
+     *
+     * @param[in] configuration configuration structure.
+     */
+    virtual void setConfiguration(const DataIOContainerConfiguration& configuration) = 0;
+
+    /**
+     * @brief Log information regarding data reader and data writer behaviour.
+     *
+     * @param[in] logger logger to be used.
+     */
+    virtual void logIOInfo(const fep3::arya::ILogger* logger) = 0;
 };
 
 } // namespace fep3::core

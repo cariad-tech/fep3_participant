@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/base/data_registry/data_registry.h>
@@ -27,29 +23,34 @@ namespace fep3 {
 namespace core {
 namespace arya {
 
-DataReader::DataReader(const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator)
+DataReader::DataReader(const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator,
+                       size_t purged_sample_log_capacity)
     : _time_comparator(time_comparator),
       DataReaderBacklog(default_data_reader_backlog_capacity,
-                        base::StreamType(fep3::base::arya::meta_type_raw))
+                        base::StreamType(fep3::base::arya::meta_type_raw),
+                        purged_sample_log_capacity)
 {
 }
 
 DataReader::DataReader(std::string name,
                        const base::StreamType& stream_type,
-                       const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator)
+                       const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator,
+                       size_t purged_sample_log_capacity)
     : _name(std::move(name)),
       _time_comparator(time_comparator),
-      DataReaderBacklog(default_data_reader_backlog_capacity, stream_type)
+      DataReaderBacklog(
+          default_data_reader_backlog_capacity, stream_type, purged_sample_log_capacity)
 {
 }
 
 DataReader::DataReader(std::string name,
                        const base::StreamType& stream_type,
                        size_t queue_size,
-                       const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator)
+                       const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator,
+                       size_t purged_sample_log_capacity)
     : _name(std::move(name)),
       _time_comparator(time_comparator),
-      DataReaderBacklog(queue_size, stream_type)
+      DataReaderBacklog(queue_size, stream_type, purged_sample_log_capacity)
 {
 }
 
@@ -92,6 +93,11 @@ void DataReader::receiveNow(Timestamp time_of_update)
 std::string DataReader::getName() const
 {
     return _name;
+}
+
+void DataReader::logPurgedSamples(const fep3::arya::ILogger* logger) const
+{
+    DataReaderBacklog::logPurgedSamples(_name, logger);
 }
 
 fep3::Result addToDataRegistry(IDataRegistry& registry, DataReader& reader)

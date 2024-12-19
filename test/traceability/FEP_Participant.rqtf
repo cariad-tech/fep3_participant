@@ -1,0 +1,20 @@
+[Files]
+Names=JIRA_FEP_SDK_Participant,FCN_TEST_FEP_SDK
+
+[JIRA_FEP_SDK_Participant]
+Category=Software Requirements
+Cover1=FCN_TEST_FEP_SDK,JIRA_FEP_SDK_Participant
+Cover1Position=2253@1516
+Cover1AnnotationPosition=3073@1506
+GraphicPosition=1860@1070
+Type=JIRA_XML_Req
+Path=$JIRA_REQS
+
+[FCN_TEST_FEP_SDK]
+Category=Component Test
+GraphicPosition=2610@1930
+Type=GoogleTest_TestSpec
+ModificationDocument1=$FEP_SDK_PARTICIPANT_TEST_RESULTS
+ModificationDocument1Type=GoogleTest_TestResults
+Path=..\function
+

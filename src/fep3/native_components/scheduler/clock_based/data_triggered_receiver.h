@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -19,14 +15,17 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
 #include <fep3/native_components/scheduler/job_runner.h>
 
+#include <atomic>
+
 namespace fep3 {
 namespace native {
+template <typename JobRunnerType = JobRunner>
 class DataTriggeredReceiver : public fep3::arya::ISimulationBus::IDataReceiver {
 public:
     DataTriggeredReceiver(const std::function<Timestamp()>& time_getter,
                           std::shared_ptr<fep3::IJob> data_triggered_job,
                           const std::string& signal_name,
-                          const fep3::native::JobRunner& job_runner,
+                          const JobRunnerType& job_runner,
                           DataTriggeredExecutor& data_triggered_executor,
                           std::shared_ptr<const fep3::ILogger> logger = nullptr)
         : _time_getter(time_getter),
@@ -58,18 +57,27 @@ public:
      */
     void operator()(const std::shared_ptr<const fep3::IDataSample>&) override
     {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(
+            _logger,
+            a_util::strings::format("Received callback from signal: %s", _signal_name.c_str()));
+
+        // if already running we prevent posting another task
+        // however this does not prevent a task being posted
+        // if the previous task is not yet running in the thread pool
+        // and set the flag
         if (!_running) {
-            _running = true;
-            _data_triggered_executor.post([&]() {
-                _job_runner.runJob(_time_getter(), *_data_triggered_job);
-                _running = false;
-            });
+            FEP3_ARYA_LOGGER_LOG_DEBUG(
+                _logger,
+                a_util::strings::format("Triggering job with callback from signal: %s",
+                                        _signal_name.c_str()));
+            postTaskToExecutor();
         }
         else {
             FEP3_ARYA_LOGGER_LOG_WARNING(
                 _logger,
                 a_util::strings::format(
-                    "Job for signal '%s' still running, can not be triggered now"));
+                    "Job for signal '%s' still running, can not be triggered now",
+                    _signal_name.c_str()));
         }
     };
 
@@ -79,12 +87,40 @@ public:
     }
 
 private:
+    void postTaskToExecutor()
+    {
+        fep3::Result result = _data_triggered_executor.post([this]() {
+            // atomic_exchange returns the previous value of running
+            if (std::atomic_exchange(&_running, true)) {
+                FEP3_ARYA_LOGGER_LOG_WARNING(
+                    _logger,
+                    a_util::strings::format(
+                        "Job for signal '%s' still running, can not be triggered now",
+                        _signal_name.c_str()));
+                return;
+            }
+            else {
+                _job_runner.runJob(_time_getter(), *_data_triggered_job);
+                _running = false;
+            }
+        });
+
+        if (!result) {
+            FEP3_ARYA_LOGGER_LOG_WARNING(
+                _logger,
+                a_util::strings::format(
+                    "Signal '%s' received but scheduler cannot trigger job, error: %s",
+                    _signal_name.c_str(),
+                    result.getDescription()));
+        }
+    }
+
     const std::function<Timestamp()> _time_getter;
     std::shared_ptr<fep3::IJob> _data_triggered_job;
     const std::string _signal_name;
-    fep3::native::JobRunner _job_runner;
+    JobRunnerType _job_runner;
     fep3::native::DataTriggeredExecutor& _data_triggered_executor;
-    std::atomic_bool _running{false};
+    std::atomic<bool> _running{false};
     std::shared_ptr<const fep3::ILogger> _logger;
 };
 } // namespace native

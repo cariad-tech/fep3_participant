@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -29,6 +28,16 @@ option(fep3_participant_cmake_enable_private_tests
 
 find_package(Threads)
 find_package(GTest)
+if(TARGET GTest::gtest_main)
+    message(STATUS "Found GTest")
+    if(TARGET GTest::gmock)
+        message(STATUS "Found GMock")
+    else()
+        message(STATUS "Could NOT find GMock")
+    endif()
+else()
+    message(STATUS "Could NOT find GTest")
+endif()
 
 include(GoogleTest)
 
@@ -87,6 +96,12 @@ if (fep3_participant_export_test_targets)
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>"
         "$<INSTALL_INTERFACE:test/include/>"
     )
+
+    target_link_libraries(fep3_components_test
+        INTERFACE
+        GTest::gmock
+        GTest::gtest_main)
+
     install(
         TARGETS fep3_components_test
         EXPORT fep3_components_test_targets

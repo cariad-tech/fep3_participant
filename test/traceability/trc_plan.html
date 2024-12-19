@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+Copyright 2023 CARIAD SE.
+
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+-->
+<html>
+<head>
+<title>Traceability Plan</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
+<style type="text/css">
+body {	font-family: Arial, Helvetica;
+			font-size: 10pt;
+			margin-left: 0.5cm;
+			margin-right: 0.5cm; }
+h1,h2,h3,h4,h5,h6 {
+			font-weight: bold;
+			margin-top: 1em;
+         margin-bottom: 0.5em; }
+table { border-collapse: collapse; empty-cells: show; font-size: 10pt; }
+td { border: 1px solid black; }
+th { border: 1px solid black; }
+h1 {		font-size: 180%; font-style: italic; font-weight: bold;
+			margin-top: 2em;
+			margin-bottom: 3em;
+			text-align: center; }
+h2 {		font-size: 140%;
+			margin-top: 1em;
+			margin-bottom: 0.8em; }
+h3 {		font-size: 130%;
+			margin-top: 0.8em;
+         margin-bottom: 0.8em;
+         margin-left: 0.3em; }
+h4 {     font-size: 110%; margin-left: 1em; }
+h5 {		font-size: 100%; margin-left: 1.8em; }
+h6 {		font-size: 90%;margin-left: 2.8em; }
+.subtitle { font-weight: normal; font-style: italic }
+.Heading1Top { background-color: #58ACFA; font-weight: bold;  border-top-width: 3px;}
+.Heading1TopRight { background-color: #58ACFA; font-weight: bold; border-right-width: 3px; border-top-width: 3px;}
+.Heading1TopLeft { background-color: #58ACFA; font-weight: bold; border-left-width: 3px; border-top-width: 3px;}
+.Heading1TopBoth { background-color: #58ACFA; font-weight: bold; border-left-width: 3px; border-right-width: 3px; border-top-width: 3px;}
+.Heading1Bottom { background-color: #58ACFA; font-weight: bold; }
+.Heading1BottomRight { background-color: #58ACFA; font-weight: bold; border-right-width: 3px; }
+.Heading1BottomLeft { background-color: #58ACFA; font-weight: bold; border-left-width: 3px; }
+.Heading1BottomBoth { background-color: #58ACFA; font-weight: bold; border-left-width: 3px; border-right-width: 3px; }
+.Heading2Top { background-color: #01A9DB; font-weight: bold; border-top-width: 3px; }
+.Heading2TopRight { background-color: #01A9DB; font-weight: bold; border-right-width: 3px; border-top-width: 3px; }
+.Heading2TopLeft { background-color: #01A9DB; font-weight: bold; border-left-width: 3px; border-top-width: 3px; }
+.Heading2TopBold { background-color: #01A9DB; font-weight: bold;  border-right-width: 3px; border-left-width: 3px; border-top-width: 3px;}
+.Heading2Bottom { background-color: #01A9DB; font-weight: bold; }
+.Heading2BottomRight { background-color: #01A9DB; font-weight: bold; border-right-width: 3px; }
+.Heading2BottomLeft { background-color: #01A9DB; font-weight: bold; border-left-width: 3px; }
+.Heading2BottomBoth { background-color: #01A9DB; font-weight: bold; border-right-width: 3px; border-left-width: 3px; }
+.RowEntry { }
+.RowEntryRight { border-right-width: 3px; }
+.RowEntryLeft { border-left-width: 3px; }
+.RowEntryBoth { border-left-width: 3px; border-right-width: 3px; }
+.RowEntryGrey { background-color: #D8D8D8; }
+.RowEntryGreyRight { background-color: #D8D8D8; border-right-width: 3px; }
+.RowEntryGreyLeft { background-color: #D8D8D8; border-left-width: 3px; }
+.RowEntryGreyBoth { background-color: #D8D8D8; border-left-width: 3px; border-right-width: 3px; }
+.RowEntryGreen { background-color: #AFFFAF; }
+.RowEntryGreenRight { background-color: #AFFFAF; border-right-width: 3px; }
+.RowEntryGreenLeft { background-color: #AFFFAF; border-left-width: 3px; }
+.RowEntryGreenBoth { background-color: #AFFFAF; border-left-width: 3px; border-right-width: 3px; }
+.RowEntryYellow { background-color: #FBF689; }
+.RowEntryYellowRight { background-color: #FBF689; border-right-width: 3px; }
+.RowEntryYellowLeft { background-color: #FBF689; border-left-width: 3px; }
+.RowEntryYellowBoth { background-color: #FBF689; border-left-width: 3px; border-right-width: 3px; }
+.RowEntryRed { background-color: #FF9B9B ; }
+.RowEntryRedRight { background-color: #FF9B9B ; border-right-width: 3px; }
+.RowEntryRedLeft { background-color: #FF9B9B ; border-left-width: 3px; }
+.RowEntryRedBoth { background-color: #FF9B9B ; border-left-width: 3px; border-right-width: 3px; }
+.RowEntryDarkRed { background-color: #E65555; }
+.RowEntryDarkRedRight { background-color: #E65555; border-right-width: 3px; }
+.RowEntryDarkRedLeft { background-color: #E65555; border-left-width: 3px; }
+.RowEntryDarkRedBoth { background-color: #E65555; border-left-width: 3px; border-right-width: 3px; }
+.RowEntryRmCommentBold { border-right-width: 3px; }
+p {		margin-top: 0.5em;
+			margin-bottom: 0.5em;
+			text-indent: 0em;
+			text-align: justify; }
+p.abstract {margin-left: 2.5cm;
+			margin-right: 2.5cm; }
+p.image {text-align: center; }
+p.caption {	margin-bottom: 1em;
+			font-weight: bold;
+			text-align: center; }
+.newpage {page-break-before: always; }
+.headernote { font-family: Arial, Helvetica;
+         font-weight: bold;
+         font-style: italic;
+         background-color: #CCCCCC; }
+.footernote { font-family: Arial, Helvetica;
+         font-weight: bold;
+         color: #000080; }
+input[type="text"] {
+     width: 100%;
+     box-sizing: border-box;
+     -webkit-box-sizing:border-box;
+     -moz-box-sizing: border-box;
+}
+
+</style>
+</head>
+<body>
+
+<h1>Traceability Plan</h1>
+<div class="sect2">
+  <h2>
+  <span class="numbering">1.   </span>Requirements</h2>
+  <div class="sect3">
+    <h3>
+    <span class="numbering">1.1.   </span>Tooling - Reqtify</h3>
+        <table width="100%" align="center">
+        <colgroup>
+        <col width="1*"></col>
+        <col width="1*"></col></colgroup>
+        <thead>
+          <tr>
+            <th class="Heading1TopLeft">Info</th>
+            <th class="Heading1TopRight">Value</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="RowEntryGreyLeft">Tool Version:</td>
+            <td class="RowEntryRight">2018 FD01 (1432)</td></tr>
+          <tr>
+            <td class="RowEntryGreyLeft">Reqtify Patches: </td>
+            <td class="RowEntryRight">- SR00580741<br/>
+- SR00620913<br/>
+- SR00555570<br/>
+- SR00534591<br/>
+- SR00499762<br/>
+- VW-10<br/>
+- SR00562837<br/>
+- SR00467711<br/>
+- SR00542077<br/>
+- SR00637734<br/>
+- SR00467718<br/>
+- SR00501857<br/>
+- SR00501859<br/>
+- SR00568988<br/>
+- SR00489488<br/>
+- SR00492006<br/>
+- SR00547383<br/>
+- SR00473136<br/>
+- SR00581406<br/>
+- SR00546793<br/>
+- SR00504029<br/>
+- SR00570887<br/>
+- SR00619599<br/>
+- SR00589175</td></tr>
+          <tr>
+            <td class="RowEntryGreyLeft">Topic Traceability Cluster: </td>
+            <td class="RowEntryRight">- fep_tpctrc_tst_googletest/1.0.0@fep/stable<br/>
+- fep_tpctrc_tst_pythontest 1.0.0 stable<br/>
+- enprove_tpctrc_tst_junit 4.1.1 integration<br/>
+- enprove_tpctrc_base 4.1.2 integration<br/>
+- enprove_tpctrc_rem_condcov 4.1.1 integration<br/>
+- enprove_tpctrc_tst_csharp 4.1.1 integration<br/>
+- enprove_tpctrc_rem_base 4.1.1 integration<br/>
+- enprove_tpctrc_fltr_variants 4.1.1 integration<br/>
+- enprove_tpctrc_impl_simulink 4.1.1 integration<br/>
+- enprove_tpctrc_tst_emcode 4.1.1 integration<br/>
+- fep_tpctrc_tst_ecutest/1.0.0@fep/stable<br/>
+- enprove_tpctrc_tst_ste 4.1.1 integration<br/>
+- fep_tpctrc_tst_base/1.1.0@fep/stable<br/>
+- enprove_tpctrc_rem_jira 4.1.1 integration<br/>
+- fep_tpctrc_tst_mocha 1.0.0 stable<br/>
+- fep_tpctrc 1.2.0 stable<br/>
+- enprove_tpctrc_impl_ccode 4.1.1 integration</td></tr></tbody></table></div></div>
+<div class="sect2">
+  <h2>
+  <span class="numbering">2.   </span>Traceability Plan - FEP_Participant</h2>
+  <div class="sect3">
+    <h3>
+    <span class="numbering">2.1.   </span>Overview</h3>
+    <p>The following diagramm represents the traceability of the project &quot;FEP_Participant&quot;:</p>
+      <p class="image"><object data="trc_plan_overview.png" type="image/png" width="400" height="178"></object></p>
+    <p></p></div>
+  <div class="sect3">
+    <h3>
+    <span class="numbering">2.2.   </span>Traceability of Layer: Software Requirements</h3>
+    <p>This section will describe the traceability of layer &quot;Software Requirements&quot;.</p>
+    <div class="sect4">
+      <h4>
+      <span class="numbering">2.2.1.   </span>Specification Document: JIRA_FEP_SDK_Participant</h4>
+      <p>Path to the document: <span style="font-style:italic;">$JIRA_REQS</span>*2 (Analysis Type: JIRA_XML_Req)</p>
+      <p></p>
+      <ul></ul>
+      <p>Requirements of the specification document are covered, if each requirement has at least one cover link of the following document(s): <span style="font-weight:bold;">(FCN_TEST_FEP_SDK OR JIRA_FEP_SDK_Participant)</span><span style="font-style:italic;">*1</span></p>
+      <p></p>
+      <p><span style="font-weight:bold;">(FCN_TEST_FEP_SDK OR JIRA_FEP_SDK_Participant)</span></p></div></div></div>
+<div class="sect2">
+  <h2>
+  <span class="numbering">3.   </span>Annex - Annotation</h2>
+      <table width="100%" align="center">
+      <colgroup>
+      <col width="80"></col>
+      <col width="1*"></col></colgroup>
+      <thead>
+        <tr>
+          <th class="Heading1TopLeft">Annotation</th>
+          <th class="Heading1TopRight">Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="RowEntryLeft"><span style="font-weight:bold;">*1</span></td>
+          <td class="RowEntryRight">Referenced documents can be found in section &quot;Specification Documents&quot; or &quot;Annex - Non Specification Documents&quot;.</td></tr>
+        <tr>
+          <td class="RowEntryLeft"><span style="font-weight:bold;">*2</span></td>
+          <td class="RowEntryRight">Path to analyzed working products. The path can be relative to the Reqtify project file or can contain system environment variables which should be resolved by the customer itself.</td></tr></tbody></table></div>
+<div class="sect2">
+  <h2>
+  <span class="numbering">4.   </span>Annex - Non Specification Documents</h2>
+  <div class="sect3">
+    <h3>
+    <span class="numbering">4.1.   </span>Document: FCN_TEST_FEP_SDK (Component Test)</h3>
+    <p>Path to the document: <span style="font-style:italic;">..\function</span>*2 (Analysis Type: GoogleTest_TestSpec)</p>
+    <p>The document is extended by the following file(s): </p>
+    <ul>
+      <li>
+        <p><span style="font-style:italic;">$FEP_SDK_PARTICIPANT_TEST_RESULTS</span>*2 (Analysis Type: GoogleTest_TestResults)</p></li></ul></div></div>
+</body>
+</html>

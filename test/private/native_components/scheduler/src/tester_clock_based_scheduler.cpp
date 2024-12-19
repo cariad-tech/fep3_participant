@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "fep3/native_components/scheduler/clock_based/clock_based_scheduler.h"
@@ -98,6 +94,8 @@ struct ClockBasedSchedulerTest : public ::testing::Test {
 
         EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
         EXPECT_CALL(*_logger, logDebug(_)).WillRepeatedly(Return(a_util::result::Result()));
+        EXPECT_CALL(*_logger, isInfoEnabled()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*_logger, logInfo(_)).WillRepeatedly(Return(a_util::result::Result()));
     }
 
     void setUpClock(fep3::Duration clock_period)
@@ -778,6 +776,13 @@ struct SchedulingWithHealthService : public ::testing::Test {
 
     SchedulingWithHealthService()
     {
+        // Called by job runner in FEP3_ARYA_LOGGER_LOG_RESULT
+        EXPECT_CALL(*_logger, isErrorEnabled()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*_logger, logError(_)).WillRepeatedly(Return(a_util::result::Result()));
+        EXPECT_CALL(*_logger, isDebugEnabled()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*_logger, logDebug(_)).WillRepeatedly(Return(a_util::result::Result()));
+        EXPECT_CALL(*_logger, isInfoEnabled()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*_logger, logInfo(_)).WillRepeatedly(Return(a_util::result::Result()));
     }
 
     void SetUp() override
@@ -968,7 +973,7 @@ TEST_F(SchedulingWithHealthService, DataTriggeredReceiverWithHealthService)
     fep3::native::DataTriggeredExecutor data_triggered_executor(mock_pool);
     data_triggered_executor.start();
 
-    auto data_trigered_receiver = std::make_shared<fep3::native::DataTriggeredReceiver>(
+    auto data_trigered_receiver = std::make_shared<fep3::native::DataTriggeredReceiver<>>(
         [&]() { return _clock_service_mock->getTime(); },
         my_job,
         my_signal_name,
@@ -1012,6 +1017,9 @@ TEST_F(SchedulingWithHealthService, DataTriggeredReceiverWithHealthService)
         EXPECT_CALL(*my_job, execute(fep3::Timestamp(40ms))).WillOnce(Return(Result{}));
         EXPECT_CALL(*my_job, execute(fep3::Timestamp(50ms))).WillOnce(Return(Result{}));
 
+        EXPECT_CALL(*_logger, isWarningEnabled()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*_logger, logWarning(_)).WillRepeatedly(Return(a_util::result::Result()));
+
         uint32_t sample_value = 1;
         const data_read_ptr<const IDataSample> sample =
             std::make_shared<fep3::base::DataSampleType<uint32_t>>(sample_value);
@@ -1024,6 +1032,8 @@ TEST_F(SchedulingWithHealthService, DataTriggeredReceiverWithHealthService)
 
 /**
  * @brief A data triggered job will wait to be finished in state deinitialize
+ * This assumes that the job was already scheduled by asio and runs in thread pool
+ * If the job was not scheduled then the job will not be executed
  */
 TEST_F(SchedulingWithDataTriggered, DataTriggeredExecutorWaitForJobsDone)
 {
@@ -1034,8 +1044,9 @@ TEST_F(SchedulingWithDataTriggered, DataTriggeredExecutorWaitForJobsDone)
 
     const fep3::Jobs jobs{{builder._job_name, {my_job, builder.makeJobInfoDataTriggered()}}};
 
+    auto nice_logger = std::make_shared<NiceMock<fep3::mock::LoggerWithDefaultBehavior>>();
     // Use the real thread pool.
-    fep3::native::ClockBasedScheduler scheduler(_logger);
+    fep3::native::ClockBasedScheduler scheduler(nice_logger);
 
     EXPECT_CALL(*_job_registry_mock, getJobsCatelyn()).WillOnce(::testing::Return(jobs));
 
@@ -1061,7 +1072,7 @@ TEST_F(SchedulingWithDataTriggered, DataTriggeredExecutorWaitForJobsDone)
     EXPECT_CALL(*_clock_service_mock, getTime()).Times(1).WillOnce(Return(Timestamp(0ms)));
 
     std::atomic_bool task_finished{false};
-    boost::latch simulation_end(1);
+    boost::latch simulation_end(3);
 
     using JobExecuteResult = fep3::IHealthService::JobExecuteResult;
     EXPECT_CALL(
@@ -1071,7 +1082,7 @@ TEST_F(SchedulingWithDataTriggered, DataTriggeredExecutorWaitForJobsDone)
 
     EXPECT_CALL(*my_job, execute(fep3::Timestamp(0ms)))
         .WillOnce(DoAll(InvokeWithoutArgs([&]() {
-                            simulation_end.wait();
+                            simulation_end.count_down_and_wait();
                             task_finished = true;
                         }),
                         Return(fep3::ERR_NOERROR)));
@@ -1083,15 +1094,19 @@ TEST_F(SchedulingWithDataTriggered, DataTriggeredExecutorWaitForJobsDone)
 
     std::atomic_bool stop_finished{false};
     std::thread stop_t([&]() {
+        // here we are sure the job runs in thread pool
+        simulation_end.count_down_and_wait();
+        // trigger stop
+        // stop should wait
         scheduler.stop();
+        // when stop returns the job must be finished
+        ASSERT_TRUE(task_finished);
         stop_finished = true;
     });
 
-    ASSERT_FALSE(task_finished);
     ASSERT_FALSE(stop_finished);
-
-    simulation_end.count_down();
+    simulation_end.count_down_and_wait();
     stop_t.join();
-    ASSERT_TRUE(task_finished);
+
     ASSERT_TRUE(stop_finished);
 }

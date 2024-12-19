@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -21,12 +20,6 @@ find_package(dev_essential REQUIRED COMPONENTS memory)
 
 add_executable(test_connext_dds_stream_item_topic
     tester_dds_stream_item_topic.cpp
-)
-
-add_test(NAME test_connext_dds_stream_item_topic
-    COMMAND test_connext_dds_stream_item_topic
-    TIMEOUT 10
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 
 target_link_libraries(test_connext_dds_stream_item_topic PRIVATE
@@ -52,16 +45,15 @@ target_compile_definitions(test_connext_dds_stream_item_topic PRIVATE
 
 rti_deploy(test_connext_dds_stream_item_topic)
 
+gtest_discover_tests(test_connext_dds_stream_item_topic
+    TIMEOUT 10
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
 ##################################################################
 # Test of DDS Connext Plugin
 ##################################################################
 
 add_executable(test_connext_dds_plugin tester_rti_common.cpp)
-add_test(NAME test_connext_dds_plugin
-    COMMAND test_connext_dds_plugin
-    TIMEOUT 30
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
-)
 target_link_libraries(test_connext_dds_plugin PRIVATE
     GTest::gtest_main
     GTest::gmock
@@ -77,30 +69,31 @@ target_link_libraries(test_connext_dds_plugin PRIVATE
 
 add_dependencies(test_connext_dds_plugin fep_participant_file_copy_rti_dds)
 set_target_properties(test_connext_dds_plugin PROPERTIES INSTALL_RPATH "$ORIGIN")
-
+gtest_discover_tests( test_connext_dds_plugin
+    TIMEOUT 30
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
 ##################################################################
 # Test of Connext DDS Simulation Bus
 ##################################################################
 
 add_executable(test_connext_dds_simulation_bus
     tester_dds_simbus.cpp
+    tester_dds_simbus_participant_name.cpp
     USER_QOS_PROFILES.xml)
 
 target_include_directories(test_connext_dds_simulation_bus PRIVATE
     "${CMAKE_SOURCE_DIR}/src/plugins/rti_dds")
 
-add_test(NAME test_connext_dds_simulation_bus
-    COMMAND test_connext_dds_simulation_bus
-    TIMEOUT 80
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
-)
 target_link_libraries(test_connext_dds_simulation_bus PRIVATE
     GTest::gtest_main
     GTest::gmock_main
+    RTIConnextDDS::cpp2_api
     dev_essential::memory
     fep3_participant_private_lib
     participant_test_utils
     participant_private_test_utils
+    fep3_thread_utilities
 )
 set_target_properties(test_connext_dds_simulation_bus PROPERTIES FOLDER "test/private/plugins")
 target_compile_definitions(test_connext_dds_simulation_bus PRIVATE
@@ -110,6 +103,15 @@ target_compile_definitions(test_connext_dds_simulation_bus PRIVATE
 
 add_dependencies(test_connext_dds_simulation_bus fep_participant_file_copy_rti_dds)
 set_target_properties(test_connext_dds_simulation_bus PROPERTIES INSTALL_RPATH "$ORIGIN")
+gtest_discover_tests( test_connext_dds_simulation_bus
+    PROPERTIES TIMEOUT 80
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
+
+if(MSVC)
+    # warning coming from dds headers
+    target_compile_options(test_connext_dds_simulation_bus PRIVATE /wd4245 /wd4244 /wd4996)
+endif()
 
 ##################################################################
 # Test of Connext DDS Simulation Bus Domain ID
@@ -122,8 +124,7 @@ add_executable(test_connext_dds_simulation_bus_domain_id
 target_include_directories(test_connext_dds_simulation_bus_domain_id PRIVATE
     "${CMAKE_SOURCE_DIR}/src/plugins/rti_dds")
 
-add_test(NAME test_connext_dds_simulation_bus_domain_id
-    COMMAND test_connext_dds_simulation_bus_domain_id
+gtest_discover_tests( test_connext_dds_simulation_bus_domain_id
     TIMEOUT 40
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
@@ -152,11 +153,6 @@ add_executable(test_connext_dds_simulation_bus_late_joiner
 target_include_directories(test_connext_dds_simulation_bus_late_joiner PRIVATE
     "${CMAKE_SOURCE_DIR}/src/plugins/rti_dds")
 
-add_test(NAME test_connext_dds_simulation_bus_late_joiner
-    COMMAND test_connext_dds_simulation_bus_late_joiner
-    TIMEOUT 40
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
-)
 target_link_libraries(test_connext_dds_simulation_bus_late_joiner PRIVATE
     GTest::gtest_main
     dev_essential::memory
@@ -169,6 +165,10 @@ target_compile_definitions(test_connext_dds_simulation_bus_late_joiner PRIVATE F
 
 add_dependencies(test_connext_dds_simulation_bus_late_joiner fep_participant_file_copy_rti_dds)
 set_target_properties(test_connext_dds_simulation_bus_late_joiner PROPERTIES INSTALL_RPATH "$ORIGIN")
+gtest_discover_tests(test_connext_dds_simulation_bus_late_joiner
+    TIMEOUT 40
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
 
 ##################################################################
 # Test of Connext DDS Simulation Bus Version
@@ -181,11 +181,6 @@ add_executable(test_connext_dds_simulation_bus_version
 target_include_directories(test_connext_dds_simulation_bus_version PRIVATE
     "${CMAKE_SOURCE_DIR}/src/plugins/rti_dds")
 
-add_test(NAME test_connext_dds_simulation_bus_version
-    COMMAND test_connext_dds_simulation_bus_version
-    TIMEOUT 30
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
-)
 target_link_libraries(test_connext_dds_simulation_bus_version PRIVATE
     GTest::gtest_main
     GTest::gmock
@@ -200,6 +195,11 @@ target_compile_definitions(test_connext_dds_simulation_bus_version PRIVATE FEP3_
 
 add_dependencies(test_connext_dds_simulation_bus_version fep_participant_file_copy_rti_dds)
 set_target_properties(test_connext_dds_simulation_bus_version PROPERTIES INSTALL_RPATH "$ORIGIN")
+
+gtest_discover_tests(test_connext_dds_simulation_bus_version
+    TIMEOUT 30
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+)
 
 ##################################################################
 # Test of Connext DDS Simulation Bus Performance
@@ -259,12 +259,6 @@ if(MSVC)
 else()
     set(TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR "")
 endif()
-
-add_test(NAME test_connext_dds_service_discovery
-    COMMAND test_connext_dds_service_discovery
-    TIMEOUT 80
-    WORKING_DIRECTORY $<TARGET_FILE_DIR:test_connext_dds_service_discovery>/${TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR}
-)
 target_link_libraries(test_connext_dds_service_discovery PRIVATE
     GTest::gtest_main
     GTest::gmock_main
@@ -288,3 +282,8 @@ if(MSVC)
     # warning coming from dds headers
     target_compile_options(test_connext_dds_service_discovery PRIVATE /wd4245 /wd4244 /wd4996)
 endif()
+
+gtest_discover_tests( test_connext_dds_service_discovery
+    TIMEOUT 80
+    WORKING_DIRECTORY $<TARGET_FILE_DIR:test_connext_dds_service_discovery>/${TEST_CONNEXT_DDS_DISCOVERY_WORKING_DIR}
+)

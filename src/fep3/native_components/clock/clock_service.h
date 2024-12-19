@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -118,23 +114,9 @@ private:
     fep3::Result setupRPCClockService(fep3::arya::IRPCServer& rpc_server);
     fep3::Result selectMainClock(const std::string& clock_name);
 
-    template <typename T>
-    std::invoke_result_t<T, GenericClockAdapter&> performLockedOp(T op)
-    {
-        std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
-        return op(_current_clock);
-    }
-
-    template <typename T>
-    std::invoke_result_t<T, const GenericClockAdapter&> performLockedOp(T op) const
-    {
-        std::lock_guard<std::recursive_mutex> lock_guard(_recursive_mutex);
-
-        return op(_current_clock);
-    }
-
 private:
+    GenericClockAdapter getClockLocked() const;
+
     mutable std::recursive_mutex _recursive_mutex;
     std::mutex _select_main_clock_mutex;
 

@@ -1,11 +1,28 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
 # with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 set(LIB_DIR "lib")
+
+
+add_library(test_dependee_shared_library SHARED
+    test_libraries/test_dependee_shared_library.h
+    test_libraries/test_dependee_shared_library.cpp
+)
+
+target_include_directories(test_dependee_shared_library PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+include(GenerateExportHeader)
+generate_export_header(test_dependee_shared_library)
+
+target_link_libraries(test_dependee_shared_library PRIVATE fep3_participant)
+set_target_properties(test_dependee_shared_library PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR}" # for shared library on linux
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR}" # for dll on windows
+    FOLDER "test/private/shared_library/test_shared_libraries"
+)
 
 add_library(test_shared_library SHARED
             test_libraries/test_shared_library.cpp
@@ -24,17 +41,6 @@ add_custom_command(TARGET test_shared_library
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:test_shared_library> "$<TARGET_FILE_DIR:test_shared_library>/${CMAKE_SHARED_LIBRARY_PREFIX}test_shared_library1.0.0${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-add_library(test_dependee_shared_library SHARED
-    test_libraries/test_dependee_shared_library.h
-    test_libraries/test_dependee_shared_library.cpp
-)
-target_link_libraries(test_dependee_shared_library PRIVATE fep3_participant)
-set_target_properties(test_dependee_shared_library PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS TRUE
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR}" # for shared library on linux
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR}" # for dll on windows
-    FOLDER "test/private/shared_library/test_shared_libraries"
-)
 
 ##################################################################
 #  the test itself
@@ -43,8 +49,7 @@ set_target_properties(test_dependee_shared_library PROPERTIES
 project(tester_shared_library)
 
 add_executable(${PROJECT_NAME} tester_shared_library.cpp)
-add_test(NAME ${PROJECT_NAME}
-    COMMAND ${PROJECT_NAME}
+gtest_discover_tests(${PROJECT_NAME}
     TIMEOUT 10
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE

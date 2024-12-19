@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #ifdef WIN32
@@ -18,10 +14,10 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/components/logging/mock/mock_logger_addons.h>
 
 #include <environment_variable.h>
-#include <helper/copy_file.h>
 #include <helper/platform_filesystem.h>
 
 // interfaces of native components
+#include <fep3/fep3_filesystem.h>
 #include <fep3/native_components/data_registry/data_registry.h>
 #include <fep3/native_components/service_bus/include/service_bus.h>
 
@@ -109,7 +105,7 @@ TEST_F(ComponentRegistryFactoryTestFixture, createRegistry__successOnNonDefaultC
         _working_directory + "/files/test.fep_components";
     const std::string non_default_file_path(_working_directory +
                                             "/non-default-file-name.fep_components");
-    ASSERT_TRUE(test::helper::copyFile(components_file_path_source, non_default_file_path));
+    ASSERT_TRUE(fs::copy_file(components_file_path_source, non_default_file_path));
     ASSERT_EQ(::fep3::Result{},
               ::fep3::environment_variable::set(_components_path_env_var, non_default_file_path));
 
@@ -148,9 +144,8 @@ TEST_F(ComponentRegistryFactoryTestFixture, createRegistry__successOnPluginSelec
     { // load ITestComponentA from plugin_1
         const std::string component_a_from_plugin_1_file_path_source =
             _working_directory + "/files/test_a_from_cpp_plugin_1.fep_components";
-        ASSERT_TRUE(
-            test::helper::copyFile(component_a_from_plugin_1_file_path_source,
-                                   _working_directory + "/fep3_participant.fep_components"));
+        ASSERT_TRUE(fs::copy_file(component_a_from_plugin_1_file_path_source,
+                                  _working_directory + "/fep3_participant.fep_components"));
 
         EXPECT_CALL(_logger_mock, isDebugEnabled()).WillRepeatedly(::testing::Return(true));
         EXPECT_CALL(_logger_mock,
@@ -195,9 +190,8 @@ TEST_F(ComponentRegistryFactoryTestFixture, createRegistry__successOnPluginSelec
     { // load ITestComponentA from plugin_2
         const std::string component_a_from_plugin_2_file_path_source =
             _working_directory + "/files/test_a_from_cpp_plugin_2.fep_components";
-        ASSERT_TRUE(
-            test::helper::copyFile(component_a_from_plugin_2_file_path_source,
-                                   _working_directory + "/fep3_participant.fep_components"));
+        ASSERT_TRUE(fs::copy_file(component_a_from_plugin_2_file_path_source,
+                                  _working_directory + "/fep3_participant.fep_components"));
 
         EXPECT_CALL(_logger_mock, isDebugEnabled()).WillRepeatedly(::testing::Return(true));
         EXPECT_CALL(_logger_mock,
@@ -259,8 +253,8 @@ TEST_F(ComponentRegistryFactoryTestFixture, createRegistry__failOnInvalidDefault
 {
     const std::string invalid_components_file_path_source =
         _working_directory + "/files/test_invalid_type.fep_components";
-    ASSERT_TRUE(test::helper::copyFile(invalid_components_file_path_source,
-                                       _working_directory + "/fep3_participant.fep_components"));
+    ASSERT_TRUE(fs::copy_file(invalid_components_file_path_source,
+                              _working_directory + "/fep3_participant.fep_components"));
 
     EXPECT_CALL(_logger_mock, isDebugEnabled()).WillRepeatedly(::testing::Return(true));
     EXPECT_CALL(_logger_mock,
@@ -291,8 +285,8 @@ TEST_F(ComponentRegistryFactoryTestFixture, createRegistry__successOnRelativeCom
 {
     const std::string relative_path_components_file_path_source =
         _working_directory + "/files/test_rel_path.fep_components";
-    ASSERT_TRUE(test::helper::copyFile(relative_path_components_file_path_source,
-                                       _working_directory + "/fep3_participant.fep_components"));
+    ASSERT_TRUE(fs::copy_file(relative_path_components_file_path_source,
+                              _working_directory + "/fep3_participant.fep_components"));
 
     EXPECT_CALL(_logger_mock, isDebugEnabled()).WillRepeatedly(::testing::Return(true));
     EXPECT_CALL(_logger_mock,

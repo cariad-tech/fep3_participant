@@ -1,25 +1,24 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-
 #include <fep3/base/component_registry/component_registry.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
 #include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/logging/logging_service.h>
 #include <fep3/native_components/logging/sinks/logging_formater_fep.hpp>
+#include <fep3/native_components/logging/sinks/logging_sink_rpc.hpp>
 #include <fep3/native_components/service_bus/testing/service_bus_testing.hpp>
 #include <fep3/rpc_services/logging/logging_client_stub.h>
 #include <fep3/rpc_services/logging/logging_rpc_sink_client_service_stub.h>
 #include <fep3/rpc_services/logging/logging_rpc_sink_service_client_stub.h>
 
-#include <a_util/system/system.h>
+#include <boost/thread/latch.hpp>
+
+#include <notification_waiting.h>
 
 // RPC Sink Client Client to send configurations to the logging service
 typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingClientStub,
@@ -33,6 +32,10 @@ typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkServiceCli
 struct TestRPCSinkClient
     : public fep3::rpc::RPCService<fep3::rpc_stubs::RPCLoggingRPCSinkClientServiceStub,
                                    fep3::rpc::IRPCLoggingSinkClientDef> {
+    TestRPCSinkClient(fep3::native::NotificationWaiting& notification) : _notification(notification)
+    {
+    }
+
     int onLog(const std::string& description,
               const std::string& logger_name,
               const std::string& participant,
@@ -47,10 +50,13 @@ struct TestRPCSinkClient
         const auto log_msg = _logging_formatter.formatLogMessage(log_message);
         std::cout << log_msg << std::endl;
         _messages.push_back(log_msg);
+        if (_messages.size() >= 2)
+            _notification.notify();
         return fep3::ERR_NOERROR.getCode();
     }
     std::vector<std::string> _messages;
     fep3::native::LoggingFormaterFep _logging_formatter;
+    fep3::native::NotificationWaiting& _notification;
 };
 
 struct TestLoggingServiceRPC : public ::testing::Test {
@@ -64,6 +70,7 @@ struct TestLoggingServiceRPC : public ::testing::Test {
     std::shared_ptr<TestRPCSinkClient> _test_sink_client;
     std::shared_ptr<LoggingSinkServiceClient> _sink_service;
     std::string _address;
+    fep3::native::NotificationWaiting _notification{true};
 
 private:
     const fep3::ComponentVersionInfo _dummy_component_version_info{
@@ -91,7 +98,7 @@ public:
 
         auto rpc_server = _service_bus->getServer();
         if (rpc_server) {
-            _test_sink_client = std::make_shared<TestRPCSinkClient>();
+            _test_sink_client = std::make_shared<TestRPCSinkClient>(_notification);
             ASSERT_EQ(
                 rpc_server->registerService(
                     ::fep3::rpc::IRPCLoggingSinkClientDef::getRPCDefaultName(), _test_sink_client),
@@ -125,25 +132,25 @@ TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
     try {
         _logging_service_client->setLoggerFilter(
             "rpc", "RPCLogger.LoggingService.Tester", static_cast<int>(fep3::LoggerSeverity::info));
+
         _sink_service->registerRPCLoggingSinkClient(_address,
+                                                    "RPCLogger.LoggingService.Tester",
+                                                    static_cast<int>(fep3::LoggerSeverity::info));
+        // register an unreachable adrress
+        _sink_service->registerRPCLoggingSinkClient("http://127.0.0.1:1111",
                                                     "RPCLogger.LoggingService.Tester",
                                                     static_cast<int>(fep3::LoggerSeverity::info));
     }
     catch (jsonrpc::JsonRpcException e) {
         ASSERT_TRUE(false) << e.what();
     }
-
     ASSERT_EQ(logger->logWarning("First message"), fep3::ERR_NOERROR);
     ASSERT_EQ(logger->logInfo("Second message"), fep3::ERR_NOERROR);
     // severity == debug should not appear because it's not configured
     ASSERT_EQ(logger->logDebug("Test log: must not appear at all"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    auto try_count = 10;
-    while (_test_sink_client->_messages.size() < 2 && try_count > 0) {
-        a_util::system::sleepMilliseconds(300);
-        try_count--;
-    }
+    _notification.waitForNotification();
 
     ASSERT_EQ(_test_sink_client->_messages.size(), 2);
 
@@ -172,11 +179,8 @@ TEST_F(TestLoggingServiceRPC, TestLoggingRPCSink)
     ASSERT_EQ(logger->logDebug("Test log: must not appear at all"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    try_count = 5;
-    while (_test_sink_client->_messages.size() < 2 && try_count > 0) {
-        a_util::system::sleepMilliseconds(300);
-        try_count--;
-    }
+    using namespace std::chrono_literals;
+    _notification.waitForNotificationWithTimeout(1s);
 
     // it is still empty, because we unregistered
     ASSERT_EQ(_test_sink_client->_messages.size(), 0);
