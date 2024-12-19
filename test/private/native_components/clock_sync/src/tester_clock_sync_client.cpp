@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/components/base/mock_components.h>
@@ -35,7 +31,6 @@ using EventSink = NiceMock<mock::experimental::Clock::EventSink>;
 using InterpolationTimeMock = NiceMock<mock::InterpolationTime>;
 using LoggingService = fep3::mock::LoggingService;
 using ComponentsMock = NiceMock<mock::Components>;
-using Logger = NiceMock<mock::LoggerWithDefaultBehavior>;
 
 struct NativeClockSyncClientTest : public Test {
     NativeClockSyncClientTest()

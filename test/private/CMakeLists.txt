@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -12,7 +11,7 @@
 # which is only a static library wrapper around the fep3_participant_object_lib
 ######################################################################################
 
-find_package(Boost 1.73.0 REQUIRED COMPONENTS thread headers)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS thread)
 include(../../scripts/cmake/set_boost_interface_targets.cmake)
 
 add_library(fep3_participant_private_lib STATIC
@@ -37,6 +36,7 @@ add_subdirectory(base)
 add_subdirectory(utils)
 add_subdirectory(components_configuration/src)
 add_subdirectory(foreign_components/cpp/src)
+add_subdirectory(component_description)
 add_subdirectory(component_factory/cpp/src)
 add_subdirectory(component_registry/src)
 add_subdirectory(component_registry_factory/src)

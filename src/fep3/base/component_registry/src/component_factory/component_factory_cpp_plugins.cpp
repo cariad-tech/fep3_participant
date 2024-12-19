@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../../include/component_factory/component_factory_cpp_plugins.h"
@@ -42,9 +38,17 @@ ComponentFactoryCPPPlugin::ComponentFactoryCPPPlugin(const std::string& plugin_f
 {
 }
 
+ComponentFactoryCPPPlugin::ComponentFactoryCPPPlugin()
+{
+}
+
 ComponentFactoryCPPPlugin::~ComponentFactoryCPPPlugin()
 {
 }
+
+ComponentFactoryCPPPlugin::ComponentFactoryCPPPlugin(ComponentFactoryCPPPlugin&&) = default;
+ComponentFactoryCPPPlugin& ComponentFactoryCPPPlugin::operator=(ComponentFactoryCPPPlugin&&) =
+    default;
 
 std::shared_ptr<fep3::arya::IComponent> ComponentFactoryCPPPlugin::createComponent(
     const std::string& iid, const ILogger* logger) const

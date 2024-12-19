@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -79,6 +79,17 @@ public:
         }
         return {};
     }
+
+    /**
+     * @brief sets the logger to the given one
+     *
+     * @param[in] logger the components where the ILoggingService is registered to
+     */
+    void initLogger(std::shared_ptr<fep3::arya::ILogger> logger)
+    {
+        _logger = std::move(logger);
+    }
+
     /**
      * @brief deinit the logger and reset the logger member
      */

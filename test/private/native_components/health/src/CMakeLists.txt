@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -11,16 +10,14 @@
 # tester_health_service
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-find_package(Boost REQUIRED COMPONENTS headers)
+find_package(Boost REQUIRED)
 
 add_executable(tester_health_service
     tester_health_service.cpp
     tester_job_health_registry.cpp
 )
 
-add_test(NAME tester_health_service
-    COMMAND tester_health_service
+gtest_discover_tests(tester_health_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -39,6 +36,8 @@ set_target_properties(tester_health_service PROPERTIES FOLDER "test/private/nati
 # tester_health_service_rpc
 ##################################################################
 
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
 add_custom_target(tester_health_service_rpc_stub_generator)
 fep_generate_rpc_stubs_before_target(
     TARGET tester_health_service_rpc_stub_generator
@@ -50,8 +49,7 @@ fep_generate_rpc_stubs_before_target(
 add_executable(tester_health_service_rpc tester_health_service_rpc.cpp)
 add_dependencies(tester_health_service_rpc tester_health_service_rpc_stub_generator)
 
-add_test(NAME tester_health_service_rpc
-    COMMAND tester_health_service_rpc
+gtest_discover_tests(tester_health_service_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )

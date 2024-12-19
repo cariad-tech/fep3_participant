@@ -1,18 +1,13 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/base/component_registry/include/plugin/base/shared_library.h>
-
-#include <a_util/filesystem.h>
+#include <fep3/fep3_filesystem.h>
 
 #include <gtest/gtest.h>
 
@@ -59,11 +54,11 @@ TEST_F(SharedLibraryFixtureTests, testLoadingSharedLibraryWithDependency)
  */
 TEST_P(SharedLibraryFixtureTests, testLoadingSharedLibraryWithDifferentNaming)
 {
-    a_util::filesystem::Path test_full_library_path{test_shared_library_dir};
+    fs::path test_full_library_path{test_shared_library_dir};
     test_full_library_path.append(GetParam());
 
     ASSERT_NO_THROW(shared_library = std::make_unique<fep3::plugin::arya::SharedLibrary>(
-                        test_full_library_path.toString()););
+                        test_full_library_path.string()););
     const auto& get_function = shared_library->get<int()>("get2FromDependeeLibrary");
     ASSERT_NE(get_function, nullptr);
     EXPECT_EQ(2, get_function());

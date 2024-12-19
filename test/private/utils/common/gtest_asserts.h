@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -53,3 +49,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
         ASSERT_THAT(std::string(actual_result.getDescription()),                                   \
                     ::testing::MatchesRegex(description_regex));                                   \
     }
+
+#define ASSERT_FEP3_RESULT_TEST_ARRANGE(expression)                                                \
+    ASSERT_EQ(expression, fep3::ERR_NOERROR) << "test failed due to error during the arrange "     \
+                                                "part";

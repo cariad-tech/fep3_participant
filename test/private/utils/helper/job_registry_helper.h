@@ -1,22 +1,20 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
 
+#include <fep3/core/default_job.h>
 #include <fep3/core/job.h>
 
 #include <gtest/gtest.h>
 
 #include <condition_variable>
+#include <string_view>
 #include <thread>
 
 namespace fep3 {
@@ -94,6 +92,11 @@ struct SimpleJobBuilder {
     fep3::ClockTriggeredJobConfiguration makeClockJobConfig() const
     {
         return fep3::ClockTriggeredJobConfiguration(_job_config);
+    }
+
+    std::unique_ptr<fep3::JobConfiguration> makeClockJobConfigPtr() const
+    {
+        return std::make_unique<fep3::ClockTriggeredJobConfiguration>(_job_config);
     }
 
     fep3::DataTriggeredJobConfiguration makeDataJobConfig() const

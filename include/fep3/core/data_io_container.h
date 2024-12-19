@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -17,6 +17,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <list>
 
 namespace fep3::core {
+
 /// @cond nodoc
 class DataIOContainer : public IDataIOContainer {
 public:
@@ -33,12 +34,18 @@ public:
     fep3::Result addToDataRegistry(fep3::arya::IDataRegistry& data_registry,
                                    fep3::arya::IClockService& clock_service) override;
     void removeFromDataRegistry(fep3::arya::IDataRegistry& data_registry) override;
+    void setConfiguration(const DataIOContainerConfiguration& configuration) override;
+
+    void logIOInfo(const fep3::arya::ILogger* logger) override;
 
 private:
     /// list of readers
     std::list<DataReader> _readers;
     /// list of writers
     std::list<DataWriter> _writers;
+    /// capacity of storage containing information regarding purged samples
+    /// configuration structure
+    DataIOContainerConfiguration _configuration;
 };
 /// @endcond
 

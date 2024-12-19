@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "http_systemaccess.h"
@@ -18,7 +14,7 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "http_url_getter.h"
 #include "service_update_sink_registry.h"
 
-#include <a_util/strings.h>
+#include <a_util/strings/strings_functions.h>
 
 #include <cxx_url.h>
 #include <notification_waiting.h>
@@ -45,8 +41,8 @@ public:
         std::string received_service_name;
         std::string received_system_name;
 
-        auto service_at_system = a_util::strings::split(update_event._service_name, "@", true);
-        if (service_at_system.size() >= 2) {
+        if (auto service_at_system = a_util::strings::split(update_event._service_name, "@");
+            service_at_system.size() >= 2) {
             received_service_name = service_at_system[0];
             received_system_name = service_at_system[1];
         }
@@ -122,7 +118,7 @@ private:
     mutable std::recursive_mutex _my_mutex;
 };
 
-struct HttpSystemAccess::Impl {
+struct HttpSystemAccess::Impl : fep3::base::arya::EasyLogging {
     Impl() = delete;
     Impl(Impl&&) = delete;
     Impl& operator=(Impl&&) = delete;
@@ -134,15 +130,15 @@ struct HttpSystemAccess::Impl {
     Impl(const std::string& system_url,
          const std::string& system_name,
          std::chrono::seconds interval,
-         std::shared_ptr<ILogger> logger,
+         std::shared_ptr<ILogger> startup_logger,
          std::shared_ptr<IServiceDiscoveryFactory> service_discovery_factory)
         : _system_name(system_name),
           _system_url(system_url),
           _interval(interval),
           _services(),
-          _logger(std::move(logger)),
           _service_discovery_factory(std::move(service_discovery_factory))
     {
+        initLogger(startup_logger);
         startDiscovering();
     }
     ~Impl()
@@ -154,17 +150,31 @@ struct HttpSystemAccess::Impl {
             _stop_loop = true;
             if (_loop.joinable()) {
                 _loop.join();
+                FEP3_LOG_DEBUG("Joined discovery loop thread");
             }
         }
     }
 
     std::multimap<std::string, std::string> getCurrentlyDiscoveredServices()
     {
-        return _services.getDiscoveredServices();
+        auto services = _services.getDiscoveredServices();
+        // FEP3_LOG_DEBUG expanded
+        auto logger = getLogger();
+        if (logger && logger->isDebugEnabled()) {
+            std::stringstream services_serialized;
+            for (auto const& x: services) {
+                services_serialized << "  " << x.first << ": " << x.second << '\n';
+            }
+
+            logger->logDebug("Discovered services:\n" + services_serialized.str());
+        }
+        return services;
     }
 
     std::multimap<std::string, std::string> getDiscoveredServices(std::chrono::milliseconds timeout)
     {
+        FEP3_LOG_DEBUG(
+            a_util::strings::format("getDiscoveredServices with timeout %dms", timeout.count()));
         if (timeout.count() != 0) {
             // wait that at least one msearch is done
             if (timeout.count() <= 0) {
@@ -173,6 +183,7 @@ struct HttpSystemAccess::Impl {
             // we do not care if we have a timeout or not we return the discovered
             _discovery_wait.waitForNotificationWithTimeout(timeout);
         }
+
         return getCurrentlyDiscoveredServices();
     }
 
@@ -180,7 +191,7 @@ struct HttpSystemAccess::Impl {
     {
         if (!_system_url.empty()) {
             _service_finder = _service_discovery_factory->getServiceFinder(
-                _logger,
+                getLogger(),
                 _system_url,
                 HttpSystemAccess::getNetworkInterface(),
                 FEP3_PARTICIPANT_LIBRARY_VERSION_ID,
@@ -192,6 +203,11 @@ struct HttpSystemAccess::Impl {
                 try {
                     seconds send_msearch_interval = _interval;
                     auto last_time = std::chrono::system_clock::now();
+
+                    FEP3_LOG_INFO(a_util::strings::format(
+                        "Starting discovery loop with MSearch interval %d s",
+                        send_msearch_interval.count()));
+
                     // send search first
 
                     searchNow();
@@ -208,8 +224,11 @@ struct HttpSystemAccess::Impl {
                     } while (!_stop_loop);
                 }
                 catch (const std::exception& ex) {
-                    _logger->logInfo(ex.what());
+                    FEP3_LOG_ERROR(a_util::strings::format(
+                        "Exception caught while discovering. Aborting. Exception message: %s",
+                        ex.what()));
                 }
+                FEP3_LOG_INFO("Ended discovery loop");
             }));
         }
     }
@@ -230,16 +249,19 @@ private:
     void searchNow()
     {
         if (!_service_finder->sendMSearch()) {
-            _logger->logInfo(_service_finder->getLastSendErrors());
+            FEP3_LOG_INFO(a_util::strings::format("Send MSearch failed with errors: %s",
+                                                  _service_finder->getLastSendErrors().c_str()));
         }
     }
     void checkForServices(std::chrono::seconds how_long)
     {
+        FEP3_LOG_DEBUG(a_util::strings::format("Checking for services for %ds", how_long.count()));
         _service_finder->checkForServices(
             [this](const fep3::native::ServiceUpdateEvent& update_event) {
                 _services.update(update_event, _system_name, _service_update_sink_registry);
             },
             how_long);
+        FEP3_LOG_DEBUG("Checked for services");
     }
     void removeOldDevices()
     {
@@ -255,7 +277,6 @@ private:
     std::chrono::seconds _interval;
     std::thread _loop;
     NotificationWaiting _discovery_wait;
-    std::shared_ptr<ILogger> _logger;
     std::shared_ptr<IServiceDiscoveryFactory> _service_discovery_factory;
     ServiceUpdateSinkRegistry _service_update_sink_registry;
 };
@@ -264,17 +285,17 @@ HttpSystemAccess::HttpSystemAccess(
     const std::string& system_name,
     const std::string& system_url,
     const std::shared_ptr<ISystemAccessBaseDefaultUrls>& defaults,
-    std::shared_ptr<ILogger> logger,
+    std::shared_ptr<ILogger> startup_logger,
     std::shared_ptr<IServiceDiscoveryFactory> service_discovery_factory)
     : SystemAccessBase(system_name, system_url, defaults),
       _service_discovery_factory(service_discovery_factory),
-      _logger(logger),
       _impl(std::make_unique<Impl>(system_url,
                                    system_name,
                                    std::chrono::seconds(5),
-                                   std::move(logger),
+                                   startup_logger,
                                    _service_discovery_factory))
 {
+    initLogger(std::move(startup_logger));
 }
 
 HttpSystemAccess::~HttpSystemAccess()
@@ -308,7 +329,7 @@ std::shared_ptr<IServiceBus::IParticipantServer> HttpSystemAccess::createAServer
                                                    _used_server_url,
                                                    getName(),
                                                    getUrl(),
-                                                   _logger,
+                                                   getLogger(),
                                                    _service_discovery_factory,
                                                    discovery_active);
         // very important to call!!

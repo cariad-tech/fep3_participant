@@ -1,47 +1,44 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2022 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "fep_components_plugin_test.h"
 
+#include <fep3/fep3_filesystem.h>
 #include <fep3/fep3_participant_version.h>
-
-#include <a_util/filesystem.h>
 
 namespace test {
 namespace helper {
 
 void FEPComponentsPluginFixture::SetUp()
 {
-    a_util::filesystem::Path plugin_file_path{GetParam()};
-    const auto& plugin_file_path_string = plugin_file_path.toString();
+    fs::path plugin_file_path{GetParam()};
+    const auto& plugin_file_path_string = plugin_file_path.string();
 #ifdef WIN32
     // remember the cwd
-    const auto& original_working_dir = a_util::filesystem::getWorkingDirectory();
+    const auto& original_working_dir = fs::current_path();
     // on windows we need to switch to the directory where the library is located
     // to ensure loading of dependee dlls that reside in the same directory
-    a_util::filesystem::setWorkingDirectory(plugin_file_path.getParent());
+    fs::current_path(plugin_file_path.parent_path());
 
     _library_handle = ::LoadLibrary(plugin_file_path_string.c_str());
     if (!_library_handle) {
-        throw std::runtime_error("failed to load shared library '" + plugin_file_path +
+        throw std::runtime_error("failed to load shared library '" + plugin_file_path.string() +
                                  "' with error code '" + std::to_string(GetLastError()) + "'");
     }
 
     // switch back to the original cwd
-    if (a_util::filesystem::Error::OK !=
-        a_util::filesystem::setWorkingDirectory(original_working_dir)) {
-        throw std::runtime_error("unable to switch back to original working directory; current "
-                                 "working directory might be wrong from now on");
+    auto ec = std::error_code{};
+    if (fs::current_path(original_working_dir, ec); ec) {
+        throw std::runtime_error("unable to switch back to original working directory; error: '" +
+                                 std::to_string(ec.value()) + " - " + ec.message() +
+                                 "'; current working directory might be wrong from now on.");
     }
+
 #else
     _library_handle = ::dlopen(plugin_file_path_string.c_str(), RTLD_LAZY);
     ASSERT_NE(nullptr, _library_handle) << "failed to load shared library '" +

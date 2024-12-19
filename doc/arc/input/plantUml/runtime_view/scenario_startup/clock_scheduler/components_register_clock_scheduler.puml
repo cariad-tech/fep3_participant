@@ -1,0 +1,129 @@
+/**
+ * Copyright @ 2023 VW Group. All rights reserved.
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ 
+ title FEP SDK Participant: Register components: Clock/Scheduler
+ 
+ participant "Component\nRegistry Factory"
+ 
+ [-> "Component\nRegistry Factory": [[fep_element_create_execute.svg{Tooltip for message} createRegistry()]]
+  activate "Component\nRegistry Factory"
+  note right: Find components file
+  "Component\nRegistry Factory" -> "Component\nRegistry Factory": createRegistryByFile()
+   activate "Component\nRegistry Factory" #LightGrey
+   create "Component\nRegistry"
+   "Component\nRegistry Factory" -> "Component\nRegistry": c'tor
+    activate "Component\nRegistry"
+    return
+   note left: Parse components file and\ncreate component factory\nfor each component
+    
+   create "Component\nFactory"
+   "Component\nRegistry Factory" -> "Component\nFactory": c'tor
+   note left: Create and register components
+    activate "Component\nFactory"
+    return
+   "Component\nRegistry Factory" -> "Component\nFactory": createComponent()
+    activate "Component\nFactory"
+    create "Clock\nService"
+    "Component\nFactory" -> "Clock\nService" : c'tor
+     activate "Clock\nService"
+     create "System\nClock"
+     "Clock\nService" -> "System\nClock" : c'tor
+      activate "System\nClock"
+      create "Clock Event\nSink"
+      "System\nClock" -> "Clock Event\nSink": c'tor
+       activate "Clock Event\nSink"
+       return
+      return
+     create "Sim.\nClock"
+     "Clock\nService" -> "Sim.\nClock" : c'tor
+      activate "Sim.\nClock"
+      return
+     create "Clock Event\nSink Registry"
+     "Clock\nService" -> "Clock Event\nSink Registry" : c'tor
+      activate "Clock Event\nSink Registry"
+      return
+     create "RPC Clock\nSync Service"
+     "Clock\nService" -> "RPC Clock\nSync Service" : c'tor
+      activate "RPC Clock\nSync Service"
+      return
+     create "Clock Main\nEvent Sink"
+     "Clock\nService" -> "Clock Main\nEvent Sink" : c'tor
+      activate "Clock Main\nEvent Sink"
+      return 
+     create "RPC Clock\nService"
+     "Clock\nService" -> "RPC Clock\nService" : c'tor
+      activate "RPC Clock\nService"
+      return
+     return
+    return
+      
+   "Component\nRegistry Factory" -> "Component\nRegistry" : registerComponent(Clock Service)
+    activate "Component\nRegistry"
+    return
+      
+   "Component\nRegistry Factory" -> "Component\nFactory": createComponent()
+    activate "Component\nFactory"
+    create "Clock Sync\nService"
+    "Component\nFactory" -> "Clock Sync\nService" : c'tor
+     activate "Clock Sync\nService"
+     create "Clock Sync\nService Configuration"
+     "Clock Sync\nService" -> "Clock Sync\nService Configuration": c'tor
+      activate "Clock Sync\nService Configuration"
+      return
+     return
+    return
+        
+   "Component\nRegistry Factory" -> "Component\nRegistry" : registerComponent(Clock Sync Service)
+    activate "Component\nRegistry"
+    return
+    
+   "Component\nRegistry Factory" -> "Component\nFactory": createComponent()
+    activate "Component\nFactory"
+    create "Job\nRegistry"
+    "Component\nFactory" -> "Job\nRegistry" : c'tor
+     activate "Job\nRegistry"
+     return
+    return
+
+   "Component\nRegistry Factory" -> "Component\nFactory": createComponent()
+    activate "Component\nFactory"
+    create "Local Scheduler\nService"
+    note left: "Scheduler Service component"
+    "Component\nFactory" -> "Local Scheduler\nService" : c'tor
+     activate "Local Scheduler\nService"
+     "Local Scheduler\nService" -> "Local Scheduler\nService" : createSchedulerRegistry()
+     create "Clock Based\nScheduler"
+     "Local Scheduler\nService" -> "Clock Based\nScheduler": c'tor
+      activate "Clock Based\nScheduler"
+      return 
+     create "Local Scheduler\nRegistry"
+     "Local Scheduler\nService" -> "Local Scheduler\nRegistry": c'tor
+      activate "Local Scheduler\nRegistry"
+      "Local Scheduler\nRegistry" -> "Local Scheduler\nRegistry": register(Clock Based Scheduler)
+      note left: Default:\nLocal Clock Based Scheduler
+      "Local Scheduler\nRegistry" -> "Local Scheduler\nRegistry": activateDefaultScheduler()
+      return
+     return
+    return
+    
+   "Component\nRegistry Factory" -> "Component\nRegistry" : registerComponent(Clock Based Scheduler)
+    activate "Component\nRegistry"
+    return
+   deactivate "Component\nRegistry Factory"
+   ...
+   [<-- "Component\nRegistry Factory" 
+@enduml

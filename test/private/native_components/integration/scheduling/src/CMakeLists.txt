@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -13,8 +12,7 @@
 
 add_executable(tester_scheduling tester_scheduling.cpp)
 
-add_test(NAME tester_scheduling
-    COMMAND tester_scheduling
+gtest_discover_tests(tester_scheduling
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )

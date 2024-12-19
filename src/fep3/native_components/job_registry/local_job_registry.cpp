@@ -1,17 +1,14 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "local_job_registry.h"
 
+#include "fep3/components/logging/easy_logger.h"
 #include "job_registry_impl.h"
 
 namespace fep3 {
@@ -27,29 +24,25 @@ std::shared_ptr<base::NativePropertyNode> JobConfigurationToPropertyNode::create
 {
     _created_node = std::make_shared<base::NativePropertyNode>(_job_name);
 
+    _created_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_TRIGGER_TYPE_PROPERTY, std::string{FEP3_JOB_CYCLIC_TRIGGER_TYPE_PROPERTY}));
+
+    uint64_t max_runtime = job_configuration._max_runtime_real_time.value_or(Duration{0}).count();
+
+    _created_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY, max_runtime));
+
+    _created_node->setChild(std::make_shared<base::NativePropertyNode>(
+        FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY, job_configuration.toString()));
+
     _created_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_TRIGGER_TYPE_PROPERTY,
-                                                   FEP3_JOB_CYCLIC_TRIGGER_TYPE_PROPERTY,
-                                                   base::PropertyType<std::string>::getTypeName()));
-
-    _created_node->setChild(std::make_shared<base::NativePropertyNode>(
-        FEP3_JOB_MAX_RUNTIME_REAL_TIME_PROPERTY,
-        std::to_string(job_configuration._max_runtime_real_time.value_or(Duration{0}).count()),
-        base::PropertyType<int32_t>::getTypeName()));
+        std::make_shared<base::NativePropertyNode>(FEP3_JOB_CYCLE_SIM_TIME_PROPERTY, int32_t{0}));
 
     _created_node->setChild(
-        std::make_shared<base::NativePropertyNode>(FEP3_JOB_RUNTIME_VIOLATION_STRATEGY_PROPERTY,
-                                                   job_configuration.toString(),
-                                                   base::PropertyType<std::string>::getTypeName()));
+        std::make_shared<base::NativePropertyNode>(FEP3_JOB_DELAY_SIM_TIME_PROPERTY, int32_t{0}));
 
     _created_node->setChild(std::make_shared<base::NativePropertyNode>(
-        FEP3_JOB_CYCLE_SIM_TIME_PROPERTY, "", base::PropertyType<int32_t>::getTypeName()));
-
-    _created_node->setChild(std::make_shared<base::NativePropertyNode>(
-        FEP3_JOB_DELAY_SIM_TIME_PROPERTY, "", base::PropertyType<int32_t>::getTypeName()));
-
-    _created_node->setChild(base::makeNativePropertyNode<std::vector<std::string>>(
-        FEP3_JOB_TRIGGER_SIGNAL_PROPERTY, {""}));
+        FEP3_JOB_TRIGGER_SIGNAL_PROPERTY, std::vector<std::string>{}));
 
     return job_configuration.acceptVisitor(*this) ? _created_node : nullptr;
 }
@@ -276,17 +269,17 @@ fep3::Result JobRegistry::addJobImpl(const std::string& name,
         fep3::Result result = CREATE_ERROR_DESCRIPTION(
             ERR_INVALID_STATE, "Registering a job is possible before initialization only");
 
-        result |= _logger->logError(result.getDescription());
+        FEP3_ARYA_LOGGER_LOG_RESULT(_logger, result);
 
         return result;
     }
 
     auto result = _job_registry_impl->addJob(name, job, job_config);
     if (ERR_RESOURCE_IN_USE == result) {
-        result |= _logger->logError(result.getDescription());
+        FEP3_ARYA_LOGGER_LOG_RESULT(_logger, result);
     }
     else if (!result) {
-        result |= _logger->logWarning(result.getDescription());
+        FEP3_ARYA_LOGGER_LOG_WARNING(_logger, result.getDescription());
     }
 
     return result;
@@ -298,17 +291,16 @@ fep3::Result JobRegistry::removeJob(const std::string& name)
         fep3::Result result = CREATE_ERROR_DESCRIPTION(
             ERR_INVALID_STATE, "Removing a job is possible before initialization only");
 
-        result |= _logger->logError(result.getDescription());
-
+        FEP3_ARYA_LOGGER_LOG_RESULT(_logger, result);
         return result;
     }
 
     auto result = _job_registry_impl->removeJob(name);
     if (ERR_NOT_FOUND == result) {
-        result |= _logger->logError(result.getDescription());
+        FEP3_ARYA_LOGGER_LOG_RESULT(_logger, result);
     }
     else if (!result) {
-        result |= _logger->logWarning(result.getDescription());
+        FEP3_ARYA_LOGGER_LOG_WARNING(_logger, result.getDescription());
     }
 
     return result;

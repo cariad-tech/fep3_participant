@@ -1,12 +1,9 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
 # with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-
-find_package(dev_essential REQUIRED COMPONENTS filesystem)
 
 add_library(faulty_test_plugin SHARED
             test_plugins/faulty_test_plugin.cpp
@@ -24,10 +21,7 @@ target_include_directories(faulty_test_plugin PUBLIC
 project(tester_startup_error_handling)
 
 add_executable(${PROJECT_NAME} tester_startup_error_handling.cpp)
-add_test(NAME ${PROJECT_NAME}
-    COMMAND ${PROJECT_NAME}
-    TIMEOUT 10
-)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test/function/participant/core")
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -39,7 +33,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     fep3_participant_core
     participant_test_utils
     GTest::gtest_main
-    dev_essential::filesystem
 )
 internal_fep3_participant_deploy(${PROJECT_NAME})
 
@@ -51,4 +44,6 @@ add_custom_command(TARGET ${PROJECT_NAME}_copy_files
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../files ${CMAKE_CURRENT_BINARY_DIR}/files/
 )
 
-
+gtest_discover_tests(${PROJECT_NAME}
+    TIMEOUT 10
+)

@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -14,8 +14,25 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #include <fep3/base/queue/data_item_queue.h>
 #include <fep3/components/data_registry/data_registry_intf.h>
+#include <fep3/components/logging/easy_logger.h>
 
 #include <mutex>
+#include <sstream>
+
+namespace {
+// Format timestamp vector in a human readable way for logging purposes.
+std::stringstream timestampVecToString(const std::vector<fep3::Timestamp>& timestamps)
+{
+    std::stringstream ss;
+    for (auto it = timestamps.begin(); it != timestamps.end(); it++) {
+        if (it != timestamps.begin()) {
+            ss << ", ";
+        }
+        ss << it->count();
+    }
+    return ss;
+}
+} // namespace
 
 namespace fep3 {
 namespace core {
@@ -33,11 +50,19 @@ public:
      *
      * @param sample_queue_capacity sample queue capacity
      * @param init_type Stream Type at init time
+     * @param purged_sample_log_capacity capacity of the buffer storing information regarding purged
+     * samples.
      */
-    DataReaderBacklog(size_t sample_queue_capacity, const fep3::arya::IStreamType& init_type)
+    DataReaderBacklog(size_t sample_queue_capacity,
+                      const fep3::arya::IStreamType& init_type,
+                      size_t purged_sample_log_capacity)
         : _sample_queue(sample_queue_capacity),
-          _init_type(std::make_shared<fep3::base::arya::StreamType>(init_type))
+          _init_type(std::make_shared<fep3::base::arya::StreamType>(init_type)),
+          _purged_sample_log_capacity(purged_sample_log_capacity)
     {
+        if (samplePurgeLogEnabled()) {
+            _purged_sample_timestamps.reserve(_purged_sample_log_capacity);
+        }
     }
 
     /// @cond nodoc
@@ -67,12 +92,22 @@ public:
     }
 
     /**
-     * @brief Receives a data sample item
+     * @brief Receives a data sample item.
+     * Optionally stores information of samples purged automatically @see
+     * _purged_sample_log_capacity. Samples are purged automatically if a sample is pushed to the
+     * queue while the queue is full.
      *
      * @param[in] sample The received data sample
      */
     void operator()(const data_read_ptr<const fep3::arya::IDataSample>& sample) override
     {
+        if (samplePurgeLogEnabled() && sampleQueueFull() && !purgeLogQueueFull()) {
+            auto oldest_sample_timestamp = _sample_queue.nextTime();
+            if (oldest_sample_timestamp.has_value()) {
+                _purged_sample_timestamps.push_back(oldest_sample_timestamp.value());
+            }
+        }
+
         _sample_queue.pushSample(sample, sample->getTime());
     }
 
@@ -191,7 +226,8 @@ public:
 
     /**
      * @brief pops latest sample older than timestamp
-     * and purges all other samples which are older than the given timestamp from queue
+     * and purges all other samples which are older than the given timestamp from queue.
+     * Optionally stores information of samples purged @see _purged_sample_log_capacity.
      *
      * @param[in] timestamp threshold for samples to remove
      * @return data_read_ptr<const IDataSample>
@@ -207,8 +243,82 @@ public:
         while (oldest && (oldest->getTime() < timestamp)) {
             sample = popSampleOldest();
             oldest = readSampleOldest();
+            if (samplePurgeLogEnabled() && !purgeLogQueueFull() && oldest &&
+                (oldest->getTime() < timestamp)) {
+                _purged_sample_timestamps.push_back(sample->getTime());
+            }
         }
         return sample;
+    }
+
+    /**
+     * @brief Clears the buffer and optionally stores information regarding purged samples @see
+     * _purged_sample_log_capacity.
+     *
+     */
+    void clear()
+    {
+        if (samplePurgeLogEnabled()) {
+            _sample_queue.iteration(
+                [&samples = _purged_sample_timestamps, capacity = _purged_sample_log_capacity](
+                    const data_read_ptr<const fep3::arya::IDataSample>&,
+                    const data_read_ptr<const fep3::arya::IStreamType>&,
+                    fep3::arya::Timestamp timestamp) {
+                    if (samples.size() >= capacity) {
+                        return false;
+                    }
+
+                    samples.push_back(timestamp);
+                    return true;
+                });
+        }
+
+        _sample_queue.clear();
+    }
+
+    /**
+     * @brief Logs the amount of purged samples and the corresponding timestamps.
+     * The capacity of information stored regarding purged samples can be configured
+     * @see _purged_sample_log_capacity. If
+     *
+     * @param[in] signal_name The name of the signal this data reader backlog belongs to
+     * @param[in] logger The logger used to log the information regarding samples purged
+     */
+    void logPurgedSamples(const std::string& signal_name, const fep3::arya::ILogger* logger) const
+    {
+        if (!samplePurgeLogEnabled()) {
+            return;
+        }
+
+        if (_purged_sample_timestamps.empty()) {
+            FEP3_LOGGER_LOG_DEBUG(
+                logger,
+                a_util::strings::format("No samples have been purged from signal '%s'.",
+                                        signal_name.c_str()));
+        }
+        else {
+            FEP3_LOGGER_LOG_WARNING(
+                logger,
+                a_util::strings::format(
+                    "'%d' samples having the following timestamps have been purged from signal "
+                    "'%s' and have never "
+                    "been accessible from within the FEP Participant: '%s'",
+                    _purged_sample_timestamps.size(),
+                    signal_name.c_str(),
+                    timestampVecToString(_purged_sample_timestamps).str().c_str()));
+            if (purgeLogQueueFull()) {
+                FEP3_LOGGER_LOG_WARNING(
+                    logger,
+                    a_util::strings::format(
+                        "The buffer containing information regarding purged samples has reached "
+                        "its limit. "
+                        "The number of purged samples for signal '%s' might be higher than '%d'. "
+                        "Increase the buffer capacity to allow storing more "
+                        "information regarding purged samples.",
+                        signal_name.c_str(),
+                        _purged_sample_timestamps.size()));
+            }
+        }
     }
 
     /**
@@ -256,10 +366,52 @@ public:
     }
 
 private:
+    /**
+     * @brief returns whether logging of purged samples is enabled.
+     *
+     * @return bool is purged samples logging enabled
+     */
+    bool samplePurgeLogEnabled() const
+    {
+        return _purged_sample_log_capacity != 0;
+    }
+
+    /**
+     * @brief returns whether the data item queue is full.
+     *
+     * @return bool is the data item queue full
+     */
+    bool sampleQueueFull() const
+    {
+        return _sample_queue.size() >= _sample_queue.capacity();
+    }
+
+    /**
+     * @brief returns whether the purged sample logging queue is full.
+     *
+     * @return bool is the purged sample logging queue full
+     */
+    bool purgeLogQueueFull() const
+    {
+        return _purged_sample_timestamps.size() >= _purged_sample_log_capacity;
+    }
+
+private:
     ///@cond no_documentation
     base::arya::detail::DataItemQueue _sample_queue;
     data_read_ptr<const fep3::arya::IStreamType> _init_type;
     mutable std::mutex _mutex;
+    /** Capacity of the buffer storing information regarding purged samples @see
+     * _purged_sample_timestamps.
+     * @see clear, @see logPurgedSamples and @see operator() will store information in case
+     * of samples being purged. Once the limit is reached, no further information regarding purged
+     * samples will be stored. Value of 0 disables storage of information regarding
+     * purged samples.
+     */
+    size_t _purged_sample_log_capacity;
+    /// Buffer storing the timestamps of purged samples. Capacity is configurable @see
+    /// _purged_sample_log_capacity.
+    std::vector<fep3::Timestamp> _purged_sample_timestamps;
     ///@endcond no_documentation
 };
 } // namespace arya

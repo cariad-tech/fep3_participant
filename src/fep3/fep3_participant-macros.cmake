@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -450,7 +449,7 @@ function(fep_generate_rpc_stubs_before_target)
     # command for client stub
     if(DEFINED function_arg_CLIENT_CLASS_NAME AND DEFINED function_arg_CLIENT_FILE_NAME)
         cmake_path(APPEND _output_dir "${function_arg_CLIENT_FILE_NAME}" OUTPUT_VARIABLE _client_output_file)
-        set(_create_client_stub $<TARGET_FILE:jsonrpcstub> "${_input_file}"
+        set(_create_client_stub $<TARGET_FILE:dev_essential::jsonrpcstub> "${_input_file}"
                                 --cpp-client=${function_arg_CLIENT_CLASS_NAME}
                                 --cpp-client-file=${_client_output_file})
         list(APPEND _output_files "${_client_output_file}")
@@ -460,7 +459,7 @@ function(fep_generate_rpc_stubs_before_target)
     # command for server stub
     if(DEFINED function_arg_SERVER_CLASS_NAME AND DEFINED function_arg_SERVER_FILE_NAME)
         cmake_path(APPEND _output_dir "${function_arg_SERVER_FILE_NAME}" OUTPUT_VARIABLE _server_output_file)
-        set(_create_server_stub $<TARGET_FILE:jsonrpcstub> "${_input_file}"
+        set(_create_server_stub $<TARGET_FILE:dev_essential::jsonrpcstub> "${_input_file}"
                                 --cpp-server=${function_arg_SERVER_CLASS_NAME}
                                 --cpp-server-file=${_server_output_file})
         list(APPEND _output_files "${_server_output_file}")

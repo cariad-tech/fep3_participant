@@ -1,0 +1,70 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ skinparam legendBackgroundColor white
+ skinparam LegendBorderThickness 0
+ 'use teoz for nested boxes
+ !pragma teoz true
+ 
+ title Create/Execute FEP Element
+ 
+ legend right
+  Legend:
+  | <#SkyBlue>    | Participant State |
+ end legend
+ 
+ actor Customer
+ box FEP Element #LightGrey
+ box FEP Application #WhiteSmoke
+  participant "main()"
+  participant Element
+  participant Job
+ end box
+ 
+ box "FEP SDK Participant Library" #WhiteSmoke
+  participant "RPC Service"
+  participant Participant
+  participant "Participant\nState Machine"
+  participant "Job\nConfiguration"
+  participant "Job\nRegistry"
+ end box
+ end box
+ 
+ activate "Participant\nState Machine"
+ hnote over "Participant\nState Machine"#SkyBlue: UNLOADED
+ 
+ Customer -> "RPC Service": "RPC: load system"
+  activate "RPC Service"
+  "RPC Service" -> "Participant\nState Machine": load()
+   activate "Participant\nState Machine"
+   "Participant\nState Machine" -> Element: c'tor
+    activate Element
+     Element -> Job: c'tor
+      activate Job
+      return
+     return
+    "Participant\nState Machine" -> Element: load()
+     activate Element
+      Element -> "Job\nConfiguration": c'tor
+       activate "Job\nConfiguration"
+       return
+      Element -> "Job\nRegistry": addJob()
+       activate "Job\nRegistry"
+       return
+      return
+     return
+    return
+   hnote over "Participant\nState Machine"#SkyBlue: LOADED
+
+@enduml

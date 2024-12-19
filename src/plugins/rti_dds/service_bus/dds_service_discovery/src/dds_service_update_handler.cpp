@@ -1,18 +1,15 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../include/dds_service_update_handler.h"
 
 #include "host_name_resolver.h"
+#include "logging_formater_common.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -26,8 +23,10 @@ namespace fep3 {
 namespace native {
 
 DssServiceUpdateHandler::DssServiceUpdateHandler(
-    std::unique_ptr<IHostNameResolver> host_name_resolver, std::shared_ptr<ILogger> logger)
-    : _thread_executor{std::make_unique<ThreadPoolExecutor>()},
+    std::unique_ptr<IHostNameResolver> host_name_resolver,
+    std::shared_ptr<ILogger> logger,
+    std::unique_ptr<IThreadPoolExecutor> thread_executor)
+    : _thread_executor{std::move(thread_executor)},
       _host_name_resolver(std::move(host_name_resolver)),
       _processed_event_stack(initial_stack_size),
       _logger(std::move(logger))
@@ -45,10 +44,12 @@ void DssServiceUpdateHandler::addWork(const DdsServiceDiscovery& participant_dat
 {
     if (_working) {
         using namespace std::literals::string_literals;
-        _logger->logDebug("received discovery sample from server "s + participant_data.id() +
-                          " , with url " + participant_data.content().host_url() +
-                          " ,response type " +
-                          std::to_string(static_cast<int>(participant_data.response_type())));
+        if (_logger->isDebugEnabled()) {
+            _logger->logDebug("received discovery sample from server "s + participant_data.id() +
+                              " , with url " + participant_data.content().host_url() +
+                              " ,response type " +
+                              std::to_string(static_cast<int>(participant_data.response_type())));
+        }
         _thread_executor->post([=]() { processServiceUpdate(participant_data); });
     }
 }
@@ -56,7 +57,7 @@ void DssServiceUpdateHandler::addWork(const DdsServiceDiscovery& participant_dat
 std::vector<ServiceUpdateEvent> DssServiceUpdateHandler::getProcessedUpdates()
 {
     std::vector<ServiceUpdateEvent> processed_events;
-    _processed_event_stack.consume_all(
+    _processed_event_stack.consume_all_atomic_reversed(
         [&](const ServiceUpdateEvent& e) { processed_events.push_back(e); });
     return processed_events;
 }

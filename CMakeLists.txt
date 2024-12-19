@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -31,7 +30,6 @@ set(FEP3_PARTICIPANT_LIBRARY fep3_participant)
 set(FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-set(DOXYGEN_WARN_IF_UNDOCUMENTED "No")
 
 set(FEP3_PARTICIPANT_LIBRARY_VERSION "${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_PATCH}")
 
@@ -47,6 +45,7 @@ endif()
 
 include(scripts/cmake/enable_multicore_compilation.cmake)
 include(scripts/cmake/use_integrated_debug_symbols.cmake)
+include(scripts/cmake/set_symbol_visibility.cmake)
 
 # Enable project folder structure for Visual Studio IDE
 set_property(GLOBAL PROPERTY USE_FOLDERS true)
@@ -69,11 +68,11 @@ else()
     set(fep3_participant_use_rtidds OFF)
 endif()
 
-option(fep3_participant_cmake_enable_documentation
-       "If enabled, generate the source code documentation -\
- requires doxygen and sphinx-build (default: ON)" ON)
 option(fep3_participant_cmake_enable_tests
        "Enable functional tests - requires googletest (default: OFF)" OFF)
+
+option(fep_participant_arc_enable
+       "Enable software architecture documentation build (default: OFF)" OFF)
 
 # -Og is needed for ABI Dumper
 if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
@@ -100,42 +99,59 @@ if(NOT DEFINED PLATFORM)
 endif(NOT DEFINED PLATFORM)
 
 # add subdirectories core
-#this is needed for teh pdb file while installed
-set(fep3_participant_pdb_version_str ${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR})
-include(src/fep3/fep3_participant-macros.cmake)
-add_subdirectory(src)
-add_subdirectory(3rdparty/lssdp-cpp)
-if (fep3_participant_cmake_enable_documentation)
-    add_subdirectory(doc)
-endif()
+if (fep_participant_arc_enable)
+    add_subdirectory(doc/arc)
+    
+    install(
+        FILES
+            README.md
+        DESTINATION
+            .
+    )
+    install(
+        FILES
+            LICENSE.md
+            doc/license/LicenseNotes.md
+        DESTINATION
+            doc/license
+    )
+    
+else()
 
-install(
-    FILES
-        README.md
-    DESTINATION
-        .
-)
-install(
-    FILES
-        LICENSE.md
-        doc/license/license_notes_from_aosd.txt
-    DESTINATION
-        doc/license
-)
+    #this is needed for teh pdb file while installed
+    set(fep3_participant_pdb_version_str ${FEP3_PARTICIPANT_LIBRARY_VERSION_MAJOR}.${FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR})
+    include(src/fep3/fep3_participant-macros.cmake)
+    add_subdirectory(src)
+    add_subdirectory(3rdparty/lssdp-cpp)
 
-if(fep3_participant_cmake_enable_tests OR fep3_participant_export_test_targets)
-    if(fep3_participant_cmake_enable_tests)
-        # we have private tests that are built/run during the product build
-        enable_testing()
-        set(fep3_participant_cmake_integrated_tests ON)
+    install(
+        FILES
+            README.md
+        DESTINATION
+            .
+    )
+    install(
+        FILES
+            LICENSE.md
+            doc/license/LicenseNotes.md
+        DESTINATION
+            doc/license
+    )
+
+    if(fep3_participant_cmake_enable_tests OR fep3_participant_export_test_targets)
+        if(fep3_participant_cmake_enable_tests)
+            # we have private tests that are built/run during the product build
+            enable_testing()
+            set(fep3_participant_cmake_integrated_tests ON)
+        endif()
+        add_subdirectory(test)
     endif()
-    add_subdirectory(test)
-endif()
 
-# install content from include directory
-install(
-    DIRECTORY
-        include
-    DESTINATION
-        ./
-)
+    # install content from include directory
+    install(
+        DIRECTORY
+            include
+        DESTINATION
+            ./
+    )
+endif()

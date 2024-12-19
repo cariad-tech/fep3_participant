@@ -1,5 +1,5 @@
 /**
- * Copyright @ 2023 VW Group. All rights reserved.
+ * Copyright 2023 CARIAD SE.
  *
  * This Source Code Form is subject to the terms of the Mozilla
  * Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -88,7 +88,8 @@ public:
         return "1.0.0";
     }
 
-    std::tuple<fep3::Result, JobPtr, JobConfigPtr> createJob() override
+    std::tuple<fep3::Result, JobPtr, JobConfigPtr> createJob(
+        const fep3::arya::IComponents&) override
     {
         using namespace std::chrono_literals;
 

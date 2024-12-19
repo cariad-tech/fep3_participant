@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "data_signal_renaming.h"
@@ -21,7 +17,7 @@ using namespace native::arya;
 Result parse_string_to_map(const std::string& lines, std::map<std::string, std::string>& map)
 {
     int line_num = 0;
-    for (const auto line: a_util::strings::split(lines, ",")) {
+    for (const auto& line: a_util::strings::split(lines, ",")) {
         auto name_value = a_util::strings::split(line, ":");
         if (name_value.size() != 2) {
             return CREATE_ERROR_DESCRIPTION(ERR_INVALID_ARG,

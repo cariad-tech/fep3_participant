@@ -1,0 +1,65 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ skinparam legendBackgroundColor white
+ skinparam LegendBorderThickness 0
+ 'use teoz for nested boxes
+ !pragma teoz true
+ 
+ title Initialize FEP Element
+ 
+ legend right
+  Legend:
+  | <#SkyBlue>    | Participant State |
+ end legend
+ 
+ actor Customer
+ box FEP Element #LightGrey
+ box FEP Application #WhiteSmoke
+  participant "main()"
+  participant Element
+  participant Job
+ end box
+ 
+ box "FEP SDK Participant Library" #WhiteSmoke
+  participant "RPC Service"
+  participant Participant
+  participant "Participant\nState Machine"
+  participant "Component\nRegistry"
+ end box
+ end box
+ 
+ activate "Participant\nState Machine"
+ hnote over "Participant\nState Machine"#SkyBlue: INITIALIZED
+ 
+ Customer -> "RPC Service": "RPC: start system"
+  activate "RPC Service"
+  "RPC Service" -> "Participant\nState Machine": start()
+   activate "Participant\nState Machine"
+   "Participant\nState Machine" -> Element: run()
+    activate Element
+    return
+   "Participant\nState Machine" -> "Component\nRegistry": start()
+    activate "Component\nRegistry"
+    
+     ref over "Component\nRegistry"
+     Start components:
+     * Clock/Scheduler:
+     ** [[components_start_clock_scheduler_master_discrete.svg timing master (discrete)]]
+     end ref
+    return
+   hnote over "Participant\nState Machine"#SkyBlue: RUNNING
+   return
+  return
+@enduml

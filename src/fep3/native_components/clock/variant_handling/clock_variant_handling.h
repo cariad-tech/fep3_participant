@@ -1,31 +1,25 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2024 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
-#include <fep3/components/base/component_intf.h>
+#include "clock_event_sink_variant_handling.h"
+
+#include <fep3/components/base/component.h>
 #include <fep3/components/base/components_intf.h>
 #include <fep3/components/clock/clock_intf.h>
 #include <fep3/components/clock/clock_service_intf.h>
 #include <fep3/components/logging/easy_logger.h>
 #include <fep3/components/logging/logger_intf.h>
-#include <fep3/fep3_participant_version.h>
 
 #include <functional>
 #include <variant>
 
 namespace fep3::native {
-
-class CatelynToAryaEventSinkAdapter;
-class AryaToCatelynEventSinkAdapter;
 
 class ClockAdapterAryaToCatelyn : public fep3::experimental::IClock {
 public:
@@ -74,7 +68,8 @@ class GenericClockAdapter {
 
 public:
     template <typename T>
-    GenericClockAdapter(std::shared_ptr<T> clock) : _clock(clock)
+    GenericClockAdapter(std::shared_ptr<T> clock)
+        : _clock(clock), _adapter(std::make_shared<CatelynToAryaEventSinkAdapter>())
     {
     }
     ~GenericClockAdapter();
@@ -122,32 +117,36 @@ private:
 template <typename T>
 fep3::Result registerClockToService(std::shared_ptr<T> clock,
                                     const fep3::arya::IComponents& components,
-                                    std::shared_ptr<ILogger>)
+                                    std::shared_ptr<ILogger> logger)
 {
-    auto clock_service_catelyn = components.getComponent<fep3::experimental::IClockService>();
+    using LatestClockService = ::fep3::experimental::IClockService;
+    auto [res, clock_service] = fep3::base::getComponentHelper<LatestClockService>(components);
 
-    if (clock_service_catelyn) {
-        return clock_service_catelyn->registerClock(clock);
+    if (clock_service && res) {
+        return clock_service->registerClock(clock);
     }
     else {
-#if FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR > 2
-        FEP3_ARYA_LOGGER_LOG_WARNING(
-            logger,
-            a_util::strings::format(
-                "%s is not part of the given component registry, it is recommended to"
-                "load FEP Component Implementation %s",
-                fep3::experimental::IClockService::getComponentIID(),
-                fep3::experimental::IClockService::getComponentIID()));
-#endif // FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR > 2
-        auto clock_service_arya = components.getComponent<fep3::arya::IClockService>();
-        // no clock service available
-        if (!clock_service_arya) {
-            RETURN_ERROR_DESCRIPTION(fep3::ERR_NO_INTERFACE,
-                                     "Neither %s or %s are part of the given component registry",
-                                     fep3::arya::IClockService::getComponentIID(),
-                                     fep3::experimental::IClockService::getComponentIID());
+        if constexpr (std::is_same_v<LatestClockService, fep3::experimental::IClockService>) {
+            // As long as interface is experimental the user does not want a log warning
+            // that interface not found
+            FEP3_LOGGER_LOG_DEBUG(logger, res.getDescription());
         }
-        // only arya clock service available
+        else {
+            FEP3_LOGGER_LOG_WARNING(logger, res.getDescription());
+        }
+
+        // Fallback if latest version of interface IClockService is not available
+        using AryaClockService = ::fep3::arya::IClockService;
+        auto [res_arya, clock_service_arya] =
+            fep3::base::getComponentHelper<AryaClockService>(components);
+        if (!clock_service_arya || !res_arya) {
+            FEP3_LOGGER_LOG_ERROR(
+                logger,
+                a_util::strings::format("Neither %s nor %s is part of the given component registry",
+                                        AryaClockService::getComponentIID(),
+                                        LatestClockService::getComponentIID()));
+            return res_arya;
+        }
         else {
             // we create an adapter to get an arya Clock
             GenericClockAdapter clock_adapter(clock);

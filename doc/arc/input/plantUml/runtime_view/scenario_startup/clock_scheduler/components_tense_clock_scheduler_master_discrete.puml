@@ -1,0 +1,126 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ 
+ title Tense Clock/Scheduler - timing master (discrete)
+ 
+ [-> "Component\nRegistry": [[fep_element_initialize.svg{Tooltip for message} tense()]] 
+  activate "Component\nRegistry"
+  note left: tense all components
+  "Component\nRegistry" -> "Clock\nService": tense()
+   activate "Clock\nService"
+    "Clock\nService" -> "Clock\nService": selectMainClock()
+    note left: main clock set to\n'local system simtime'
+    "Clock\nService" -> "Clock Main\nEvent Sink": updateTimeout(5s)
+     activate "Clock Main\nEvent Sink"
+     return
+    note left: validate sim. clock configuration
+   return
+  "Component\nRegistry" -> "Clock Sync\nService": tense()
+   activate "Clock Sync\nService"
+   return
+  ...
+  "Component\nRegistry" -> "Local Scheduler\nService": tense()
+   activate "Local Scheduler\nService"
+   note left: active scheduler is\n'clock based scheduler'
+   "Local Scheduler\nService" -> "Local Scheduler\nRegistry": setActiveScheduler()
+    activate "Local Scheduler\nRegistry"
+    return
+   "Local Scheduler\nService" -> "Local Scheduler\nService": initScheduler()
+   activate "Local Scheduler\nService"
+   "Local Scheduler\nService" -> "Job\nRegistry": getJobs()
+    activate "Job\nRegistry"
+    return
+   "Local Scheduler\nService" -> "Local Scheduler\nRegistry": initializeActiveScheduler()
+    activate "Local Scheduler\nRegistry"
+    "Local Scheduler\nRegistry" -> "Clock Based\nScheduler": initialize()
+     activate "Clock Based\nScheduler"
+     ref over "Clock Based\nScheduler"
+      create ThreadPool (ThreadPoolExecutor)
+      create DataTriggeredExecutor
+     end ref
+     "Clock Based\nScheduler" -> "Clock Based\nScheduler": initializeTimerScheduler()
+      activate "Clock Based\nScheduler"
+      create "Task Clock\nEvent Sink"
+      "Clock Based\nScheduler" -> "Task Clock\nEvent Sink": c'tor
+       activate "Task Clock\nEvent Sink"
+       note left: Depending on the clock type:\n- discrete: create SyncTaskExecutorInvoker\n- continous: create AsyncTaskExecutorInvoker
+       "Task Clock\nEvent Sink" -> "Scheduler\nFactory": createSchedulerProcessor()
+        activate "Scheduler\nFactory"
+        create "Sync Task\nExecutor Invoker"
+        "Scheduler\nFactory" -> "Sync Task\nExecutor Invoker": c'tor
+         activate "Sync Task\nExecutor Invoker"
+         return
+        return
+       return
+      "Clock Based\nScheduler" -> "Clock\nService": registerEventSink()
+      note left: Register\n'Task Clock Event Sink'
+       activate "Clock\nService"
+       "Clock\nService" -> "Clock Event\nSink Registry": registerSink()
+        activate "Clock Event\nSink Registry"
+        create "Single Thread\nWorker"
+        "Clock Event\nSink Registry" -> "Single Thread\nWorker": c'tor
+        note left: Create single thread\nworker for task executor
+         activate "Single Thread\nWorker"
+         create thread
+         "Single Thread\nWorker" -> thread: c'tor
+          activate thread #HoneyDew
+         'return
+         "Single Thread\nWorker" --> "Clock Event\nSink Registry"
+         deactivate "Single Thread\nWorker"
+        'return
+        "Clock Event\nSink Registry" --> "Clock\nService"
+        deactivate "Clock Event\nSink Registry"
+       'return
+       "Clock\nService" --> "Clock Based\nScheduler"
+       deactivate "Clock\nService"
+      'return
+      "Clock Based\nScheduler" --> "Clock Based\nScheduler"
+      deactivate "Clock Based\nScheduler" 
+     "Clock Based\nScheduler" -> "Job\nRegistry": getJobsCatelyn()
+      activate "Job\nRegistry"
+      return
+     note left: for all registered jobs
+     "Clock Based\nScheduler" -> "Clock Based\nScheduler": parseJobEntry()
+     "Clock Based\nScheduler" -> "Clock Triggered\nJob Configuration": acceptVisitor(this)
+      activate "Clock Triggered\nJob Configuration"
+      "Clock Triggered\nJob Configuration" -> "Clock Based\nScheduler": visitClockTriggeredConfiguration()
+       activate "Clock Based\nScheduler"
+       "Clock Based\nScheduler" -> "Clock Based\nScheduler": addClockTriggeredJobToScheduler()
+       create "Job\nRunner"
+       "Clock Based\nScheduler" -> "Job\nRunner": c'tor
+        activate "Job\nRunner"
+        return
+       "Clock Based\nScheduler" -> "Task Clock\nEvent Sink": addTask()
+        activate "Task Clock\nEvent Sink"
+        "Task Clock\nEvent Sink" -> "Sync Task\nExecutor Invoker": addTask()
+         activate "Sync Task\nExecutor Invoker"
+         "Sync Task\nExecutor Invoker" -> "Sync Task\nExecutor": addTask()
+          activate "Sync Task\nExecutor"
+          note left: Add job runner as\nscheduler task to task list
+          "Sync Task\nExecutor" -> "Task\nStorage": addTask()
+           activate "Task\nStorage"
+           return
+          return
+         return
+        return
+       return
+      return
+     return
+    return
+   return
+   ...
+  return
+
+@enduml

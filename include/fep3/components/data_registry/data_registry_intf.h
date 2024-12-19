@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -74,6 +74,22 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #define FEP3_DATA_REGISTRY_SIGNAL_RENAMING_OUTPUT_CONFIGURATION                                    \
     FEP3_DATA_REGISTRY_CONFIG "/" FEP3_SIGNAL_RENAMING_OUTPUT_CONFIGURATION_PROPERTY
+
+/**
+ * @brief The purged samples log capacity property name.
+ * Use this to set the purged sample log capacity for data readers when using the default job API
+ * with a single string.
+ */
+#define FEP3_PURGED_SAMPLES_LOG_CAPACITY_PROPERTY "purged_samples_log_capacity"
+/**
+ * @brief The clear data readers sample queue property name.
+ * Use this to set the input signal queues to be cleared automatically after the job cycle
+ */
+#define FEP3_CLEAR_INPUT_SIGNALS_QUEUES_PROPERTY "clear_input_signal_queues"
+/**
+ * @brief Default value of the purged samples log capacity.
+ */
+#define FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE 1000
 
 namespace fep3 {
 namespace arya {

@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -31,10 +31,12 @@ public:
      * @brief Construct a new Data Reader
      *
      * @param[in] time_comparator comparator for sample timestamp and simulation time to check
-     * sample validity
+     * @param[in] purged_sample_log_capacity capacity of storage containing information regarding
+     * purged samples sample validity
      */
     DataReader(const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
-                   std::less<fep3::Timestamp>{});
+                   std::less<fep3::Timestamp>{},
+               size_t purged_sample_log_capacity = FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE);
 
     /**
      * @brief Construct a new Data Reader
@@ -42,12 +44,14 @@ public:
      * @param[in] name name of incoming data
      * @param[in] stream_type type of incoming data
      * @param[in] time_comparator comparator for sample timestamp and simulation time to check
-     * sample validity
+     * @param[in] purged_sample_log_capacity capacity of storage containing information regarding
+     * purged samples sample validity
      */
     DataReader(std::string name,
                const fep3::base::arya::StreamType& stream_type,
                const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
-                   std::less<fep3::Timestamp>{});
+                   std::less<fep3::Timestamp>{},
+               size_t purged_sample_log_capacity = FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE);
 
     /**
      * @brief Construct a new Data Reader
@@ -56,13 +60,15 @@ public:
      * @param[in] stream_type type of incoming data
      * @param[in] queue_size size of the data reader's sample backlog
      * @param[in] time_comparator comparator for sample timestamp and simulation time to check
-     * sample validity
+     * @param[in] purged_sample_log_capacity capacity of storage containing information regarding
+     * purged samples sample validity
      */
     DataReader(std::string name,
                const fep3::base::arya::StreamType& stream_type,
                size_t queue_size,
                const std::function<bool(fep3::Timestamp, fep3::Timestamp)>& time_comparator =
-                   std::less<fep3::Timestamp>{});
+                   std::less<fep3::Timestamp>{},
+               size_t purged_sample_log_capacity = FEP3_PURGED_SAMPLES_LOG_CAPACITY_DEFAULT_VALUE);
 
     /**
      * @brief Deleted Copy CTOR
@@ -140,6 +146,13 @@ public:
      * @return the name of the reader
      */
     virtual std::string getName() const;
+
+    /**
+     * @brief Logs the amount of purged samples and the corresponding timestamps.
+     *
+     * @param[in] logger The logger used to log the information regarding samples purged
+     */
+    void logPurgedSamples(const fep3::arya::ILogger* logger) const;
 
 private:
     /// name of data reader

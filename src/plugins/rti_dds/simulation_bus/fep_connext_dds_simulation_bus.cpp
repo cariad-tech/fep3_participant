@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "fep_connext_dds_simulation_bus.h"
@@ -20,9 +16,9 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/base/stream_type/default_stream_type.h>
 #include <fep3/components/logging/logging_service_intf.h>
 #include <fep3/components/participant_info/participant_info_intf.h>
+#include <fep3/fep3_filesystem.h>
 #include <fep3/fep3_participant_version.h>
 
-#include <a_util/filesystem.h>
 #include <a_util/result.h>
 #include <a_util/system/address_info.h>
 
@@ -134,7 +130,7 @@ public:
             _qos_provider = std::make_shared<QosProvider>(dds::core::QosProvider::Default());
         }
         // If not we search beside the simulation bus binary
-        else if (a_util::filesystem::exists(qos_file_beside_the_binary_clean)) {
+        else if (fs::exists(qos_file_beside_the_binary_clean)) {
             _qos_provider = std::make_shared<QosProvider>(qos_file_beside_the_binary_clean);
         }
         else {
@@ -466,6 +462,7 @@ fep3::Result ConnextDDSSimulationBus::initialize()
                                  "RTI DDS doesn't support system name longer than 255 byte");
     }
     participant_qos.extensions().property.set({"dds.domain_participant.domain_tag", system_name});
+    participant_qos.extensions().participant_name.name(participant_name);
 
     _impl->initBusInfo(participant_qos, participant_name);
 
@@ -477,13 +474,16 @@ fep3::Result ConnextDDSSimulationBus::initialize()
 #ifdef WIN32
         // in windows the rtimonitoring is loaded lazy ... so we need to change working dir here for
         // creating time
-        auto orig_wd = a_util::filesystem::getWorkingDirectory();
+        auto orig_wd = fs::current_path();
 
         const auto address_info =
             a_util::system::AddressInfo(ConnextDDSSimulationBus::_address_info);
-        auto wd = address_info.getFilePath().getParent();
+        auto wd = fs::path{address_info.getFilePath().getParent().toString()};
 
-        if (a_util::filesystem::Error::OK != a_util::filesystem::setWorkingDirectory(wd)) {
+        try {
+            fs::current_path(wd);
+        }
+        catch (fs::filesystem_error const&) {
             orig_wd = wd;
         }
 #endif
@@ -493,13 +493,13 @@ fep3::Result ConnextDDSSimulationBus::initialize()
         }
         catch (const std::exception& ex) {
 #ifdef WIN32
-            a_util::filesystem::setWorkingDirectory(orig_wd);
+            fs::current_path(orig_wd);
 #endif
             RETURN_ERROR_DESCRIPTION(ERR_UNEXPECTED, ex.what());
         }
 
 #ifdef WIN32
-        a_util::filesystem::setWorkingDirectory(orig_wd);
+        fs::current_path(orig_wd);
 #endif
     }
     _impl->createDataAccessCollection();
@@ -533,7 +533,7 @@ bool ConnextDDSSimulationBus::isSupported(const IStreamType& stream_type) const
     using namespace fep3::base::arya;
     return (meta_type_raw == stream_type || (meta_type_audio == stream_type) ||
             (meta_type_ddl == stream_type) || (meta_type_plain == stream_type) ||
-            (meta_type_string == stream_type) || (meta_type_plain == stream_type));
+            (meta_type_string == stream_type));
 }
 
 std::unique_ptr<ISimulationBus::IDataReader> ConnextDDSSimulationBus::getReader(

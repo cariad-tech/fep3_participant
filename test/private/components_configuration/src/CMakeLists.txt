@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -20,5 +19,5 @@ target_link_libraries(test_components_configuration PRIVATE
     GTest::gtest_main
 )
 
-add_test(NAME test_components_configuration COMMAND test_components_configuration WORKING_DIRECTORY "..")
+gtest_discover_tests(test_components_configuration WORKING_DIRECTORY "..")
 set_target_properties(test_components_configuration PROPERTIES TIMEOUT 10)

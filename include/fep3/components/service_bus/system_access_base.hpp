@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -12,7 +12,10 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #pragma once
 
+#include <fep3/components/logging/easy_logger.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
+
+#include <algorithm>
 
 /**
  * the default timeout of the address discovery within the
@@ -25,13 +28,20 @@ namespace base {
 namespace arya {
 
 /**
+ * the default number of tries of the address discovery within the
+ * fep3::base::SystemAccessBase::getRequester call
+ */
+constexpr int fep3_service_bus_get_requester_max_tries = 10;
+
+/**
  * Helper base implementation class to create a ISystemAccess implementation
  * 3 methods to implement:
  * @li @c SystemAccessBase::createAServer
  * @li @c SystemAccessBase::createARequester
  * @li @c SystemAccessBase::getDiscoveredServices
  */
-class SystemAccessBase : public fep3::catelyn::IServiceBus::ISystemAccess {
+class SystemAccessBase : public fep3::catelyn::IServiceBus::ISystemAccess,
+                         public fep3::base::arya::EasyLogging {
 public:
     /**
      * Class interface to obtain certain default urls for system access and server
@@ -152,6 +162,12 @@ public:
         try {
             _server.reset();
             auto server = createAServer(server_name, server_url, discovery_active);
+
+            FEP3_LOG_INFO(a_util::strings::format(
+                "Created participant server %s with url %s which is%sdiscoverable",
+                server_name.c_str(),
+                server_url.c_str(),
+                discovery_active ? " " : " not "));
             if (server) {
                 _server = server;
             }
@@ -196,6 +212,10 @@ public:
             return;
         }
         _server.reset();
+
+        FEP3_LOG_INFO(a_util::strings::format("Released participant server %s with url %s",
+                                              _server->getName().c_str(),
+                                              _server->getUrl().c_str()));
     }
 
     /**
@@ -229,22 +249,45 @@ public:
             }
             // if it is still empty, discover it
             if (found_url.empty()) {
-                found_services = discover(FEP3_SERVICE_BUS_GET_REQUESTER_TIMEOUT);
-                for (const auto& found_service: found_services) {
-                    if (found_service.first == far_participant_name) {
-                        found_url = found_service.second;
+                for (int try_count = 0; try_count < fep3_service_bus_get_requester_max_tries;
+                     ++try_count) {
+                    found_services = discover(FEP3_SERVICE_BUS_GET_REQUESTER_TIMEOUT);
+                    const auto it =
+                        std::find_if(found_services.begin(),
+                                     found_services.end(),
+                                     [&far_participant_name](const auto& discovered_service) {
+                                         return discovered_service.first == far_participant_name;
+                                     });
+                    if (it != found_services.end()) {
+                        found_url = it->second;
                         break;
                     }
                 }
             }
         }
+
         if (found_url.empty()) {
+            FEP3_LOG_ERROR(
+                a_util::strings::format("Could not find nor create a requester for participant %s",
+                                        far_participant_name.c_str()));
             return {};
         }
+
         try {
-            return createARequester(far_participant_name, found_url);
+            auto requester = createARequester(far_participant_name, found_url);
+            FEP3_LOG_DEBUG(
+                a_util::strings::format("Created requester for participant %s and url %s",
+                                        far_participant_name.c_str(),
+                                        found_url.c_str()));
+            return requester;
         }
-        catch (std::exception&) {
+        catch (std::exception& exception) {
+            FEP3_LOG_ERROR(a_util::strings::format("Exception caught while getting a requester for "
+                                                   "participant %s. Exception message: %s",
+                                                   far_participant_name.c_str(),
+                                                   exception.what()));
+            FEP3_LOG_ERROR(a_util::strings::format("Failed to get a requester for participant %s",
+                                                   far_participant_name.c_str()));
             return {};
         }
     }

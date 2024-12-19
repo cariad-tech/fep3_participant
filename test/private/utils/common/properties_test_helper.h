@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -17,17 +13,14 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 inline fep3::base::NativePropertyNode createTestProperty(
     const std::string& node_name = std::string("Clock"))
 {
-    const std::string default_type = fep3::base::PropertyType<std::string>::getTypeName();
-
     fep3::base::NativePropertyNode properties_clock(node_name);
 
-    auto node_clocks = std::make_shared<fep3::base::NativePropertyNode>(
-        "Clocks", "2", fep3::base::PropertyType<int32_t>::getTypeName());
+    auto node_clocks = std::make_shared<fep3::base::NativePropertyNode>("Clocks", int32_t{2});
 
     auto node_clocks1 =
-        std::make_shared<fep3::base::NativePropertyNode>("Clock1", "my name", default_type);
-    node_clocks1->setChild(std::make_shared<fep3::base::NativePropertyNode>(
-        "CycleTime", "1", fep3::base::PropertyType<int32_t>::getTypeName()));
+        std::make_shared<fep3::base::NativePropertyNode>("Clock1", std::string{"my name"});
+    node_clocks1->setChild(
+        std::make_shared<fep3::base::NativePropertyNode>("CycleTime", int32_t{1}));
 
     properties_clock.setChild(node_clocks);
     node_clocks->setChild(node_clocks1);
@@ -38,21 +31,19 @@ inline fep3::base::NativePropertyNode createTestProperty(
 inline std::shared_ptr<fep3::IPropertyNode> createTestProperties(
     const std::string& node_name = std::string("Clock"))
 {
-    const std::string default_type = fep3::base::PropertyType<std::string>::getTypeName();
-
     auto properties_clock = std::make_shared<fep3::base::NativePropertyNode>(node_name);
 
-    auto node_clocks = std::make_shared<fep3::base::NativePropertyNode>(
-        "Clocks", "2", fep3::base::PropertyType<int32_t>::getTypeName());
+    auto node_clocks = std::make_shared<fep3::base::NativePropertyNode>("Clocks", int32_t{2});
 
     auto node_clocks1 =
-        std::make_shared<fep3::base::NativePropertyNode>("Clock1", "my name", default_type);
-    node_clocks1->setChild(std::make_shared<fep3::base::NativePropertyNode>(
-        "CycleTime", "1", fep3::base::PropertyType<int32_t>::getTypeName()));
+        std::make_shared<fep3::base::NativePropertyNode>("Clock1", std::string{"my name"});
+
+    node_clocks1->setChild(
+        std::make_shared<fep3::base::NativePropertyNode>("CycleTime", int32_t{1}));
 
     auto node_clocks2 = std::make_shared<fep3::base::NativePropertyNode>("Clock2");
-    node_clocks2->setChild(std::make_shared<fep3::base::NativePropertyNode>(
-        "CycleTime", "2", fep3::base::PropertyType<int32_t>::getTypeName()));
+    node_clocks2->setChild(
+        std::make_shared<fep3::base::NativePropertyNode>("CycleTime", int32_t{2}));
 
     properties_clock->setChild(node_clocks);
     node_clocks->setChild(node_clocks1);
@@ -63,8 +54,6 @@ inline std::shared_ptr<fep3::IPropertyNode> createTestProperties(
 
 inline std::shared_ptr<fep3::IPropertyNode> createTypeTestProperties()
 {
-    const std::string default_type = fep3::base::PropertyType<std::string>::getTypeName();
-
     auto node_types = std::make_shared<fep3::base::NativePropertyNode>("types");
     node_types->setChild(fep3::base::makeNativePropertyNode<int32_t>("int", 1));
     node_types->setChild(fep3::base::makeNativePropertyNode<double>("double", 1.0));

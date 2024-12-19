@@ -1,21 +1,18 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <a_util/process.h>
 
-#include <future>
 #include <gtest_asserts.h>
 #include <list>
+#include <notification_waiting.h>
 #include <service_bus.h>
+#include <thread>
 
 namespace {
 bool contains(const std::multimap<std::string, std::string>& servers,
@@ -33,11 +30,10 @@ bool contains(const std::multimap<std::string, std::string>& servers,
 } // namespace
 
 struct ServiceUpdateEventSinkMock : public fep3::IServiceBus::IServiceUpdateEventSink {
-    ServiceUpdateEventSinkMock(std::future<void>& execute_future,
+    ServiceUpdateEventSinkMock(fep3::native::NotificationWaiting& update_event_triggered,
                                std::vector<std::string> system_names)
-        : _system_names(std::move(system_names))
+        : _update_event_triggered(update_event_triggered), _system_names(std::move(system_names))
     {
-        execute_future = _update_event_triggered.get_future();
     }
 
     void updateEvent(const fep3::IServiceBus::ServiceUpdateEvent& update_event)
@@ -48,14 +44,14 @@ struct ServiceUpdateEventSinkMock : public fep3::IServiceBus::IServiceUpdateEven
 
         if (it != _system_names.end()) {
             updateEventMock(update_event);
-            _update_event_triggered.set_value();
+            _update_event_triggered.notify();
         }
     }
 
     MOCK_METHOD(void, updateEventMock, (const fep3::IServiceBus::ServiceUpdateEvent&), ());
 
 private:
-    std::promise<void> _update_event_triggered;
+    fep3::native::NotificationWaiting& _update_event_triggered;
     const std::vector<std::string> _system_names;
 };
 
@@ -74,10 +70,9 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
     std::stringstream ss;
     ss << std::this_thread::get_id();
 
-    std::string system_name_for_test_1 =
-        std::string("system_1_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_1 = "system_1_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
     // create a system access to the named system "system_name_for_test_1" on the default URL
     fep3::native::ServiceBus bus1;
@@ -125,9 +120,9 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
     ASSERT_TRUE(contains(list_of_discovered_at_2, {"server_1", "server_2"}));
 
     // health service
-    std::future<void> _update_event_future;
+    fep3::native::NotificationWaiting _update_event_notification;
     ::testing::StrictMock<ServiceUpdateEventSinkMock> _update_event_sink(
-        _update_event_future, std::vector<std::string>{system_name_for_test_1});
+        _update_event_notification, std::vector<std::string>{system_name_for_test_1});
     EXPECT_FEP3_NOERROR(sys_access1->registerUpdateEventSink(&_update_event_sink));
     using namespace std::chrono_literals;
     EXPECT_CALL(
@@ -140,7 +135,7 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
                 testing::Field(&fep3::IServiceBus::ServiceUpdateEvent::service_name, "server_2")))))
         .WillRepeatedly(::testing::Return());
 
-    _update_event_future.wait_for(10s);
+    _update_event_notification.waitForNotificationWithTimeout(10s);
 
     EXPECT_FEP3_NOERROR(sys_access1->deregisterUpdateEventSink(&_update_event_sink));
 }
@@ -160,15 +155,13 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
     std::stringstream ss;
     ss << std::this_thread::get_id();
 
-    std::string system_name_for_test_1 =
-        std::string("system_1_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_1 = "system_1_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
-    std::string system_name_for_test_2 =
-        std::string("system_2_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_2 = "system_2_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
     // create a system access to the named system "system_name_for_test_1" on the default URL
     fep3::native::ServiceBus bus1;
@@ -226,9 +219,10 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
                           std::string(std::string("server_3@") + system_name_for_test_1)}));
 
     // health service
-    std::future<void> _update_event_future;
+    fep3::native::NotificationWaiting _update_event_notification;
+
     ::testing::StrictMock<ServiceUpdateEventSinkMock> _update_event_sink(
-        _update_event_future,
+        _update_event_notification,
         std::vector<std::string>{system_name_for_test_1, system_name_for_test_2});
 
     EXPECT_FEP3_NOERROR(sys_access_all->registerUpdateEventSink(&_update_event_sink));
@@ -247,7 +241,7 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
                                system_name_for_test_1),
                 testing::Field(&fep3::IServiceBus::ServiceUpdateEvent::service_name, "server_3")))))
         .WillRepeatedly(::testing::Return());
-    _update_event_future.wait_for(10s);
+    _update_event_notification.waitForNotificationWithTimeout(10s);
 
     EXPECT_FEP3_NOERROR(sys_access_all->deregisterUpdateEventSink(&_update_event_sink));
 }

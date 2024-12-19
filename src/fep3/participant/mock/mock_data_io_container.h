@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #pragma once
 
@@ -41,6 +37,8 @@ public:
                 addToDataRegistry,
                 (fep3::arya::IDataRegistry&, fep3::arya::IClockService&));
     MOCK_METHOD(void, removeFromDataRegistry, (fep3::arya::IDataRegistry&));
+    MOCK_METHOD(void, setConfiguration, (const fep3::core::DataIOContainerConfiguration&));
+    MOCK_METHOD(void, logIOInfo, (const fep3::arya::ILogger*));
 };
 
 } // namespace mock

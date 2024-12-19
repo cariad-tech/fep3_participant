@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -18,11 +14,12 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/components/logging/logging_service_intf.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
 
-namespace fep3 {
-// not yet sure if this is really necessary within the implementation
-namespace native {
+namespace fep3::native {
+
+class HttpSystemAccess;
+class IServiceDiscoveryFactory;
 class LoggerProxy;
-// servicebus implementation supporting the arya service bus
+
 class ServiceBus
     : public fep3::base::Component<fep3::arya::IServiceBus, fep3::catelyn::IServiceBus> {
 public:
@@ -32,6 +29,11 @@ public:
     ServiceBus(ServiceBus&&) = delete;
     ServiceBus& operator=(const ServiceBus&) = delete;
     ServiceBus& operator=(ServiceBus&&) = delete;
+
+private:
+    std::shared_ptr<fep3::IServiceBus::ISystemAccess> getDefaultAccess() const;
+    void lock();
+    void unlock();
 
 public: // the arya ServiceBus interface
     fep3::Result createSystemAccess(const std::string& system_name,
@@ -56,10 +58,12 @@ public: // override base::Component
     fep3::Result destroy() override;
 
 private:
-    class Impl;
-    std::shared_ptr<LoggerProxy> _logger_proxy;
-    std::unique_ptr<Impl> _impl;
     ServiceBusConfiguration _configuration;
+    std::vector<std::shared_ptr<HttpSystemAccess>> _system_accesses;
+    std::shared_ptr<fep3::IServiceBus::ISystemAccess> _default_system_access;
+    std::atomic<bool> _locked;
+    std::shared_ptr<LoggerProxy> _logger_proxy;
+    std::shared_ptr<IServiceDiscoveryFactory> _service_discovery_factory;
 };
-} // namespace native
-} // namespace fep3
+
+} // namespace fep3::native

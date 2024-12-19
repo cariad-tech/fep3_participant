@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -10,15 +9,12 @@
 # Test of the native clock implementations
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-
 add_executable(tester_simulation_clock
                tester_simulation_clock.cpp
 )
 
 
-add_test(NAME tester_simulation_clock
-    COMMAND tester_simulation_clock
+gtest_discover_tests(tester_simulation_clock
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -38,14 +34,11 @@ set_target_properties(tester_simulation_clock PROPERTIES FOLDER "test/private/na
 # Test of the SystemClock implementation
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-
 add_executable(tester_system_clock
                tester_system_clock.cpp
 )
 
-add_test(NAME tester_system_clock
-    COMMAND tester_system_clock
+gtest_discover_tests(tester_system_clock
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -68,8 +61,7 @@ add_executable(tester_clock_registry
                tester_clock_registry.cpp
 )
 
-add_test(NAME tester_clock_registry
-    COMMAND tester_clock_registry
+gtest_discover_tests(tester_clock_registry
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -90,8 +82,7 @@ add_executable(tester_clock_service
                tester_clock_service.cpp
 )
 
-add_test(NAME tester_clock_service
-    COMMAND tester_clock_service
+gtest_discover_tests(tester_clock_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -110,12 +101,13 @@ set_target_properties(tester_clock_service PROPERTIES FOLDER "test/private/nativ
 # Test of the native clock service rpc implementation
 ##################################################################
 
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
 add_executable(tester_rpc_clock_service
     tester_rpc_clock_service.cpp
 )
 
-add_test(NAME tester_rpc_clock_service
-    COMMAND tester_rpc_clock_service
+gtest_discover_tests(tester_rpc_clock_service
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )
@@ -142,8 +134,7 @@ add_executable(tester_rpc_clock_sync_service
     tester_rpc_clock_sync_service.cpp
 )
 
-add_test(NAME tester_rpc_clock_sync_service
-    COMMAND tester_rpc_clock_sync_service
+gtest_discover_tests(tester_rpc_clock_sync_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -170,8 +161,7 @@ add_executable(tester_rpc_clock_sync_client
     tester_rpc_clock_sync_client.cpp
 )
 
-add_test(NAME tester_rpc_clock_sync_client
-    COMMAND tester_rpc_clock_sync_client
+gtest_discover_tests(tester_rpc_clock_sync_client
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -198,8 +188,7 @@ add_executable(tester_clock_event_sink_registry
     tester_clock_event_sink_registry.cpp
 )
 
-add_test(NAME tester_clock_event_sink_registry
-    COMMAND tester_clock_event_sink_registry
+gtest_discover_tests(tester_clock_event_sink_registry
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )

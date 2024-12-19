@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -15,11 +11,11 @@ with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <fep3/base/queue/fep3_locked_queue.h>
 #include <fep3/fep3_errors.h>
 
-#include <a_util/concurrency.h>
 #include <a_util/memory.h>
 #include <a_util/system.h>
 
 #include <functional>
+#include <mutex>
 
 namespace fep3 {
 namespace native {
@@ -69,7 +65,7 @@ private:
     /// The timer used to pipeline the physical logging
     a_util::system::Timer _log_timer;
     /// Mutex to guard the enqueues.
-    a_util::concurrency::recursive_mutex _queue_guard;
+    std::recursive_mutex _queue_guard;
     /// String holding internal messages
     std::string _internal_msg;
 

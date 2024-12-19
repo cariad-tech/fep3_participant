@@ -1,23 +1,21 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include <fep3/base/component_registry/component_registry.h>
 #include <fep3/components/clock/mock_clock_service.h>
+#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
 #include <fep3/fep3_participant_version.h>
 #include <fep3/native_components/logging/logging_service.h>
 #include <fep3/native_components/service_bus/testing/service_bus_testing.hpp>
 #include <fep3/rpc_services/logging/logging_client_stub.h>
+#include <fep3/rpc_services/logging/logging_rpc_sink_service_service_stub.h>
 
-#include <a_util/system/system.h>
+#include <thread>
 
 typedef fep3::rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingClientStub,
                                     fep3::rpc::IRPCLoggingServiceDef>
@@ -93,7 +91,7 @@ TEST_F(TestLoggingServiceConsole, TestConsoleLogErr)
     ASSERT_EQ(logger->logWarning("Test log: must not appear in stderr"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    a_util::system::sleepMilliseconds(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // validate console content
     std::string strng = testing::internal::GetCapturedStderr();
@@ -133,7 +131,7 @@ TEST_F(TestLoggingServiceConsole, TestConsoleLogStd)
     ASSERT_EQ(logger->logDebug("Test log: must not appear at all"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    a_util::system::sleepMilliseconds(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // validate console content
     std::string strng = testing::internal::GetCapturedStdout();
@@ -168,7 +166,7 @@ TEST_F(TestLoggingServiceConsole, TestTimestampIsNS)
     ASSERT_EQ(logger->logWarning("Some message"), fep3::ERR_NOERROR);
 
     // wait until the logs are executed from queue
-    a_util::system::sleepMilliseconds(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     std::string strng = testing::internal::GetCapturedStdout();
     ASSERT_NE(strng.find("12345[ns]"), std::string::npos);

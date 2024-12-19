@@ -1,19 +1,16 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
 #include "../task_executor_intf.h"
 #include "notification_waiting.h"
 
+#include <fep3/components/logging/easy_logger.h>
 #include <fep3/fep3_duration.h>
 #include <fep3/fep3_timestamp.h>
 
@@ -30,7 +27,8 @@ class SyncTaskExecutorInvoker : public ITaskExecutorInvoker {
 public:
     using Factory = std::function<ProcessorType()>;
 
-    SyncTaskExecutorInvoker(Factory f) : _timer_queue_processor(f())
+    SyncTaskExecutorInvoker(Factory f, std::shared_ptr<const fep3::ILogger> logger = nullptr)
+        : _timer_queue_processor(f()), _logger(logger)
     {
     }
 
@@ -51,7 +49,19 @@ public:
         // blocks on incoming stop and protects the timers_list from TimeResetBegin
         std::unique_lock<std::mutex> lock(_mutex_processing_lock);
         if (_running) {
+            FEP3_ARYA_LOGGER_LOG_DEBUG(
+                _logger,
+                a_util::strings::format(
+                    "Received time update, new time: %lld,  processing scheduling queue",
+                    new_time.count()));
             processQueueSynchron(new_time, next_time);
+        }
+        else {
+            FEP3_ARYA_LOGGER_LOG_DEBUG(
+                _logger,
+                a_util::strings::format("Ignoring time update (new time: %lld) because scheduler "
+                                        "invoker is not running",
+                                        new_time.count()));
         }
     }
 
@@ -84,5 +94,6 @@ private:
     std::mutex _mutex_processing_lock;
     fep3::Timestamp _last_execution_time{_restart_time};
     bool _running{false};
+    std::shared_ptr<const fep3::ILogger> _logger;
 };
 } // namespace fep3::native

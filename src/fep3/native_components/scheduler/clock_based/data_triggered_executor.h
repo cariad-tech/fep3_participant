@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
     This Source Code Form is subject to the terms of the Mozilla
     Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -23,6 +23,7 @@ You may add additional accurate notices of copyright ownership.
 
 #include <fep3/components/scheduler/scheduler_service_intf.h>
 #include <fep3/components/simulation_bus/simulation_bus_intf.h>
+#include <fep3/fep3_errors.h>
 #include <fep3/native_components/scheduler/job_runner.h>
 
 namespace fep3 {
@@ -34,10 +35,16 @@ public:
     {
     }
 
-    void post(std::function<void()> f)
+    fep3::Result post(const std::function<void()>& f)
     {
         if (_running) {
             _threaded_executor.post(f);
+            return {};
+        }
+        else {
+            return CREATE_ERROR_DESCRIPTION(
+                fep3::ERR_INVALID_STATE,
+                "Scheduler is not running and no data triggered jobs can be posted");
         }
     }
 

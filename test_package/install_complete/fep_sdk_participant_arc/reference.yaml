@@ -1,0 +1,33 @@
+# Copyright 2023 CARIAD SE.
+#
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# Clang tidy is enabled/disabled via env var which cannot be used as condition in reference file
+exclude:
+    files:
+        - test/results/sca/result_clang-tidy_sca_tests\.xml
+
+common:
+    files:
+        - doc/fep3_participant_arc.html
+        - doc/html/.+.css
+        - doc/html/.+.html
+        - doc/html/.+.js
+        - doc/html/.+.png
+        - doc/html/.+.svg
+        - doc/html/doxygen_html/.+.map
+        - doc/html/doxygen_html/.+.md5
+        - doc/html/objects.inv
+        - doc/html/_sources/.+.txt
+        - doc/html/_static/.+.ico
+        - doc/html/_static/css/fonts/.+.eot
+        - doc/html/_static/css/fonts/.+.ttf
+        - doc/html/_static/css/fonts/.+.woff
+        - doc/html/_static/css/fonts/.+.woff2
+        - doc/license/LICENSE.md
+        - doc/license/LicenseNotes.md
+        - README.md
+        
+        

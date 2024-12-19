@@ -1,5 +1,5 @@
 /**
- * Copyright @ 2023 VW Group. All rights reserved.
+ * Copyright 2023 CARIAD SE.
  *
  * This Source Code Form is subject to the terms of the Mozilla
  * Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -42,12 +42,12 @@ std::string RPCClockService::getMainClockName()
 std::string RPCClockService::getTime(const std::string& clock_name)
 {
     if (clock_name.empty()) {
-        return a_util::strings::toString(_service.getTime().count());
+        return std::to_string(_service.getTime().count());
     }
     else {
         auto current_time = _service.getTime(clock_name);
         if (current_time.has_value()) {
-            return a_util::strings::toString(current_time.value().count());
+            return std::to_string(current_time.value().count());
         }
         else {
             return "-1";

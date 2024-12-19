@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -10,12 +9,9 @@
 # tester_job_registry
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-
 add_executable(tester_job_registry_impl tester_job_registry_impl.cpp)
 
-add_test(NAME tester_job_registry_impl
-    COMMAND tester_job_registry_impl
+gtest_discover_tests(tester_job_registry_impl
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -34,8 +30,7 @@ set_target_properties(tester_job_registry_impl PROPERTIES FOLDER "test/private/n
 
 add_executable(tester_job_configurations tester_job_configurations.cpp)
 
-add_test(NAME tester_job_configurations
-    COMMAND tester_job_configurations
+gtest_discover_tests(tester_job_configurations
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -60,8 +55,7 @@ set_target_properties(tester_job_configurations PROPERTIES FOLDER "test/private/
 
 add_executable(tester_job_registry tester_job_registry.cpp)
 
-add_test(NAME tester_job_registry
-    COMMAND tester_job_registry
+gtest_discover_tests(tester_job_registry
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -83,6 +77,8 @@ set_target_properties(tester_job_registry PROPERTIES FOLDER "test/private/native
 # Test of the native job registry rpc implementation
 ##################################################################
 
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
 add_custom_target(tester_job_registry_rpc_stub_generator)
 fep_generate_rpc_stubs_before_target(
     TARGET tester_job_registry_rpc_stub_generator
@@ -94,8 +90,7 @@ fep_generate_rpc_stubs_before_target(
 add_executable(tester_job_registry_rpc tester_job_registry_rpc.cpp)
 add_dependencies(tester_job_registry_rpc tester_job_registry_rpc_stub_generator)
 
-add_test(NAME tester_job_registry_rpc
-    COMMAND tester_job_registry_rpc
+gtest_discover_tests(tester_job_registry_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )

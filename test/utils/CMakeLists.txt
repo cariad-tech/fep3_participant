@@ -1,18 +1,16 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
 # with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-find_package(Boost 1.73.0 REQUIRED COMPONENTS headers)
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS filesystem process)
+find_package(Boost 1.73.0 REQUIRED)
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS process)
 
 add_library(participant_test_utils STATIC)
 
 target_sources(participant_test_utils PRIVATE
     helper/component_registry_rpc_service_helper.h
-    helper/copy_file.h
     helper/dds_test_service_discovery_helpers.h
     helper/gmock_async_helper.h
     helper/gmock_destruction_helper.h
@@ -35,7 +33,6 @@ target_link_libraries(participant_test_utils
         fep3_components_test
     PRIVATE
         dev_essential::process
-        dev_essential::filesystem
         ${CMAKE_DL_LIBS}
         Boost::headers
 )

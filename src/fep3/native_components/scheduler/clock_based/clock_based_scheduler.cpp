@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "clock_based_scheduler.h"
@@ -112,6 +108,14 @@ fep3::Result ClockBasedScheduler::initialize(const fep3::IComponents& components
     auto job_count = jobs.size();
     if (job_count > 0) {
         _thread_pool = std::make_unique<ThreadPoolExecutor>(job_count);
+        FEP3_ARYA_LOGGER_LOG_DEBUG(
+            _logger,
+            a_util::strings::format("Thread pool of scheduler initialized with %llu threads",
+                                    job_count));
+    }
+    else {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(_logger,
+                                   "No jobs found, thread pool of scheduler will have 0 threads");
     }
 
     _data_triggered_executor = std::make_unique<DataTriggeredExecutor>(*_thread_pool);
@@ -136,14 +140,34 @@ fep3::Result ClockBasedScheduler::visitDataTriggeredConfiguration(
 
     for (auto& signal_name: config._signal_names) {
         auto data_triggered_receiver =
-            std::make_shared<DataTriggeredReceiver>(_clock_service->getTimeGetter(),
-                                                    _current_processed_job->job,
-                                                    signal_name,
-                                                    job_runner,
-                                                    *_data_triggered_executor,
-                                                    _logger);
-        FEP3_RETURN_IF_FAILED(
-            _data_registry->registerDataReceiveListener(signal_name, data_triggered_receiver));
+            std::make_shared<DataTriggeredReceiver<>>(_clock_service->getTimeGetter(),
+                                                      _current_processed_job->job,
+                                                      signal_name,
+                                                      job_runner,
+                                                      *_data_triggered_executor,
+                                                      _logger);
+        auto res =
+            _data_registry->registerDataReceiveListener(signal_name, data_triggered_receiver);
+
+        if (res) {
+            FEP3_ARYA_LOGGER_LOG_DEBUG(
+                _logger,
+                a_util::strings::format(
+                    "Adding listener for signal %s in data triggered job '%s' succeeded",
+                    signal_name.c_str(),
+                    _current_processed_job->job_info.getName().c_str()));
+        }
+        else {
+            FEP3_ARYA_LOGGER_LOG_WARNING(
+                _logger,
+                a_util::strings::format(
+                    "Adding listener for signal %s in data triggered job '%s' failed, error :%s",
+                    signal_name.c_str(),
+                    _current_processed_job->job_info.getName().c_str(),
+                    res.getDescription()));
+        }
+
+        FEP3_RETURN_IF_FAILED(res);
         _data_triggered_receivers.push_back(data_triggered_receiver);
     }
 
@@ -179,13 +203,26 @@ void ClockBasedScheduler::addClockTriggeredJobToScheduler(const Config& config,
                                        config._max_runtime_real_time,
                                        _logger,
                                        std::forward<Args>(args)...);
-    _task_executor->addTask(
+    auto res = _task_executor->addTask(
         [&, job_runner, this](const fep3::Timestamp time) mutable {
             job_runner.runJob(time, i_job);
         },
         job_name,
         config._cycle_sim_time,
         config._delay_sim_time);
+
+    if (!res) {
+        FEP3_ARYA_LOGGER_LOG_WARNING(
+            _logger,
+            a_util::strings::format("Adding clock triggered job '%s' failed, error :%s",
+                                    job_name.c_str(),
+                                    res.getDescription()));
+    }
+    else {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(
+            _logger,
+            a_util::strings::format("Adding clock triggered job '%s' succeeded", job_name.c_str()));
+    }
 }
 
 fep3::Result ClockBasedScheduler::start()
@@ -202,6 +239,7 @@ fep3::Result ClockBasedScheduler::start()
         FEP3_RETURN_IF_FAILED(_task_executor->start());
     }
 
+    FEP3_ARYA_LOGGER_LOG_DEBUG(_logger, "Started scheduler");
     return {};
 }
 

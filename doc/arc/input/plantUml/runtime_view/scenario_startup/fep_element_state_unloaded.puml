@@ -1,0 +1,40 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam LegendBorderThickness 0
+ 
+ title FEP Participant States
+ state Unloaded #SkyBlue;line:black
+ state Loaded #LightGray;line:black
+ state Initialized #LightGray;line:black
+ state Running #LightGray;line:black
+ state Paused ##[dotted] {
+ }
+
+ hide empty description
+ [*] -down[#black]-> Unloaded
+ Unloaded -right[#gray]-> [*] : exit
+ Unloaded -[#gray]-> Loaded : load
+ Loaded -up[#gray]-> Unloaded : unload
+ Loaded -[#gray]-> Initialized : initialize
+ Initialized -up[#gray]-> Loaded : deinitialize
+ Initialized -down[#gray,dotted]-> Paused : pause
+ Initialized -down[#gray]-> Running : start
+ Running -left[#gray,dotted]-> Paused : pause
+ Running -up[#gray]-> Initialized : stop
+ Paused -right[#gray,dotted]-> Running : start
+ Paused -up[#gray,dotted]-> Initialized : stop
+
+ 
+ legend right
+  Legend:
+  | ... | States or transitions with dotted lines are not supported|
+ end legend
+@enduml

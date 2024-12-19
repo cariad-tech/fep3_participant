@@ -1,9 +1,21 @@
+/**
+ * @copyright
+ * @verbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * @endverbatim
+ */
 #include "dds_test_service_discovery_helpers.h"
 #include "service_discovery_factory_dds.h"
 
 #include <a_util/process/process.h>
 
 #include <boost/asio.hpp>
+#include <boost/process.hpp>
 
 TEST(TestConnextDDSS_ServiceDiscovery, DiscoveryServicerDiscoveryFinderPairTest)
 {

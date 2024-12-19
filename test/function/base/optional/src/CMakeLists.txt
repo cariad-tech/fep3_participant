@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -14,7 +13,7 @@ target_link_libraries(${TEST_NAME} PRIVATE
     fep3_participant
     GTest::gtest_main
 )
-add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+gtest_discover_tests(${TEST_NAME})
 set_target_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
 
 internal_fep3_participant_deploy(${TEST_NAME})

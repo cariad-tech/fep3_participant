@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../../include/component_factory/component_factory_cpp_plugins.h"
@@ -27,22 +23,22 @@ std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistry(
 {
     /// Static method to query information about the memory address of this binary
     const auto address_info = a_util::system::AddressInfo(ComponentRegistryFactory::createRegistry);
-    a_util::filesystem::Path component_config_file_path;
-    const std::vector<a_util::filesystem::Path> search_hints{
-        ::a_util::filesystem::getWorkingDirectory(), address_info.getFilePath().getParent()};
+    fs::path component_config_file_path;
+    const std::vector<fs::path> search_hints{
+        fs::current_path(), fs::path(address_info.getFilePath().getParent().toString())};
     // Note: if the environment variable is set, the user tells us to load a specific components
     // configuration file, so
     // - we do not search for the default file name (see below)
     // - we do not silently load default components only
     // , but rather throw an exception if such file is not found.
     const auto& environment_variable_file_path = a_util::process::getEnvVar(env_variable, "");
-    ;
+
     if (!environment_variable_file_path.empty()) {
         FEP3_LOGGER_LOG_DEBUG(logger,
                               std::string() + "Found environment variable \"" + env_variable +
                                   "\" with " + " value \"" + environment_variable_file_path + "\"")
         component_config_file_path = file::find(environment_variable_file_path, search_hints);
-        if (component_config_file_path.isEmpty()) {
+        if (component_config_file_path.empty()) {
             throw std::runtime_error(std::string() +
                                      "Couldn't find FEP Component Configuration File '" +
                                      environment_variable_file_path + "'");
@@ -57,7 +53,7 @@ std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistry(
         // search for the default file name
         component_config_file_path = file::find("./" + component_file_name, search_hints);
     }
-    if (component_config_file_path.isEmpty()) {
+    if (component_config_file_path.empty()) {
         FEP3_LOGGER_LOG_ERROR(logger,
                               std::string() +
                                   "No FEP Component Configuration File found; Built-in component "
@@ -68,9 +64,9 @@ std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistry(
     else {
         FEP3_LOGGER_LOG_DEBUG(logger,
                               std::string() + "FEP Component Configuration File found @ \"" +
-                                  component_config_file_path.toString() +
+                                  component_config_file_path.string() +
                                   "\"; loading FEP Components accordingly")
-        return createRegistryByFile(component_config_file_path, logger);
+        return createRegistryByFile(component_config_file_path.string(), logger);
     }
 }
 
@@ -97,14 +93,12 @@ std::shared_ptr<ComponentRegistry> ComponentRegistryFactory::createRegistryByFil
             case ComponentSourceType::built_in: {
                 throw std::runtime_error(
                     "Built in components are deprecated, use a cpp-plugin component");
-                break;
             }
             case ComponentSourceType::cpp_plugin:
                 component_factory = std::make_unique<ComponentFactoryCPPPlugin>(plugin_file_path);
                 break;
             case ComponentSourceType::c_plugin: {
                 throw std::runtime_error("C-plugin components are deprecated");
-                break;
             }
             default:
                 throw std::runtime_error(std::string() + "Unsupported FEP Component source type " +

@@ -1,3 +1,11 @@
+#
+# Copyright 2023 CARIAD SE.
+# 
+# This Source Code Form is subject to the terms of the Mozilla
+# Public License, v. 2.0. If a copy of the MPL was not distributed
+# with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+#
 include(./cmake.sources)
 set(SERVICE_BUS_DIR ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/)
 
@@ -14,12 +22,14 @@ ${SERVICE_BUS_RPC_DIR}/src/http_client.cpp
 ${SERVICE_BUS_RPC_DIR}/src/http_server.cpp
 ${SERVICE_BUS_RPC_DIR}/src/http_url_getter.cpp
 ${SERVICE_BUS_RPC_DIR}/src/service_update_sink_registry.cpp
+${SERVICE_BUS_RPC_DIR}/src/service_update_event_sink_proxy.cpp
 ${SERVICE_BUS_RPC_DIR}/include/http_systemaccess.h
 ${SERVICE_BUS_RPC_DIR}/include/find_free_port.h
 ${SERVICE_BUS_RPC_DIR}/include/http_client.h
 ${SERVICE_BUS_RPC_DIR}/include/http_server.h
 ${SERVICE_BUS_RPC_DIR}/include/http_url_getter.h
 ${SERVICE_BUS_RPC_DIR}/include/service_update_sink_registry.h
+${SERVICE_BUS_RPC_DIR}/include/service_update_event_sink_proxy.h
 ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus/service_bus_intf.h
 ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus/service_registry_base.hpp
 ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus/system_access_base.hpp
@@ -38,10 +48,10 @@ ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus/rpc/fep_rpc_stubs_clie
 ${PROJECT_SOURCE_DIR}/include/fep3/components/service_bus/rpc/fep_rpc_stubs_service.h)
 
 if(NOT TARGET dev_essential)
-    find_package(dev_essential 1.3.0 REQUIRED COMPONENTS result pkg_rpc system process)
+    find_package(dev_essential 1.3.0 REQUIRED COMPONENTS result pkg_rpc process)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS headers)
+find_package(Boost REQUIRED)
 
 target_include_directories(fep3_service_bus_base_lib
     PUBLIC
@@ -86,13 +96,12 @@ set_target_properties(fep3_lssdp_service_discovery_lib PROPERTIES FOLDER "plugin
 target_include_directories(fep3_lssdp_service_discovery_lib
     PUBLIC
     ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/include
-    ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/service_discovery/lssdp_factory/include/)
+    ${PROJECT_SOURCE_DIR}/src/fep3/native_components/service_bus/rpc/service_discovery/lssdp_factory/include/
+    ${PROJECT_SOURCE_DIR}/src/fep3/native_components/logging/sinks)
 
 target_link_libraries(fep3_lssdp_service_discovery_lib
                                              PUBLIC
                                              fep3_service_bus_base_lib
                                              PRIVATE
-                                             fep3_lssdp
-                                             dev_essential::system
-                                             dev_essential::concurrency)
+                                             fep3_lssdp)
 target_compile_definitions(fep3_lssdp_service_discovery_lib PRIVATE LSSDP_SERVICE_DISCOVERY)

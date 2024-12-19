@@ -1,0 +1,165 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+skinparam backgroundColor transparent
+!include <c4/C4_Container.puml>  
+
+LAYOUT_WITH_LEGEND()
+
+title <Draft> Native Component: Clock Service - C4 model: Level 2
+
+System_Boundary(sys_fep_participant, [[lvl1_participant_overview.svg FEP SDK Participant]]){
+  
+  Container(cont_base, "Base", "C++", "")
+  Container(cont_rpc_services, "RPC Services", "C++", "")
+  
+  Container_Boundary(cont_components, "Components"){
+    
+    Container(cont_comp_base, "Base", "", "")
+    
+    Container_Boundary(cont_ncomp, "Native Components"){
+      Container_Boundary(cont_ncomp_clock_service, "Clock Service"){
+        Container(cont_ncomp_clock_event_sink, "Clock Event Sink", "","")
+        
+        Container(cont_ncomp_clock_event_sink_registry, [[lvl3_ncomp_clock_event_sink_registry.svg Clock Event Sink Registry]], "", "")
+        Container(cont_ncomp_clock_main_event_sink, [[lvl3_ncomp_clock_main_event_sink.svg Clock Main Event Sink]], "","")
+        Container(cont_ncomp_clock_registry, "Clock Registry", "", "")
+        Container(cont_ncomp_clock_serv, "Clock Service", "", "")
+        Container(cont_ncomp_clock_service_configuration, "Clock Service Configuration", "","")
+        Container(cont_ncomp_clock_external, "External Clock", "","")
+        Container(cont_ncomp_clock_rpc_service, "RPC Clock Service", "", "")
+        Container(cont_ncomp_clock_rpc_sync_client, "RPC Clock Sync\nClient", "","")
+        Container(cont_ncomp_clock_rpc_sync_service, "RPC Clock Sync\nService", "","")
+        Container(cont_ncomp_clock_simulation, "Simulation Clock", "","")
+        Container(cont_ncomp_clock_system, "System Clock", "","")
+        
+        Container_Boundary(cont_ncomp_clock_variant, "Variant Handling"){
+          Container(cont_ncomp_clock_var, "Clock Variant Handling", "","")
+          Container(cont_ncomp_clock_var_event_sink, "Clock Event Sink\nVariant Handling", "","")
+          Container(cont_ncomp_clock_var_clock_serv, "Clock Service Handling", "","")
+        }
+      }
+      
+      Container(cont_ncomp_logging_service, "Logging Service", "","")
+      Container(cont_ncomp_service_bus, "Service Bus", "","")
+      
+    }
+  }
+}
+
+Container_Boundary(cont_opendev, "OPENDEV"){
+   Container_Boundary(cont_dev_essential, "Dev Essential"){
+    Container_Boundary(cont_dev_essential_autil, "a_util") {
+      Container_Ext(cont_devess_sys, "a_util::system", "C++")
+      Container_Ext(cont_devess_res, "a_util::result", "C++")
+      Container_Ext(cont_devess_str, "a_util::strings", "C++")
+    }
+   }
+}
+
+Container_Boundary(cont_3rdParty, "3rd Party"){
+   Container_Boundary(cont_boost, "Boost"){
+    Container_Ext(cont_boost_thread, "thread", "C++", "")
+    Container_Ext(cont_boost_asio, "asio", "C++", "")
+    Container_Ext(cont_boost_bind, "bind", "C++", "")
+   }
+}
+
+Lay_D(cont_base, cont_rpc_services)
+Lay_R(cont_base, cont_comp_base)
+Lay_D(cont_ncomp_service_bus, cont_ncomp_logging_service)
+Lay_R(cont_ncomp_service_bus, cont_ncomp_clock_event_sink)
+
+Lay_D(cont_ncomp_clock_event_sink, cont_ncomp_clock_serv)
+Lay_D(cont_ncomp_clock_serv, cont_ncomp_clock_external)
+Lay_D(cont_ncomp_clock_external, cont_ncomp_clock_rpc_service)
+Lay_R(cont_ncomp_clock_event_sink, cont_ncomp_clock_event_sink_registry)
+
+Lay_D(cont_ncomp_clock_event_sink_registry, cont_ncomp_clock_service_configuration)
+Lay_D(cont_ncomp_clock_service_configuration, cont_ncomp_clock_simulation)
+Lay_D(cont_ncomp_clock_simulation, cont_ncomp_clock_rpc_sync_client)
+Lay_R(cont_ncomp_clock_event_sink_registry, cont_ncomp_clock_main_event_sink)
+
+Lay_D(cont_ncomp_clock_main_event_sink, cont_ncomp_clock_registry)
+Lay_D(cont_ncomp_clock_registry, cont_ncomp_clock_system)
+Lay_D(cont_ncomp_clock_system, cont_ncomp_clock_rpc_sync_service)
+Lay_R(cont_ncomp_clock_main_event_sink, cont_ncomp_clock_var)
+
+Lay_D(cont_ncomp_clock_var, cont_ncomp_clock_var_event_sink)
+Lay_D(cont_ncomp_clock_var_event_sink, cont_ncomp_clock_var_clock_serv)
+
+'Clock Event Sink Registry
+'Rel(cont_ncomp_clock_event_sink_registry, cont_ncomp_clock_var_event_sink, "Uses", "GenericEventSinkAdapter")
+'Rel(cont_ncomp_clock_event_sink_registry, cont_base, "Uses", "SingleThreadWorker")
+'Rel(cont_ncomp_clock_event_sink_registry, cont_ncomp_logging_service, "Uses", "EasyLogging")
+'Rel(cont_ncomp_clock_event_sink_registry, cont_boost_thread, "Uses", "latch")
+'Rel(cont_ncomp_clock_event_sink_registry, cont_boost_asio, "Uses", "post")
+'Rel(cont_ncomp_clock_event_sink_registry, cont_boost_bind, "Uses", "bind")
+'Clock Main Event Sink
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_res, "Uses", "a_util::result")
+'Rel(cont_ncomp_clock_main_event_sink, cont_rpc_services, "Uses", "IRPCClockSyncMasterDef")
+'Rel(cont_ncomp_clock_main_event_sink, cont_ncomp_logging_service, "Uses", "ILogger")
+'Rel(cont_ncomp_clock_main_event_sink, cont_ncomp_clock_rpc_sync_client, "Uses", "RPCClockSyncClient")
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_str, "Uses", "a_util::strings")
+'Clock Registry
+'Rel(cont_ncomp_clock_registry, cont_ncomp_clock_var, "Uses", "GenericClockAdapter")
+'Rel(cont_ncomp_clock_registry, cont_ncomp_logging_service, "Uses", "EasyLogging")
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_res, "Uses", "a_util::result")
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_str, "Uses", "a_util::strings")
+'Clock Service
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_registry,"Uses","IClockRegistry,ClockRegistry")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_var, "Uses", "GenericClockAdapter")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_main_event_sink, "Uses", "ClockMainEventSink")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_service_configuration, "Uses", "ClockServiceConfiguration")
+'Rel(cont_ncomp_clock_serv, cont_comp_base, "Uses", "Component")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_logging_service, "Uses", "EasyLogging")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_simulation, "Uses", "SimulationClock")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_system, "Uses", "SystemClock")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_rpc_service, "Uses", "IRPCClockServiceDef,RPCClockService")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_clock_rpc_sync_service, "Uses", "RPCClockSyncService")
+'Rel(cont_ncomp_clock_serv, cont_ncomp_service_bus, "Uses", "IServiceBus")
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_res, "Uses", "a_util::result")
+'Rel(cont_ncomp_clock_main_event_sink, cont_devess_str, "Uses", "a_util::strings")
+'Clock Service Configuration
+'Rel(cont_ncomp_clock_service_configuration, cont_base, "Uses", "Configuration,PropertyVariable")
+'Rel(cont_ncomp_clock_service_configuration, cont_ncomp_logging_service, "Uses", "ILogger,EasyLogging")
+'External Clock
+'RPC Clock Service
+'Rel(cont_ncomp_clock_rpc_service, cont_ncomp_clock_serv, "Uses", "IClockService")
+'Rel(cont_ncomp_clock_rpc_service, cont_ncomp_service_bus, "Uses", "RPCService")
+'Rel(cont_ncomp_clock_rpc_service,cont_rpc_services, "Uses", "IRPCClockServiceDef,RPCClockServiceStub")
+'Rel(cont_ncomp_clock_rpc_service, cont_ncomp_clock_serv, cont_ncomp, "Uses", "IClockService")
+'RPC Clock Sync Client
+'Rel(cont_ncomp_clock_rpc_sync_client, cont_ncomp_service_bus, "Uses", "RPCServiceClient")
+'Rel(cont_ncomp_clock_rpc_sync_client, cont_rpc_services, "Uses", "IRPCClockSyncSlaveDef,IRPCClockSyncMasterDef,RPCClockSyncSlaveClientStub")
+'RPC Clock Sync Service
+'Rel(cont_ncomp_clock_rpc_sync_service, cont_ncomp_logging_service, "Uses", "EasyLogging")
+'Rel(cont_ncomp_clock_rpc_sync_service, cont_ncomp_service_bus, "Uses", "RPCService")
+'Rel(cont_ncomp_clock_rpc_sync_service, cont_rpc_services, "Uses", "IRPCClockSyncMasterDef,RPCClockSyncMasterServiceStub")
+'Rel(cont_ncomp_clock_rpc_service, cont_ncomp_clock_serv, cont_ncomp, "Uses", "IClockService")
+'Rel(cont_ncomp_clock_rpc_service, cont_ncomp_clock_main_event_sink, "Uses", "IClockMainEventSink")
+'Simulation Clock
+'Rel(cont_ncomp_clock_simulation, cont_ncomp_clock_event_sink, "Uses", "ClockEventSink")
+'Rel(cont_ncomp_clock_simulation, cont_ncomp_clock_external, "Uses", "IExternalClock,ExternalClock")
+'Rel(cont_ncomp_clock_simulation, cont_ncomp_clock_serv, "Uses", "")
+'System Clock
+'Rel(cont_ncomp_clock_system, cont_ncomp_clock_event_sink, "Uses", "ClockEventSink")
+'Rel(cont_ncomp_clock_system, cont_ncomp_clock_external, "Uses", "IExternalClock,ExternalClock")
+'Rel(cont_ncomp_clock_system, cont_ncomp_clock_serv, "Uses", "")
+'Rel(cont_ncomp_clock_system, cont_devess_sys, "Uses", "a_util::system")
+'Clock Variant Handling
+'Rel(cont_ncomp_clock_var, cont_comp_base, "Uses", "IComponent,IComponents")
+'Rel(cont_ncomp_clock_var, cont_ncomp_clock_rpc_service, "Uses", "IClockService")
+'Rel(cont_ncomp_clock_var, cont_ncomp_logging_service, "Uses", "ILogger,EasyLogging")
+'Clock Event Sink Variant Handling
+
+'Logging Service
+'Rel(cont_ncomp_logging_service, cont_ncomp_clock_var_clock_serv, "Uses", "ClockServiceAdapter")
+
+@enduml

@@ -1,0 +1,136 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam hyperlinkUnderline false
+ 
+ title Start Clock/Scheduler - timing master (discrete)
+ 
+ [-> "Component\nRegistry": [[fep_element_start.svg{Tooltip for message} start()]] 
+  activate "Component\nRegistry"
+  "Component\nRegistry" -> "Clock\nService": start()
+   activate "Clock\nService"
+   "Clock\nService" -> "Simulation\nClock": start()
+    activate "Simulation\nClock"
+    "Simulation\nClock" -> "Clock Event\nSink": setEventSink()
+     activate "Clock Event\nSink"
+     return
+    "Simulation\nClock" -> "Simulation\nClock": resetTime()
+    "Simulation\nClock" -> "Clock Event\nSink Registry": timeResetBegin()
+     activate "Clock Event\nSink Registry"
+     "Clock Event\nSink Registry" -> "Clock Event\nSink Registry": triggerEvent()
+     "Clock Event\nSink Registry" -> "Single Thread\nWorker": dispatch(timeResetBegin)
+      activate "Single Thread\nWorker"
+      "Single Thread\nWorker" --> "Task Clock\nEvent Sink": worker thread
+       activate "Task Clock\nEvent Sink"
+       note left: boost::asio::post() event will\nbe processed in worker threads
+       "Task Clock\nEvent Sink" -> "Sync Task\nExecutor Invoker": timeReset()
+        activate "Sync Task\nExecutor Invoker"
+        return
+       return
+      ...
+      "Single Thread\nWorker" --> "Clock Main\nEvent Sink": worker thread
+       activate "Clock Main\nEvent Sink"
+       "Clock Main\nEvent Sink" -> "RPC\nService/Client"
+        activate "RPC\nService/Client"
+        [<- "RPC\nService/Client" : "RPC Master -> Slave: Time reset event"]]
+        [--> "RPC\nService/Client" 
+        return
+       return 
+      ...
+      return
+     return
+    "Simulation\nClock" -> "Clock Event\nSink": setCurrentTime()
+     activate "Clock Event\nSink"
+     return
+    "Simulation\nClock" -> "Clock Event\nSink Registry": timeResetEnd()
+     activate "Clock Event\nSink Registry"
+     "Clock Event\nSink Registry" -> "Clock Event\nSink Registry": triggerEvent()
+     "Clock Event\nSink Registry" -> "Single Thread\nWorker": dispatch(timeResetEnd)
+      activate "Single Thread\nWorker"
+      note left: boost::asio::post() event will\nbe processed in worker threads
+      return
+     return
+    note left: Simulation clock\nworker thread created
+    return
+   return
+  "Component\nRegistry" -> "Clock Sync\nService": start()
+   activate "Clock Sync\nService"
+   return
+  "Simulation\nClock" --> "Simulation\nClock": worker thread
+   activate "Simulation\nClock"
+   "Simulation\nClock" -> "Simulation\nClock": setNewTime()
+   "Simulation\nClock" -> "Clock Event\nSink Registry": timeUpdateBegin()
+    activate "Clock Event\nSink Registry"
+    "Clock Event\nSink Registry" -> "Clock Event\nSink Registry": triggerEvent()
+    "Clock Event\nSink Registry" -> "Single Thread\nWorker": dispatch(timeUpdateBegin)
+     activate "Single Thread\nWorker"
+     note left: boost::asio::post() event will\nbe processed in worker threads
+     return
+    return
+   "Simulation\nClock" -> "Clock Event\nSink": setCurrentTime()
+    activate "Clock Event\nSink"
+    return
+   "Simulation\nClock" -> "Clock Event\nSink Registry": timeUpdating()
+    activate "Clock Event\nSink Registry"
+    "Clock Event\nSink Registry" -> "Clock Event\nSink Registry": triggerEvent()
+    "Clock Event\nSink Registry" -> "Single Thread\nWorker": dispatch(timeUpdating)
+     activate "Single Thread\nWorker"
+     ...
+     "Single Thread\nWorker" --> "Task Clock\nEvent Sink": worker thread
+      activate "Task Clock\nEvent Sink"
+      "Task Clock\nEvent Sink" -> "Sync Task\nExecutor Invoker": timeUpdating()
+       activate "Sync Task\nExecutor Invoker"
+       "Sync Task\nExecutor Invoker" -> "Sync Task\nExecutor Invoker": processQueueSynchron()
+       "Sync Task\nExecutor Invoker" -> "Sync Task\nExecutor": run()
+        activate "Sync Task\nExecutor"
+        ref over "Sync Task\nExecutor Invoker", "Sync Task\nExecutor"
+         see Sequence Diagram "run master jobs"
+        end ref
+        return
+       return
+      return
+     ...
+     "Single Thread\nWorker" --> "Clock Main\nEvent Sink": worker thread
+      activate "Clock Main\nEvent Sink"
+      "Clock Main\nEvent Sink" -> "RPC\nService/Client"
+       activate "RPC\nService/Client"
+       [<- "RPC\nService/Client" : "RPC Master -> Slave: Time updating event"]]
+       [--> "RPC\nService/Client" 
+       return
+      return 
+     return
+    return
+   "Simulation\nClock" -> "Clock Event\nSink Registry": timeUpdateEnd()
+    activate "Clock Event\nSink Registry"
+    "Clock Event\nSink Registry" -> "Clock Event\nSink Registry": triggerEvent()
+    "Clock Event\nSink Registry" -> "Single Thread\nWorker": dispatch(timeUpdateEnd)
+     activate "Single Thread\nWorker"
+     note left: boost::asio::post() event will\nbe processed in worker threads
+     return
+    return
+   return
+  "Component\nRegistry" -> "Local Scheduler\nService": start()
+   activate "Local Scheduler\nService"
+   "Local Scheduler\nService" -> "Local Scheduler\nService": getActiveScheduler()
+   "Local Scheduler\nService" -> "Local Scheduler\nRegistry": startActiveScheduler()
+    activate "Local Scheduler\nRegistry"
+    "Local Scheduler\nRegistry" -> "Task Clock\nEvent Sink": start()
+     activate "Task Clock\nEvent Sink"
+     note left: Depending on clock type\n- discrete: start SyncTaskExecutorInvoker\n- continous: start AsyncTaskExecutorInvoker
+     "Task Clock\nEvent Sink" -> "Sync Task\nExecutor Invoker": start()
+      activate "Sync Task\nExecutor Invoker"
+      return
+     return
+    return
+   return
+  return
+@enduml

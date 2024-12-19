@@ -1,0 +1,81 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+ 
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam hyperlinkUnderline false
+ 
+ title Initialize Clock/Scheduler - timing slave (discrete)
+ 
+ [-> "Component\nRegistry": [[fep_element_initialize.svg{Tooltip for message} initialize()]] 
+  activate "Component\nRegistry"
+  "Component\nRegistry" -> "Clock\nService": initialize()
+   activate "Clock\nService"
+   return
+  "Component\nRegistry" -> "Clock Sync\nService": initialize()
+   activate "Clock Sync\nService"
+   
+   ref over "Clock Sync\nService"
+   Update all registered property variables
+   end ref
+   
+   "Clock Sync\nService" -> "Clock Sync\nService": getClockServiceAdapter()
+   "Clock Sync\nService" -> "Clock\nService": getMainClockName()
+    activate "Clock\nService"
+    return
+   
+   ref over "Clock Sync\nService"
+   Validate master/slave clock sync configuration
+   end ref
+   
+   "Clock Sync\nService" -> "Clock Sync\nService": setupSlaveClock()
+    activate "Clock Sync\nService"
+    "Clock Sync\nService" -> "MasterOnDemand\nClockDiscrete": c'tor
+     activate "MasterOnDemand\nClockDiscrete"
+     "MasterOnDemand\nClockDiscrete" -> "FarClock\nUpdater": c'tor
+      activate "FarClock\nUpdater"
+      "FarClock\nUpdater" -> "RPC\nService/Client": c'tor
+       activate "RPC\nService/Client"
+       return
+      return
+     "MasterOnDemand\nClockDiscrete" -> "Discrete\nClock": c'tor
+      activate "Discrete\nClock"
+      return
+     "MasterOnDemand\nClockDiscrete" -> "FarClock\nUpdater": startRPC()
+      activate "FarClock\nUpdater"
+      
+      ref over "FarClock\nUpdater"
+       register to RPC
+      end ref
+      
+      "FarClock\nUpdater" -> "FarClock\nUpdater": registerToMaster()
+       activate "FarClock\nUpdater"
+       "FarClock\nUpdater" -> "RPC\nService/Client": getMasterType()
+        activate "RPC\nService/Client"
+        [<- "RPC\nService/Client" : [[components_init_clock_scheduler_master_discrete.svg{Tooltip for message} RPC Slave -> Master:\nget Master type]]
+        [--> "RPC\nService/Client" 
+        return
+       "FarClock\nUpdater" -> "RPC\nService/Client": registerSyncSlave()
+       activate "RPC\nService/Client"
+        [<- "RPC\nService/Client" : [[components_init_clock_scheduler_master_discrete.svg{Tooltip for message} RPC Slave -> Master:\nregister Sync Slave"]]
+        [--> "RPC\nService/Client" 
+        return
+       return
+      return
+     return
+    return
+   return
+  "Component\nRegistry" -> "Local Scheduler\nService": initialize()
+   activate "Local Scheduler\nService"
+   return
+  ...
+  return
+
+@enduml

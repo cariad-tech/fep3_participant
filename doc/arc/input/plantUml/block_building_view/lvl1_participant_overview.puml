@@ -1,0 +1,110 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+skinparam backgroundColor transparent
+skinparam hyperlinkUnderline false 
+
+!include <c4/C4_Container.puml>
+
+LAYOUT_WITH_LEGEND()
+
+title <Draft> FEP3 SDK Participant Library: Overview - C4 model: Level 1
+
+System_Boundary(sys_fep_participant, "FEP SDK Participant"){
+
+  Container(cont_base, "Base", "C++", "")
+  Container(cont_core, "Core", "C++", "")
+  
+  Container_Boundary(cont_comp, "Components"){
+    Container(cont_comp_base, "Base", "C++", "")
+    Container_Boundary(cont_ncomp, "Native Components"){
+      Container(cont_ncomp_clock_service, [[lvl2_ncomp_clock_service.svg Clock Service]], "C++", "")
+      Container(cont_ncomp_cock_sync_service, "Clock Sync Service", "C++", "")
+      Container(cont_ncomp_configuration_service, "Configuration Service", "C++", "")
+      Container(cont_ncomp_data_registry, "Data Registry", "C++", "")
+      Container(cont_ncomp_job_registry, "Job Registry", "C++", "")
+      Container(cont_ncomp_logging_service, "Logging Service", "C++", "")
+      Container(cont_ncomp_participant_info, "Participant Info", "C++", "")
+      Container(cont_ncomp_scheduler_service, "Scheduler Service", "C++", "")
+      Container(cont_ncomp_service_bus, "Service Bus", "C++", "")
+      Container(cont_ncomp_simulation_bus, "Simulation Bus", "C++", "")
+      Container(cont_ncomp_health_service, "Health Service", "C++", "")
+    }
+  }
+  
+  Container(cont_fep_participant, "Participant", "C++", "")
+  Container(cont_plugin, "Plugin", "C++", "")
+  Container(cont_rpc_services, "RPC Services", "C++", "") 
+  
+  Container_Ext(cont_lssdp, "lssdp-cpp", "C++", "")
+  
+  Container_Boundary(cont_rti_dds, "RTI DDS"){
+    Container(cont_rti, "RTI DDS", "C++", "")
+    Container_Ext(cont_rti_connext_dds, "RTI Connext DDS","C++", "")
+  }
+  
+  Container(cont_fep_http, "FEP Http Service Bus", "C++", "")
+} 
+
+Container_Boundary(cont_fep_participant_plugin, "FEP SDK Participant Plugin"){
+  Container_Ext(cont_component_foreign, "Foreign Components", "C++", "")
+}
+
+Container_Boundary(cont_3rdParty, "3rd Party"){
+  Container_Boundary(cont_boost, "Boost"){
+    Container_Ext(cont_boost_head, "headers", "C++", "")
+    Container_Ext(cont_boost_dt, "date_time", "C++", "")
+    Container_Ext(cont_boost_thread, "thread", "C++", "")
+    Container_Ext(cont_boost_fs, "filesystem", "C++", "")
+    Container_Ext(cont_boost_asio, "asio", "C++", "")
+    Container_Ext(cont_boost_bind, "bind", "C++", "")
+   }
+   Container_Ext(cont_clip, "Clipp", "C++", "")
+}
+ 
+Container_Boundary(cont_opendev, "OPENDEV"){
+  Container_Boundary(cont_dev_essential, "Dev Essential"){
+    Container_Ext(cont_devess_rpc, "pkg_rpc", "C++")
+    Container_Ext(cont_devess_ddl, "ddl", "C++")
+    Container_Boundary(cont_dev_essential_autil, "a_util") {
+      Container_Ext(cont_devess_sys, "a_util::system", "C++")
+      Container_Ext(cont_devess_fs, "a_util::filesystem", "C++")
+      Container_Ext(cont_devess_proc, "a_util::process", "C++")
+      Container_Ext(cont_devess_res, "a_util::result", "C++")
+      Container_Ext(cont_devess_xml, "a_util::xml", "C++")
+      Container_Ext(cont_devess_mem, "a_util::memory", "C++")
+      Container_Ext(cont_devess_str, "a_util::strings", "C++")
+    }
+   }
+}
+
+Lay_R(cont_rpc_services, cont_base)
+Lay_R(cont_base, cont_core)
+Lay_R(cont_core, cont_fep_participant)
+Lay_R(cont_fep_participant, cont_plugin)
+Lay_R(cont_plugin, cont_lssdp)
+Lay_R(cont_lssdp, cont_rti_dds)
+Lay_R(cont_rti_dds, cont_comp)
+Lay_D(cont_rpc_services, cont_comp_base)
+
+Lay_R(cont_rti, cont_component_foreign)
+Lay_D(cont_component_foreign, cont_boost_dt)
+Lay_R(cont_clip, cont_boost_head)
+Lay_R(cont_boost_head, cont_boost_dt)
+Lay_R(cont_boost_dt, cont_boost_thread)
+Lay_D(cont_boost_head, cont_boost_fs)
+Lay_R(cont_boost_fs, cont_boost_bind)
+Lay_R(cont_boost_bind, cont_boost_asio)
+Lay_D(cont_boost_fs, cont_devess_ddl)
+Lay_R(cont_devess_ddl, cont_devess_rpc)
+
+@enduml
+
+
+

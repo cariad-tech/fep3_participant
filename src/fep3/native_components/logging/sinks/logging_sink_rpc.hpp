@@ -1,23 +1,22 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
+#include "logging_sink_requests.h"
+#include "logging_sink_service_connection_status.h"
+#include "logging_sink_service_connection_strategy.h"
+#include "registered_rpc_sink_services.h"
+#include "send_log_to_rpc_sink.h"
 
 #include <fep3/base/properties/properties.h>
 #include <fep3/components/logging/logging_service_intf.h>
-#include <fep3/components/service_bus/rpc/fep_rpc_stubs_client.h>
 #include <fep3/components/service_bus/rpc/fep_rpc_stubs_service.h>
 #include <fep3/components/service_bus/service_bus_intf.h>
-#include <fep3/rpc_services/logging/logging_rpc_sink_client_client_stub.h>
 #include <fep3/rpc_services/logging/logging_rpc_sink_service_service_stub.h>
 #include <fep3/rpc_services/logging/logging_service_rpc_intf_def.h>
 
@@ -27,10 +26,6 @@ namespace fep3 {
 namespace native {
 
 // this is the class to send messages to a registered sink far away on another process
-// this client MUST register !!
-using RPCSinkClientClient =
-    rpc::RPCServiceClient<fep3::rpc_stubs::RPCLoggingRPCSinkClientClientStub,
-                          fep3::rpc::IRPCLoggingSinkClientDef>;
 using RPCSinkClientService = rpc::RPCService<fep3::rpc_stubs::RPCLoggingRPCSinkServiceServiceStub,
                                              fep3::rpc::IRPCLoggingSinkServiceDef>;
 
@@ -63,35 +58,42 @@ public:
 
     void releaseServiceBus()
     {
-        std::lock_guard<std::mutex> lock(_sync_filters);
+        std::scoped_lock lock(_mutex_registered_rpc_sink_services);
+        _registered_rpc_sink_services.clear();
         _service_bus->getServer()->unregisterService(
             fep3::rpc::IRPCLoggingSinkServiceDef::getRPCDefaultName());
         _service_bus = nullptr;
-        _client_filters.clear();
     }
 
     fep3::Result log(LogMessage log) const override final
     {
-        fep3::Result result = ERR_NOERROR;
-        std::lock_guard<std::mutex> lock(_sync_filters);
+        std::queue<SinkRequest> sink_requests = _sink_registration_request_queue.popAll();
+        // from here lock free from the RPC calls
+        auto requester_factory = [this](const std::string& address) {
+            return getRequester(address);
+        };
 
-        for (const auto& current_client: _client_filters) {
-            // TODO: Filter here!
-            try {
-                result = static_cast<int32_t>(
-                    current_client.second._client->onLog(log._message,
-                                                         log._logger_name,
-                                                         log._participant_name,
-                                                         static_cast<int>(log._severity),
-                                                         log._timestamp));
-            }
-            catch (const jsonrpc::JsonRpcException& ex) {
-                result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
-            }
-            catch (const std::exception& ex) {
-                result = CREATE_ERROR_DESCRIPTION(ERR_EXCEPTION_RAISED, ex.what());
-            }
-        }
+        // we guard here since releaseServiceBus can be called from LoggingService::Destroy
+        // the thread in LoggingQueue however can still trigger us until the destructor of
+        // LoggingService
+        std::scoped_lock lock(_mutex_registered_rpc_sink_services);
+
+        // first we process the (un)registrations received from rpc calls
+        _registered_rpc_sink_services.processRequests(sink_requests, requester_factory);
+        // Then we check if all the registered sinks are alive
+        LogginkSinkConnectionHandleStrategy strategy(_sink_connection_status);
+        auto strategy_result =
+            strategy.checkConnectivity(_registered_rpc_sink_services.getRegisteredSinkClients());
+        // remove the dead sinks
+        _registered_rpc_sink_services.processRequests(strategy_result, requester_factory);
+        // send the log message to the sinks
+        auto [result, failed_url] =
+            sendLogToSinks(log, _registered_rpc_sink_services.getRegisteredSinkClients());
+        // remove again the sinks that had an error during transmission
+        auto failed_transmission_strategy_result = strategy.handleFailedTransmissions(failed_url);
+        _registered_rpc_sink_services.processRequests(failed_transmission_strategy_result,
+                                                      requester_factory);
+
         return result;
     }
 
@@ -100,42 +102,35 @@ public:
                                      const std::string& logger_name_filter,
                                      int severity)
     {
-        std::lock_guard<std::mutex> lock(_sync_filters);
-        if (_service_bus) {
-            std::unique_ptr<RPCSinkClientClient> new_client(
-                new RPCSinkClientClient(rpc::IRPCLoggingSinkClientDef::getRPCDefaultName(),
-                                        _service_bus->getRequester(address, true)));
-
-            auto& new_filter = _client_filters[address];
-            new_filter._name_filter = logger_name_filter;
-            new_filter._severity_filter = static_cast<fep3::LoggerSeverity>(severity);
-            new_filter._client.reset(new_client.release());
-            return 0;
-        }
-        else {
-            // this call is while shutting down
-            return ERR_INVALID_STATE.getCode();
-        }
+        _sink_registration_request_queue.addRegisterSinkRequest(
+            address, logger_name_filter, severity);
+        return 0;
     }
 
     int unregisterRPCLoggingSinkClient(const std::string& address)
     {
-        std::lock_guard<std::mutex> lock(_sync_filters);
-        _client_filters.erase(address);
+        _sink_registration_request_queue.addUnRegisterSinkRequest(address);
+
         return 0;
     }
 
 private:
-    struct ClientFilter {
-        std::string _name_filter;
-        fep3::LoggerSeverity _severity_filter;
-        std::unique_ptr<RPCSinkClientClient> _client;
-    };
-    /// RPC client to send the logs to the system library
-    std::map<std::string, ClientFilter> _client_filters;
-    mutable std::mutex _sync_filters;
+    std::shared_ptr<fep3::arya::IServiceBus::IParticipantRequester> getRequester(
+        const std::string& address) const
+    {
+        if (_service_bus) {
+            return _service_bus->getRequester(address, true);
+        }
+        else
+            return nullptr;
+    }
 
     IServiceBus* _service_bus;
+
+    mutable SinkRequestQueue _sink_registration_request_queue;
+    mutable RegisteredRpcSinkServices _registered_rpc_sink_services;
+    mutable LoggingSinkConnectionStatus _sink_connection_status;
+    mutable std::mutex _mutex_registered_rpc_sink_services;
 };
 
 inline RPCSinkClientServiceImpl::RPCSinkClientServiceImpl(LoggingSinkRPC& logging_sink)

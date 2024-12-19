@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2022 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -127,6 +123,12 @@ using arya::Component;
 template <typename iid_getter_type>
 class ComponentInterface {
 public:
+    // Updating gtest to 1.13 triggered the "Empty base optimization" (EBO)
+    // because of a private inheritance in StrickMock class.
+    // It will cause compilation error in Windows because StrickMock tries to verify
+    // the size of the subclass.
+    // To avoid this optimization we can a virtual DTOR into this class.
+    virtual ~ComponentInterface() = default;
     FEP_COMPONENT_IID(iid_getter_type()())
 };
 

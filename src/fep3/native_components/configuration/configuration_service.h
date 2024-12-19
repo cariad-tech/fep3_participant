@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -51,7 +47,7 @@ private:
 class RPCConfigurationService : public rpc::RPCService<fep3::rpc_stubs::RPCConfigurationServiceStub,
                                                        fep3::rpc::IRPCConfigurationDef> {
 public:
-    explicit RPCConfigurationService(ConfigurationService& service) : _service(service)
+    explicit RPCConfigurationService(fep3::IConfigurationService& service) : _service(service)
     {
     }
 
@@ -65,7 +61,7 @@ public:
                     const std::string& value) override;
 
 private:
-    ConfigurationService& _service;
+    fep3::IConfigurationService& _service;
 };
 
 } // namespace native

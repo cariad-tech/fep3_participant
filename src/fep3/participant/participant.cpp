@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "../../logging/default_severity_from_env_variable.h"
@@ -357,7 +353,7 @@ Participant createParticipant(const std::string& name,
             if (!result_server_creation) {
                 throw std::runtime_error(
                     std::string("can not create participant ") + name +
-                    " Error:" + a_util::strings::toString(result_server_creation.getErrorCode()) +
+                    " Error:" + std::to_string(result_server_creation.getErrorCode()) +
                     " Description: " + result_server_creation.getDescription());
             }
         }

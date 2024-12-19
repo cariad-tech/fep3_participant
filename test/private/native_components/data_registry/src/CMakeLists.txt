@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -17,11 +16,6 @@ add_executable(test_data_registry tester_data_registry.cpp
                data_registry_test_fixture.h
 )
 
-add_test(NAME test_data_registry
-    COMMAND test_data_registry
-    TIMEOUT 10
-)
-
 target_link_libraries(test_data_registry PRIVATE
     dev_essential::ddl
     dev_essential::pkg_rpc
@@ -35,17 +29,16 @@ target_link_libraries(test_data_registry PRIVATE
 set_target_properties(test_data_registry PROPERTIES FOLDER "test/private/native_components/data_registry")
 internal_fep3_participant_deploy(test_data_registry)
 
+gtest_discover_tests(test_data_registry
+    TIMEOUT 10
+)
+
 ##################################################################
 # Mapping
 ##################################################################
 
 add_executable(test_mapping tester_mapping.cpp
                data_registry_test_fixture.h
-)
-
-add_test(NAME test_mapping
-    COMMAND test_mapping
-    TIMEOUT 10
 )
 
 target_link_libraries(test_mapping PRIVATE
@@ -64,3 +57,7 @@ target_compile_definitions(test_mapping PRIVATE
 
 set_target_properties(test_mapping PROPERTIES FOLDER "test/private/native_components/data_registry")
 internal_fep3_participant_deploy(test_mapping)
+
+gtest_discover_tests(test_mapping
+    TIMEOUT 10
+)

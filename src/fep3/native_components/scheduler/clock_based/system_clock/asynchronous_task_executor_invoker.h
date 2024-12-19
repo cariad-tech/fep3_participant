@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
@@ -85,10 +81,12 @@ public:
 
     void timeUpdating(Timestamp, std::optional<arya::Timestamp>) override
     {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(_logger, "Received time update event");
     }
 
     void timeReset(Timestamp old_time, Timestamp new_time) override
     {
+        FEP3_ARYA_LOGGER_LOG_DEBUG(_logger, "Received time reset event");
         std::unique_lock<std::mutex> lock(_mutex_processing_lock);
         _async_timer_queue_processor.timeReset(old_time, new_time);
         _reset_or_stop_notification.notify();
@@ -121,6 +119,8 @@ private:
             {
                 std::unique_lock<std::mutex> lock(_mutex_processing_lock);
                 const auto current_time = _get_time();
+                FEP3_ARYA_LOGGER_LOG_DEBUG(
+                    _logger, "Asynchronous executor, running clock triggered jobs scheduling");
                 time_to_wait = _async_timer_queue_processor.run(current_time);
             }
             if (time_to_wait < 1ms) {

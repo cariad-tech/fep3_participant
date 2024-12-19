@@ -1,13 +1,9 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #include "dds_test_service_discovery_helpers.h"
@@ -49,10 +45,9 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscovery)
     std::stringstream ss;
     ss << std::this_thread::get_id();
 
-    std::string system_name_for_test_1 =
-        std::string("system_1_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_1 = "system_1_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
     ProcessedDiscoverySampleWaiter processed_sample_waiter_1(
         {"server_1@" + system_name_for_test_1});
@@ -127,15 +122,13 @@ TEST(ServiceBusServer, testHTTPSystemAccessDiscoveryAllSystems)
     std::stringstream ss;
     ss << std::this_thread::get_id();
 
-    std::string system_name_for_test_1 =
-        std::string("system_1_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_1 = "system_1_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
-    std::string system_name_for_test_2 =
-        std::string("system_2_") +
-        a_util::strings::toString(a_util::process::getCurrentProcessId()) + std::string("_") +
-        ss.str();
+    std::string system_name_for_test_2 = "system_2_" +
+                                         std::to_string(a_util::process::getCurrentProcessId()) +
+                                         std::string("_") + ss.str();
 
     // create a system access to the named system "system_name_for_test_1" on the default URL
     fep3::native::ServiceBus bus1;

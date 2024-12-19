@@ -1,23 +1,18 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2023 VW Group. All rights reserved.
-
-    This Source Code Form is subject to the terms of the Mozilla
-    Public License, v. 2.0. If a copy of the MPL was not distributed
-    with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-@endverbatim
+ * Copyright 2024 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+#pragma once
 #include "clock_event_sink_variant_handling.h"
 
-#include <fep3/components/base/components_intf.h>
+#include <fep3/components/base/component.h>
 #include <fep3/components/clock/clock_service_intf.h>
 #include <fep3/components/logging/easy_logger.h>
 #include <fep3/components/logging/logger_intf.h>
-#include <fep3/fep3_participant_version.h>
 
 #include <functional>
 #include <memory>
@@ -116,33 +111,36 @@ inline std::pair<fep3::Result, std::unique_ptr<ClockServiceAdapter>> getClockSer
 inline std::pair<fep3::Result, std::unique_ptr<ClockServiceAdapter>> getClockServiceAdapter(
     const fep3::IComponents& components, std::shared_ptr<const fep3::ILogger> logger)
 {
-    auto clock_service_catelyn = components.getComponent<fep3::experimental::IClockService>();
+    using LatestClockService = ::fep3::experimental::IClockService;
+    auto [res, clock_service] = fep3::base::getComponentHelper<LatestClockService>(components);
 
-    if (clock_service_catelyn) {
-        return {fep3::Result{}, std::make_unique<ClockServiceAdapter>(clock_service_catelyn)};
+    if (clock_service && res) {
+        return {fep3::Result{}, std::make_unique<ClockServiceAdapter>(clock_service)};
     }
     else {
-#if FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR > 2
-        FEP3_ARYA_LOGGER_LOG_WARNING(
-            logger,
-            a_util::strings::format(
-                "%s is not part of the given component registry, it is recommended to"
-                "load FEP Component Implementation %s",
-                fep3::experimental::IClockService::getComponentIID(),
-                fep3::experimental::IClockService::getComponentIID()));
-#endif // FEP3_PARTICIPANT_LIBRARY_VERSION_MINOR >
-        auto clock_service_arya = components.getComponent<fep3::arya::IClockService>();
-        if (clock_service_arya) {
-            return {fep3::Result{}, std::make_unique<ClockServiceAdapter>(clock_service_arya)};
+        if constexpr (std::is_same_v<LatestClockService, fep3::experimental::IClockService>) {
+            // As long as interface is experimental the user does not want a log warning
+            // that interface not found
+            FEP3_LOGGER_LOG_DEBUG(logger, res.getDescription());
         }
         else {
-            auto error_desc = CREATE_ERROR_DESCRIPTION(
-                fep3::ERR_NO_INTERFACE,
-                "Neither %s or %s are part of the given component registry",
-                fep3::arya::IClockService::getComponentIID(),
-                fep3::experimental::IClockService::getComponentIID());
-            FEP3_ARYA_LOGGER_LOG_ERROR(logger, error_desc.getDescription());
-            return {error_desc, nullptr};
+            FEP3_LOGGER_LOG_WARNING(logger, res.getDescription());
+        }
+
+        // Fallback if latest version of interface IClockService is not available
+        using AryaClockService = ::fep3::arya::IClockService;
+        auto [res_arya, clock_service_arya] =
+            fep3::base::getComponentHelper<AryaClockService>(components);
+        if (!clock_service_arya || !res_arya) {
+            FEP3_LOGGER_LOG_ERROR(
+                logger,
+                a_util::strings::format("Neither %s nor %s is part of the given component registry",
+                                        AryaClockService::getComponentIID(),
+                                        LatestClockService::getComponentIID()));
+            return {res_arya, nullptr};
+        }
+        else {
+            return {res_arya, std::make_unique<ClockServiceAdapter>(clock_service_arya)};
         }
     }
 }

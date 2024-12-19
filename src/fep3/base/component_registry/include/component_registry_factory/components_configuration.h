@@ -1,28 +1,18 @@
 /**
- * @file
- * @copyright
- * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
-
-This Source Code Form is subject to the terms of the Mozilla
-Public License, v. 2.0. If a copy of the MPL was not distributed
-with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-@endverbatim
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 #pragma once
 
 #include "../../include/component_factory/component_source_type.h"
 
+#include <fep3/fep3_filesystem.h>
+
 #include <vector>
-
-namespace boost {
-namespace filesystem {
-
-class path;
-
-} // namespace filesystem
-} // namespace boost
 
 namespace fep3 {
 namespace arya {
@@ -43,9 +33,8 @@ public:
 
 private:
     std::vector<ComponentConfiguration> load(const std::string& file_path);
-    boost::filesystem::path getAbsoluteComponentLibPath(
-        const boost::filesystem::path& component_lib_rel_path,
-        const std::string& fep_component_file_path) const;
+    fs::path getAbsoluteComponentLibPath(const fs::path& component_lib_rel_path,
+                                         const std::string& fep_component_file_path) const;
 
 private:
     // Note: The order of entries in the container of items defines the order of component creation,

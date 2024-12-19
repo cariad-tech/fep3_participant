@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -11,13 +10,22 @@ set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_common.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_console.hpp
-    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_rpc.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_csv.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_fep.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_intf.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.hpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.cpp
     ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_file_base.hpp
+)
+
+set(COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_RPC_SINK
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_rpc.hpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_service_connection_status.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_service_connection_status.cpp
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_requests.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/registered_rpc_sink_services.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_sink_service_connection_strategy.h
+    ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/send_log_to_rpc_sink.h
 )
 
 set(COMPONENTS_LOGGING_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/fep3/components/logging)
@@ -31,6 +39,7 @@ set(COMPONENTS_LOGGING_SOURCES_PUBLIC
 if (MSVC)
     # Ignore warnings coming from boost date_time
     set_source_files_properties(
+      ${COMPONENTS_PLUGIN_LOGGING_DIR}/logging_service.cpp
       ${COMPONENTS_PLUGIN_LOGGING_DIR}/sinks/logging_formater_json.cpp
       PROPERTIES
       COMPILE_FLAGS "/wd4244"
@@ -54,6 +63,7 @@ set(COMPONENT_PLUGIN_LOGGING_SOURCES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE}
 
 source_group(components\\logging\\private FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE})
 source_group(components\\logging\\sinks FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+source_group(components\\logging\\sinks\\rpc FILES ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_RPC_SINK})
 source_group(components\\logging\\public FILES ${COMPONENTS_LOGGING_SOURCES_PUBLIC})
 
 ##################################################################
@@ -122,6 +132,8 @@ install(FILES
 ######################################
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES})
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_SINKS})
+list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENT_PLUGIN_LOGGING_SOURCES_PRIVATE_RPC_SINK})
 list(APPEND FEP_COMPONENT_PLUGIN_SOURCES  ${COMPONENTS_LOGGING_RPC_SOURCES})
 list(APPEND FEP_COMPONENT_PLUGIN_STUB_GENERATORS logging_service_rpc_stub_generator)
+
 

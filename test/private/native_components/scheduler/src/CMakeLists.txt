@@ -1,5 +1,4 @@
-#
-# Copyright @ 2021 VW Group. All rights reserved.
+# Copyright 2023 CARIAD SE.
 #
 # This Source Code Form is subject to the terms of the Mozilla
 # Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -10,12 +9,9 @@
 # tester_job_runner
 ##################################################################
 
-find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
-
 add_executable(tester_job_runner tester_job_runner.cpp)
 
-add_test(NAME tester_job_runner
-    COMMAND tester_job_runner
+gtest_discover_tests(tester_job_runner
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -36,8 +32,7 @@ set_target_properties(tester_job_runner PROPERTIES FOLDER "test/private/native_c
 
 add_executable(tester_scheduler_registry tester_scheduler_registry.cpp)
 
-add_test(NAME tester_scheduler_registry
-    COMMAND tester_scheduler_registry
+gtest_discover_tests(tester_scheduler_registry
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -54,7 +49,7 @@ set_target_properties(tester_scheduler_registry PROPERTIES FOLDER "test/private/
 ##################################################################
 # tester_timer_scheduler
 ##################################################################
-find_package(Boost 1.73.0 REQUIRED COMPONENTS thread headers)
+find_package(Boost 1.73.0 REQUIRED COMPONENTS thread)
 
 add_executable(tester_task_executor
     test_data_triggered_executor.cpp
@@ -62,10 +57,10 @@ add_executable(tester_task_executor
     test_asynchronous_task_executor_invoker.cpp
     test_synchronous_task_executor.cpp
     test_common_task_executor.cpp
-    test_synchronous_task_executor_invoker.cpp)
+    test_synchronous_task_executor_invoker.cpp
+    test_data_triggered_receiver.cpp)
 
-add_test(NAME tester_task_executor
-    COMMAND tester_task_executor
+gtest_discover_tests(tester_task_executor
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -89,8 +84,7 @@ set_target_properties(tester_task_executor PROPERTIES FOLDER "test/private/nativ
 
 add_executable(tester_clock_based_scheduler tester_clock_based_scheduler.cpp)
 
-add_test(NAME tester_clock_based_scheduler
-    COMMAND tester_clock_based_scheduler
+gtest_discover_tests(tester_clock_based_scheduler
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -114,8 +108,7 @@ set_target_properties(tester_clock_based_scheduler PROPERTIES FOLDER "test/priva
 
 add_executable(tester_scheduler_service tester_scheduler_service.cpp)
 
-add_test(NAME tester_scheduler_service
-    COMMAND tester_scheduler_service
+gtest_discover_tests( tester_scheduler_service
     TIMEOUT 10
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../"
 )
@@ -134,6 +127,8 @@ set_target_properties(tester_scheduler_service PROPERTIES FOLDER "test/private/n
 # Test of the native scheduler service rpc implementation
 ##################################################################
 
+find_package(dev_essential 1.3.0 REQUIRED COMPONENTS pkg_rpc)
+
 add_custom_target(tester_scheduler_service_rpc_stub_generator)
 fep_generate_rpc_stubs_before_target(
     TARGET tester_scheduler_service_rpc_stub_generator
@@ -145,8 +140,7 @@ fep_generate_rpc_stubs_before_target(
 add_executable(tester_scheduler_service_rpc tester_scheduler_service_rpc.cpp)
 add_dependencies(tester_scheduler_service_rpc tester_scheduler_service_rpc_stub_generator)
 
-add_test(NAME tester_scheduler_service_rpc
-    COMMAND tester_scheduler_service_rpc
+gtest_discover_tests(tester_scheduler_service_rpc
     TIMEOUT 10
     WORKING_DIRECTORY ".."
 )

@@ -2,7 +2,7 @@
  * @file
  * @copyright
  * @verbatim
-Copyright @ 2021 VW Group. All rights reserved.
+Copyright 2023 CARIAD SE.
 
 This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
@@ -35,6 +35,14 @@ template <typename T>
 using conversion_function_type = T (*)(const std::string&);
 
 /**
+ * @brief Alias for defining a function taking a const std::string& and T& and returning bool.
+ *
+ * @tparam T the return type of the conversion function.
+ */
+template <typename T>
+using conversion_bool_function_type = bool (*)(const std::string&, T&);
+
+/**
  * @brief Dummy function that takes string as input and returns it.
  *        defined since there is (logically) no a_util::strings::toString
  *
@@ -48,6 +56,21 @@ inline std::string stringPropertyToString(const std::string& s)
 }
 
 /**
+ * @brief Dummy function that takes string as input and returns it.
+ *        defined since there is (logically) no a_util::strings::toString
+ *
+ * @param[in] s string returned from the function.
+ * @param[in] t string returned from the function.
+ *
+ * @return bool result of the conversion
+ */
+inline bool boolStringPropertyToString(const std::string& s, std::string& t)
+{
+    t = s;
+    return true;
+}
+
+/**
  * @brief Tuple defining the conversion functions from types to string.
  */
 static constexpr auto func_covertors =
@@ -58,6 +81,18 @@ static constexpr auto func_covertors =
                     static_cast<conversion_function_type<uint64_t>>(a_util::strings::toUInt64),
                     static_cast<conversion_function_type<double>>(a_util::strings::toDouble),
                     stringPropertyToString);
+
+/**
+ * @brief Tuple defining the conversion functions from types to string.
+ */
+static constexpr auto bool_func_covertors =
+    std::make_tuple(static_cast<conversion_bool_function_type<bool>>(a_util::strings::toBool),
+                    static_cast<conversion_bool_function_type<int32_t>>(a_util::strings::toInt32),
+                    static_cast<conversion_bool_function_type<int64_t>>(a_util::strings::toInt64),
+                    static_cast<conversion_bool_function_type<uint32_t>>(a_util::strings::toUInt32),
+                    static_cast<conversion_bool_function_type<uint64_t>>(a_util::strings::toUInt64),
+                    static_cast<conversion_bool_function_type<double>>(a_util::strings::toDouble),
+                    boolStringPropertyToString);
 ///@cond nodoc
 /**
  * @brief Trait checking if there is conversion function from string to type @p T in  @link
@@ -104,6 +139,7 @@ struct DefaultPropertyTypeConversion<
      * alias for defining a conversion function from string to type @p T.
      */
     using intern_conversion_function_type = T (*)(const std::string&);
+    using intern_bool_conversion_function_type = bool (*)(const std::string& from, T& to);
 
     /**
      * @brief static function to deserialize the value from string (utf-8) to the typed
@@ -117,6 +153,20 @@ struct DefaultPropertyTypeConversion<
         static constexpr auto intern_conversion_function =
             std::get<intern_conversion_function_type>(func_covertors);
         return (*intern_conversion_function)(from);
+    }
+    /**
+     * @brief static function to deserialize the value from string (utf-8) to the typed
+     * representation @p T.
+     *
+     * @param[in] from the value as string.
+     * @param[in] to the value as T.
+     * @return bool result of conversion
+     */
+    inline static bool fromString(const std::string& from, T& to)
+    {
+        static constexpr auto intern_bool_conversion_function =
+            std::get<intern_bool_conversion_function_type>(bool_func_covertors);
+        return (*intern_bool_conversion_function)(from, to);
     }
 
     /**
@@ -216,8 +266,33 @@ struct DefaultPropertyTypeConversion<
         std::transform(split_vector_value.begin(),
                        split_vector_value.end(),
                        return_value.begin(),
-                       DefaultPropertyTypeConversion<T>::fromString);
+                       [](auto& x) { return DefaultPropertyTypeConversion<T>::fromString(x); });
         return return_value;
+    }
+
+    /**
+     * @brief static function to deserialize the value from string (utf-8) to the typed
+     * representation std::vector<T>
+     *
+     * @param[in] from the value as string
+     * @param[in] to the value std::vector<T>
+     * @return bool the result if the conversion is successful
+     */
+    inline static bool fromString(const std::string& from, std::vector<T>& to)
+    {
+        std::vector<std::string> split_vector_value = a_util::strings::split(from, ";");
+        to.resize(split_vector_value.size());
+        std::vector<bool> return_values(split_vector_value.size());
+
+        for (size_t i = 0; i < split_vector_value.size(); ++i) {
+            T val;
+            return_values[i] =
+                DefaultPropertyTypeConversion<T>::fromString(split_vector_value[i], val);
+            to[i] = val;
+        }
+
+        return std::all_of(
+            return_values.cbegin(), return_values.cend(), [](bool val) { return val == true; });
     }
 
     /**

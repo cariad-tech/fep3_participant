@@ -1,9 +1,16 @@
 * text=auto
 * whitespace=space-before-tab,tab-in-indent,trailing-space
 
-# Needed by conan to calculate the same recipe hash on every os
+# Some files are used to calculate a hash
+# These files need the same line ending indepented of os
+# Hash needs to be the same indepented of os
+# Always checkout with lf
 # Further information in the conan docs: https://tinyurl.com/y27nm4q4
 conanfile*.py text eol=lf
 open_cpp_coverage.py text eol=lf
+conanfile_fep_participant_base.py text eol=lf
+conan_fep_participant_helper.py text eol=lf
+components_metamodel_helper.py text eol=lf
 conandata.yml text eol=lf
 version text eol=lf
+fep_sdk_native_components.mm3_components.yml eol=lf

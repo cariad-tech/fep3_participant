@@ -1,0 +1,97 @@
+/**
+ * Copyright 2023 CARIAD SE.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla
+ * Public License, v. 2.0. If a copy of the MPL was not distributed
+ * with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@startuml
+ skinparam backgroundColor transparent
+ skinparam sequenceReferenceBackgroundColor white
+ skinparam defaultTextAlignment left
+ skinparam BoxPadding 10
+ skinparam hyperlinkUnderline false
+ skinparam legendBackgroundColor white
+ skinparam LegendBorderThickness 0
+ 'use teoz for nested boxes
+ !pragma teoz true
+ 
+ title Create/Execute FEP Element
+ 
+ legend right
+  Legend:
+  | <#SkyBlue>    | Participant State |
+ end legend
+ 
+ actor Customer
+ box FEP Element #LightGrey
+ box FEP Application #WhiteSmoke
+  participant "main()"
+  participant Element
+  participant Job
+ end box
+ 
+ box "FEP SDK Participant Library" #WhiteSmoke
+  participant Participant
+  participant "Participant\nState Machine"
+  participant "Component\nRegistry Factory"
+  participant "Component\nRegistry"
+ end box
+ end box
+
+ Customer -> "main()": execute
+  activate "main()"
+  "main()" -> Participant: createParticipant<Application::Element>()
+   activate Participant
+   Participant -> "Component\nRegistry Factory": createRegistry()
+    activate "Component\nRegistry Factory"
+    
+    ref over "Component\nRegistry Factory"
+     Create/register components:
+     * Determine path of the FEP components file
+     * Parse the FEP components file
+     * Create and register components
+     ** [[components_register_clock_scheduler.svg Clock/Scheduler]]
+    end ref
+    create "Component\nRegistry"
+    "Component\nRegistry Factory" -> "Component\nRegistry": c'tor
+    return
+    
+    ref over Participant
+     * Initialize the service bus
+     * Create and initialize the server
+    end ref
+    
+    Participant -> Participant: c'tor
+  return
+
+ "main()" -> Participant: exec()
+  activate Participant
+  Participant -> "Component\nRegistry": create()
+   activate "Component\nRegistry"
+   
+   ref over "Component\nRegistry"
+    Call method create() for each
+    registered component
+    * [[components_create_clock_scheduler.svg Clock/Scheduler]]
+   end ref
+   
+   return
+
+ create "Participant\nState Machine"
+ Participant -> "Participant\nState Machine" : c'tor()
+  activate "Participant\nState Machine"
+  hnote over "Participant\nState Machine"#SkyBlue: UNLOADED
+  return
+
+ ref over Participant
+ * register RPC service for Participant State Machine
+ * register RPC service for Component Registry
+ end ref
+   
+ Participant -> "Participant\nState Machine": _runner(Participant State Machine)
+  activate "Participant\nState Machine"
+  ...
+  
+@enduml
