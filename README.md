@@ -1,3 +1,10 @@
+## ℹ️ This repository is archived 
+
+It is now maintained at https://github.com/cariad-tech
+
+
+---
+
 <!---
 Copyright @ 2021 VW Group. All rights reserved.
 
